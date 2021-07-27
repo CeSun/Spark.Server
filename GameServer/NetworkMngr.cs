@@ -57,8 +57,10 @@ namespace GameServer
             tcpServer.Start();
             var serverSocket = tcpServer.Server;
             List<Socket> checklist = new List<Socket>();
+            List<(ulong, Socket)> waitDelete = new List<(ulong, Socket)>();
             while (!Stop)
             {
+                waitDelete.Clear();
                 now = DateTime.Now;
                 ResetCheckList(ref checklist);
                 Socket.Select(checklist, null, null, 1000);
@@ -76,15 +78,28 @@ namespace GameServer
                     }
                     else
                     {
-                        var len = item.Receive(dataBuffer);
+                        var len = 0;
+                        try
+                        {
+                            len = item.Receive(dataBuffer);
+                        }
+                        catch
+                        {
+                            var sessionId = socketMap.GetValueOrDefault(item);
+                            waitDelete.Add((sessionId, item));
+                        }
                         var id = socketMap.GetValueOrDefault(item);
                         if (id == 0)
                             continue;
                         var session = clientMap.GetValueOrDefault(id);
                         if (session == null)
                             continue;
-                        List<byte[]> outlist;
-                        var otherData = ReadPackFromBuffer(dataBuffer, session.otherData, session==null?len:len + session.otherData.Length, out outlist);
+                        List<byte[]> outlist = new List<byte[]> ();
+                        if (session.otherData != null)
+                        {
+                            len += session.otherData.Length;
+                        }
+                        var otherData = ReadPackFromBuffer(dataBuffer, session.otherData, len, out outlist);
                         session.otherData = otherData;
                         foreach(var itemdata in outlist)
                         {
@@ -104,7 +119,6 @@ namespace GameServer
                         }
                     }
                 }
-                List<(ulong, Socket)> waitDelete = new List<(ulong, Socket)>();
                 foreach(var pair in clientMap)
                 {
                     if ((now - pair.Value.latestRec).Seconds >= 5)
@@ -129,10 +143,11 @@ namespace GameServer
         byte[] ReadPackFromBuffer(byte[] buffer1, byte[] otherData, int dataLength, out List<byte[]> outList)
         {
             var buffer = new byte[dataLength];
-            int otherLen = otherData == null? 0 : otherData.Length;
+            int otherLen = 0;
+            if (otherData != null) otherLen=  otherData.Length;
             if (otherData != null)
                 Array.Copy(otherData, buffer, otherData.Length);
-            Array.Copy(buffer1, 0, buffer, otherLen, buffer1.Length);
+            Array.Copy(buffer1, 0, buffer, otherLen, buffer.Length - otherLen);
             outList = new List<byte[]>();
             int start = 0;
             int length = 0;
@@ -170,6 +185,7 @@ namespace GameServer
         internal byte[] otherData;
         public DateTime latestRec;
         internal NetworkMngr networkMngr;
+       
         public void Send(byte[] data)
         {
             networkMngr.sendBufferBlock.Post((this, data));

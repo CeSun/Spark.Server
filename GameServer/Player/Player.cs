@@ -40,7 +40,7 @@ namespace GameServer.Player
         {
             SHead rspHead = new SHead {Msgid=EOpcode.TestRsp, Errcode = EErrno.EcserrnoSucc };
             TestRsp resBody = new TestRsp { Id = 1, Name = "Test" };
-            await Task.Delay(1000);
+            await Task.Delay(0);
             SendToClientAsync(rspHead, resBody);
         }
 
