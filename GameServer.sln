@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameServer", "GameServer\GameServer.csproj", "{30C82D82-2427-4404-86F0-45F1696D9060}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frame", "Frame\Frame.csproj", "{F8467179-4267-4736-8DE0-D96DC2E4C004}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30C82D82-2427-4404-86F0-45F1696D9060}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30C82D82-2427-4404-86F0-45F1696D9060}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30C82D82-2427-4404-86F0-45F1696D9060}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30C82D82-2427-4404-86F0-45F1696D9060}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8467179-4267-4736-8DE0-D96DC2E4C004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8467179-4267-4736-8DE0-D96DC2E4C004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8467179-4267-4736-8DE0-D96DC2E4C004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8467179-4267-4736-8DE0-D96DC2E4C004}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C0E02544-B4CC-4FF6-9050-1EA86434BBE4}
+	EndGlobalSection
+EndGlobal
