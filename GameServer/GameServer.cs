@@ -6,33 +6,24 @@ using System.Threading.Tasks;
 
 namespace GameServer
 {
-    public class Server
+    public class Server : ServerApp<Server>
     {
-        NetworkMngr netWorkMngr = new NetworkMngr();
         PlayerPool playerPool = new PlayerPool();
-        SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
-        public static void Start()
+
+        protected override void OnInit()
         {
-            Server gameServer = new Server();
-            try
-            {
-                gameServer.Init();
-                while(true)
-                {
-                    gameServer.Update();
-                }
-            }
-            catch { }
-            gameServer.Fini();
+
+        }
+        protected override void OnUpdate()
+        {
+            playerPool.Update();
+        }
+        protected override void OnFini()
+        {
+            playerPool.Fini();
         }
 
-        void Init()
-        {
-            SynchronizationContext.SetSynchronizationContext(SyncContext);
-            netWorkMngr.Init(DataHandler);
-        }
-
-        async Task DataHandler(Session session, byte[] data)
+        protected async override Task OnHandlerData(Session session, byte[] data)
         {
            var player = playerPool.playerPool.GetValueOrDefault(session.SessionId);
            if (player == null)
@@ -43,17 +34,6 @@ namespace GameServer
            await player.processData(data);
         }
 
-        void Update()
-        {
-            SyncContext.Update();
-            netWorkMngr.Update();
-            Thread.Sleep(0);
-        }
 
-        void Fini()
-        {
-            netWorkMngr.Fini();
-        }
-      
     }
 }
