@@ -1,17 +1,18 @@
 ﻿using Protocol;
 using Google.Protobuf;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
+using Frame;
 
 namespace GameServer.Player
 {
     public class Player
     {
         public Session Session { get; private set; }
-        Frame.Dispatcher<EOpcode, SHead> dispatcher = new Frame.Dispatcher<EOpcode, SHead>(head => { return head.Msgid; });
+        Dispatcher<EOpcode, SHead> dispatcher = new Dispatcher<EOpcode, SHead>(head => { return head.Msgid; });
+        FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
+        
         public bool IsDisConnected { get; private set; }
         public async Task processData(byte[] data)
         {
@@ -24,6 +25,25 @@ namespace GameServer.Player
             Session = session;
             dispatcher.Bind<TestReq>(EOpcode.TestReq, HelloHandler);
             dispatcher.requestHandlers.Add(RequestHandler);
+            fsm.AddState(EState.Init, null, null, null);
+            fsm.AddState(EState.Logining, null, null, null);
+            fsm.AddState(EState.LogOut, null, null, null);
+            fsm.AddState(EState.Online, null, null, null);
+            fsm.AddState(EState.LogOut, null, null, null);
+
+            fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
+            fsm.AddEvent(EEvent.Create, EState.Logining, EState.Creating, null);
+
+            fsm.AddEvent(EEvent.LoginSucc, EState.Logining, EState.Online, null);
+            fsm.AddEvent(EEvent.LoginSucc, EState.Creating, EState.Online, null);
+
+
+            fsm.AddEvent(EEvent.Logout, EState.Online, EState.LogOut, null);
+            fsm.AddEvent(EEvent.Logout, EState.Init, EState.LogOut, null);
+            fsm.AddEvent(EEvent.Logout, EState.Creating, EState.LogOut, null);
+            fsm.AddEvent(EEvent.Logout, EState.Logining, EState.LogOut, null);
+
+            fsm.Start(EState.Init);
         }
 
         bool RequestHandler(SHead reqHead)
@@ -64,11 +84,29 @@ namespace GameServer.Player
 
         public void Update()
         {
-
+            fsm.Update();
         }
         public void Fini()
         {
 
         }
+    }
+
+    enum EState
+    {
+        Init,
+        Logining,
+        Creating,
+        Online,
+        LogOut
+    }
+
+    enum EEvent
+    {
+        Login,
+        LoginSucc,
+        Create,
+        Logout,
+        DbError
     }
 }

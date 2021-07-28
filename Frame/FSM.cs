@@ -82,6 +82,7 @@ namespace Frame
             if (value == null)
                return false;
             _CurrentState = value;
+            value.Entry?.Invoke();
             return true;
         }
 
