@@ -53,6 +53,8 @@ namespace GameServer.Player
             byte[] data = new byte[packLength];
             var packLengthBits = BitConverter.GetBytes(packLength);
             var headLengthBits = BitConverter.GetBytes(headBits.Length);
+            Array.Reverse(packLengthBits);
+            Array.Reverse(headLengthBits);
             packLengthBits.CopyTo(data, 0);
             headLengthBits.CopyTo(data, sizeof(int));
             headBits.CopyTo(data, 2 * sizeof(int));

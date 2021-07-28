@@ -48,6 +48,7 @@ namespace GameServer
 
         Dictionary<ulong, Session> clientMap = new Dictionary<ulong, Session>();
         Dictionary<Socket, ulong> socketMap = new Dictionary<Socket, ulong>();
+        Dictionary<Socket, List<byte[]>> sendMap = new Dictionary<Socket, List<byte[]>>();
         ulong IdIter = 1;
         byte[] dataBuffer = new byte[1024 * 1024 * 5];
         DateTime now;
@@ -56,15 +57,44 @@ namespace GameServer
             tcpServer = new TcpListener(System.Net.IPAddress.Any, 2007);
             tcpServer.Start();
             var serverSocket = tcpServer.Server;
-            List<Socket> checklist = new List<Socket>();
+            List<Socket> readlist = new List<Socket>();
+            List<Socket> writelist = new List<Socket>();
+            List<Socket> errorlist = new List<Socket>();
             List<(ulong, Socket)> waitDelete = new List<(ulong, Socket)>();
             while (!Stop)
             {
+                errorlist.Clear();
+                writelist.Clear();
                 waitDelete.Clear();
                 now = DateTime.Now;
-                ResetCheckList(ref checklist);
-                Socket.Select(checklist, null, null, 1000);
-                foreach(var item in checklist)
+                ResetCheckList(ref readlist);
+                errorlist.AddRange(readlist);
+                Socket.Select(readlist, writelist, errorlist, 1000);
+                IList<(Session, byte[])> outListSend;
+                if (sendBufferBlock.TryReceiveAll(out outListSend))
+                {
+                    foreach (var pair in outListSend)
+                    {
+                        if (socketMap.GetValueOrDefault(pair.Item1.clientSocket) != 0)
+                        {
+                            var list = sendMap.GetValueOrDefault(pair.Item1.clientSocket);
+                            if (list == null)
+                            {
+                                list = new List<byte[]>();
+                                sendMap.Add(pair.Item1.clientSocket, list);
+                            }
+                            list.Add(pair.Item2);
+                        } else
+                        {
+                            sendMap.Remove(pair.Item1.clientSocket);
+                        }
+                    }
+                }
+                foreach(var item in sendMap)
+                {
+                    writelist.Add(item.Key);
+                }
+                foreach (var item in readlist)
                 {
                     if (item == serverSocket)
                     {
@@ -108,16 +138,21 @@ namespace GameServer
                         session.latestRec = now;
                     }
                 }
-                IList<(Session, byte[])> outListSend;
-                if(sendBufferBlock.TryReceiveAll(out outListSend))
+                foreach(var item in writelist)
                 {
-                    foreach(var pair in outListSend)
+                    var list  =sendMap.GetValueOrDefault(item);
+                    if (list == null)
+                        continue;
+                    foreach(var data in list)
                     {
-                        if (socketMap.GetValueOrDefault(pair.Item1.clientSocket) != 0)
-                        {
-                            pair.Item1.clientSocket.BeginSend(pair.Item2, 0, pair.Item2.Length, 0, null, null);
-                        }
+                        item.Send(data);
                     }
+                    list.Clear();
+                }
+                foreach(var item in errorlist)
+                {
+                    var sessionId = socketMap.GetValueOrDefault(item);
+                    waitDelete.Add((sessionId, item));
                 }
                 foreach(var pair in clientMap)
                 {
@@ -126,7 +161,12 @@ namespace GameServer
                         waitDelete.Add((pair.Key, pair.Value.clientSocket));
                     }
                 }
-                waitDelete.ForEach(pair => { clientMap.Remove(pair.Item1); socketMap.Remove(pair.Item2); });
+                waitDelete.ForEach(pair => {
+                    pair.Item2.Shutdown(SocketShutdown.Both);
+                    clientMap.Remove(pair.Item1);
+                    socketMap.Remove(pair.Item2);
+                    sendMap.Remove(pair.Item2);
+                });
                 Thread.Sleep(0);
             }
         }
@@ -185,7 +225,6 @@ namespace GameServer
         internal byte[] otherData;
         public DateTime latestRec;
         internal NetworkMngr networkMngr;
-       
         public void Send(byte[] data)
         {
             networkMngr.sendBufferBlock.Post((this, data));
