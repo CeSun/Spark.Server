@@ -24,7 +24,8 @@ namespace Frame
             recvTask.Start();
             this.dataHandler = dataHandler; 
         }
-
+        DateTime datetime = default;
+        int packnums = 0;
         public void Update()
         {
             IList<(Session, byte[])> list;
@@ -35,8 +36,20 @@ namespace Frame
                 {
                     dataHandler(item.Item1, item.Item2);
                 }
+                packnums += list.Count;
             }
-
+            
+            var nnow = DateTime.Now;
+            if (datetime == default)
+            {
+                datetime = nnow;
+            }
+            if ((nnow - datetime).TotalMilliseconds > 1000)
+            {
+                Console.WriteLine("packNums:" + packnums);
+                packnums = 0;
+                datetime = nnow;
+            }
             
         }
 
@@ -107,6 +120,7 @@ namespace Frame
                     }
                     else
                     {
+                        var sessionId = socketMap.GetValueOrDefault(item);
                         var len = 0;
                         try
                         {
@@ -114,7 +128,10 @@ namespace Frame
                         }
                         catch
                         {
-                            var sessionId = socketMap.GetValueOrDefault(item);
+                            waitDelete.Add((sessionId, item));
+                        }
+                        if (len == 0)
+                        {
                             waitDelete.Add((sessionId, item));
                         }
                         var id = socketMap.GetValueOrDefault(item);
@@ -139,12 +156,20 @@ namespace Frame
                 }
                 foreach(var item in writelist)
                 {
+                    var sessionId = socketMap.GetValueOrDefault(item);
                     var list  =sendMap.GetValueOrDefault(item);
                     if (list == null)
                         continue;
                     foreach(var data in list)
                     {
-                        item.Send(data);
+                        try
+                        {
+                            item.Send(data);
+                        } catch
+                        {
+                            waitDelete.Add((sessionId, item));
+                            break;
+                        }
                     }
                     list.Clear();
                 }
@@ -155,7 +180,7 @@ namespace Frame
                 }
                 foreach(var pair in clientMap)
                 {
-                    if ((now - pair.Value.latestRec).Seconds >= 5)
+                    if ((now - pair.Value.latestRec).Seconds >= 10000)
                     {
                         waitDelete.Add((pair.Key, pair.Value.clientSocket));
                     }
