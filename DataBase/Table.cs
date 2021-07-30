@@ -125,7 +125,7 @@ namespace DataBase
             }
         }
 
-        public static async Task<(Table<TProto, TKey, TTable>? Row, DBError Error)> QueryAync(TKey key) 
+        public static async Task<(TTable? Row, DBError Error)> QueryAync(TKey key) 
         {
             TTable table = new TTable();
             var tableName = table.TableName;
@@ -144,12 +144,18 @@ namespace DataBase
                     var version = reader.GetFieldValue<int>("c_version");
                     table.Value = parser.ParseFrom(buffer);
                     table.version = version;
+                    reader.Close();
                     return (table, DBError.Success);
                 }
                 else
                 {
+                    reader.Close();
                     return (null, DBError.IsNotExisted);
                 }
+            }
+            catch (MySqlException ex)
+            {
+                return (null, DBError.UnKnowError);
             }
             catch (Exception ex)
             {
@@ -157,7 +163,7 @@ namespace DataBase
             }
         }
 
-        static async Task<DBError> DeleteAync(TKey key)
+        public static async Task<DBError> DeleteAync(TKey key)
         {
             TTable table = new TTable();
             var keyString = table.GetKey(key);

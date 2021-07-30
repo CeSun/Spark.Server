@@ -17,7 +17,7 @@ namespace UnitTest
             SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
             Database.Init();
-            fun();
+            TestDataBase();
             while (true)
             {
                 SyncContext.Update();
@@ -25,15 +25,22 @@ namespace UnitTest
             Database.Fini();
 
         }
-        static async Task fun()
+        static async Task TestDataBase()
         {
-
-            var p = await TPlayer.QueryAync(1);
-            if (p.Error == DBError.Success)
+            List<Task<(TPlayer, DBError)>> players = new List<Task<(TPlayer, DBError)>>();
+            for(var i = 0; i < 100; i ++)
             {
-                Console.WriteLine(p.Row.Value.Nickname);
+                players.Add(TPlayer.QueryAync(1));
             }
-            
+            List<TPlayer> players2 = new List<TPlayer>();
+            foreach(var task in players)
+            {
+                var res = await task;
+                if (res.Item2 == DBError.Success)
+                {
+                    players2.Add(res.Item1);
+                }
+            }
         }
     }
 }
