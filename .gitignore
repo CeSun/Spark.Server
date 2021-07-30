@@ -10,3 +10,7 @@
 /Frame/obj
 /.vs/GameServer/DesignTimeBuild
 /.vs/GameServer/v17
+/DataBase/bin
+/DataBase/obj
+/UnitTest/bin
+/UnitTest/obj

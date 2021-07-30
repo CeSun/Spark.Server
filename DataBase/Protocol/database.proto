@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package DataBase;
+
+message DBPlayer
+{
+	uint64 uin = 1;
+	string nickname = 2;
+	repeated DBCurrency currency = 3;
+
+}
+
+message DBCurrency
+{
+	int32 id = 1;
+	uint32 nums = 2;
+}

@@ -76,8 +76,6 @@ namespace Frame
                 return;
             if (getMsgId == default)
                 return;
-
-
             foreach (var handler in requestHandlers)
             {
                 var ret = handler(head);
