@@ -28,7 +28,7 @@ namespace UnitTest
         static async Task TestDataBase()
         {
             List<Task<(TPlayer, DBError)>> players = new List<Task<(TPlayer, DBError)>>();
-            for(var i = 0; i < 100; i ++)
+            for(var i = 0; i < 2; i ++)
             {
                 players.Add(TPlayer.QueryAync(1));
             }
@@ -41,6 +41,13 @@ namespace UnitTest
                     players2.Add(res.Item1);
                 }
             }
+
+            var ret = await players2[0].SaveAync();
+            Console.WriteLine(ret);
+            ret = await players2[1].SaveAync();
+            Console.WriteLine(ret);
+
+
         }
     }
 }

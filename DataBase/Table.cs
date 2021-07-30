@@ -16,6 +16,7 @@ namespace DataBase
         IsExisted,
         IsNotExisted,
         ObjectIsEmpty,
+        VersionError,
         UnKnowError
     }
 
@@ -31,7 +32,6 @@ namespace DataBase
         {
 
         }
-
         public TProto Value { get; private set; }
 
         public abstract string TableName {  get; }
@@ -91,7 +91,7 @@ namespace DataBase
                         return DBError.Success;
                     }
                     else
-                        return DBError.IsExisted;
+                        return DBError.VersionError;
                 }
                 catch
                 {
