@@ -39,7 +39,7 @@ namespace UnitTest
             List<Task<(TPlayer, DBError)>> players = new List<Task<(TPlayer, DBError)>>();
             for(var i = 0; i < 2; i ++)
             {
-                players.Add(TPlayer.QueryAync(1));
+                players.Add(TPlayer.QueryAync((1, 1)));
             }
             List<TPlayer> players2 = new List<TPlayer>();
             foreach(var task in players)
@@ -60,14 +60,11 @@ namespace UnitTest
 
         static async Task TestUinMngr()
         {
-            var uin = await uinMngr.GetUinAsync();
-            Console.WriteLine("uin:" + uin);
-            uin = await uinMngr.GetUinAsync();
-            Console.WriteLine("uin:" + uin);
-            uin = await uinMngr.GetUinAsync();
-            Console.WriteLine("uin:" + uin);
-            uin = await uinMngr.GetUinAsync();
-            Console.WriteLine("uin:" + uin);
+            for (var i = 0; i < 1000; i++)
+            {
+                var uin = await uinMngr.GetUinAsync();
+                Console.WriteLine("uin:" + uin);
+            }
         }
     }
 }

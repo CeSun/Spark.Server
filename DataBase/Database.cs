@@ -9,7 +9,10 @@ namespace DataBase
 {
     public class Database
     {
-        public static MySqlConnection mySqlConn;
+        private static MySqlConnection? mySqlConn;
+#pragma warning disable CS8603 // 可能返回 null 引用。
+        public static MySqlConnection MySqlConn { get { if (mySqlConn != null) return mySqlConn; return mySqlConn; } }
+#pragma warning restore CS8603 // 可能返回 null 引用。
         public static void Init()
         {
             mySqlConn = new MySqlConnection("Server=localhost;Port=3306;Database=Game01; User=game;Password=1024;sslmode=Required");
@@ -23,7 +26,7 @@ namespace DataBase
 
         public static void Fini()
         {
-            mySqlConn.Close();
+            mySqlConn?.Close();
         }
     }
 }

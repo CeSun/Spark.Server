@@ -24,6 +24,7 @@ message SHead
 enum EErrno
 {
 	ECSERRNO_SUCC = 0;						// 操作成功
+	ECSERRNO_Error = 1;						// 发生错误
 }
 
 message TestReq {

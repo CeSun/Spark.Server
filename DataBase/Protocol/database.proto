@@ -4,24 +4,30 @@ package DataBase;
 
 message DBPlayer
 {
-	uint64 uin = 1;
-	string nickname = 2;
-	repeated DBCurrency currency = 3;
+	int32 zone = 1;			// 玩家大区
+	uint64 uin = 2;			// 玩家唯一标识
+	string nickname = 3;	// 玩家昵称
+	int64 last_login_time = 4;	// 最后一次登录时间
+	int64 login_server_id = 5;	// 登录的服务器实例id
+	repeated DBCurrency currency = 6;	// 货币
 
 }
 
 message DBCurrency
 {
-	int32 id = 1;
-	uint32 nums = 2;
+	int32 id = 1;		// 道具的id
+	uint32 nums = 2;	// 数量
 }
+
 enum AuthType {
 	Test = 0;
 }
+
 message DBAccount {
 	AuthType type = 1;
 	string account = 2;
-	uint64 uin = 3;
+	int32 zone = 3;
+	uint64 uin = 4;
 }
 
 message DBUin

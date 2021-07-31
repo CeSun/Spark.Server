@@ -14,7 +14,7 @@ namespace GameServer.Module
         {
             this.zone = zone;
             state = State.Loading;
-            updateMngrAsync();
+            _ = updateMngrAsync();
         }
         private int AddNums = 100;
         private ulong StartNum = 0;
@@ -32,7 +32,7 @@ namespace GameServer.Module
             if (ret.Error == DataBase.DBError.IsNotExisted)
             {
                 var uin = TUin.New();
-                uin.Value.Zone = Server.Instance.Zone;
+                uin.Value.Zone = zone;
                 uin.Value.Nums = 0;
                 var ret2 = await uin.SaveAync();
                 if (ret2 == DataBase.DBError.IsExisted)
@@ -95,9 +95,7 @@ namespace GameServer.Module
                     {
                         state = State.Loading;
                         tasks.Add(tcs);
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                        updateMngrAsync();
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                        _ = updateMngrAsync();
                     }
                     else
                     {

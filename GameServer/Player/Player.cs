@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Frame;
 using MySqlX.XDevAPI;
 using DataBase.Tables;
+using DataBase;
 
 namespace GameServer.Player
 {
@@ -15,7 +16,8 @@ namespace GameServer.Player
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
-        public DataBase.DBPlayer DBData { get; private set; }
+        public DBPlayer DBData { get { return tPlayer.Value; } }
+        private TPlayer tPlayer;
         public bool IsDisConnected { get; private set; }
         public async Task processData(byte[] data)
         {
@@ -82,18 +84,29 @@ namespace GameServer.Player
             SHead rspHead = new SHead { Msgid = EOpcode.LoginRsp, Errcode = EErrno.EcserrnoSucc };
             LoginRsp rspBody = new LoginRsp();
             fsm.PostEvent(EEvent.Login);
-            var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount));
+            var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
             if (retval.Error == DataBase.DBError.Success)
             {
-                var playerPair = await TPlayer.QueryAync(retval.Row.Value.Uin);
+                var playerPair = await TPlayer.QueryAync((retval.Row.Value.Zone, retval.Row.Value.Uin));
                 if (playerPair.Error == DataBase.DBError.Success)
                 {
-                    DBData = playerPair.Row.Value;
-                    fsm.PostEvent(EEvent.LoginSucc);
-                    rspBody.PlayerInfo = new PlayerInfo();
-                    rspBody.PlayerInfo.Uin = DBData.Uin;
-                    rspBody.PlayerInfo.NickName = DBData.Nickname;
-                    rspBody.LoginResult = ELoginResult.Success;
+                    tPlayer = playerPair.Row;
+                    tPlayer.Value.LastLoginTime = DateTime.Now.Millisecond;
+                    tPlayer.Value.LoginServerId = Server.Instance.InstanceId;
+                    var ret = await tPlayer.SaveAync();
+                    if (ret == DBError.Success)
+                    {
+                        fsm.PostEvent(EEvent.LoginSucc);
+                        rspBody.PlayerInfo = new PlayerInfo();
+                        rspBody.PlayerInfo.Uin = DBData.Uin;
+                        rspBody.PlayerInfo.NickName = DBData.Nickname;
+                        rspBody.LoginResult = ELoginResult.Success;
+                    }
+                    else
+                    {
+                        fsm.PostEvent(EEvent.Logout);
+                        rspHead.Errcode = EErrno.EcserrnoError;
+                    }
                 }
                 else
                 {

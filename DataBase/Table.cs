@@ -28,10 +28,12 @@ namespace DataBase
             return table;
         }
 
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
         public Table()
         {
 
         }
+#pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
         public TProto Value { get; private set; }
 
         public abstract string TableName {  get; }
@@ -46,7 +48,7 @@ namespace DataBase
             // 版本号是0即新增
             if (version == 0)
             {
-                var cmd = Database.mySqlConn.CreateCommand(); 
+                var cmd = Database.MySqlConn.CreateCommand(); 
                 cmd.CommandText = string.Format("insert into {0} (c_key, c_value, c_version) values(@key,@value,@version);", TableName);
                 cmd.Parameters.AddWithValue("@key", keyString);
                 cmd.Parameters.AddWithValue("@value", bitData);
@@ -76,7 +78,7 @@ namespace DataBase
             }
             else
             {
-                var cmd = Database.mySqlConn.CreateCommand();
+                var cmd = Database.MySqlConn.CreateCommand();
                 cmd.CommandText = string.Format("update {0} set c_value=@value, c_version=@newVersion where c_key=@key and c_version=@oldVersion;", TableName);
                 cmd.Parameters.AddWithValue("@key", keyString);
                 cmd.Parameters.AddWithValue("@value", bitData);
@@ -105,7 +107,7 @@ namespace DataBase
             if (version == 0)
                 return DBError.ObjectIsEmpty;
             var keyString = GetKey();
-            var cmd = Database.mySqlConn.CreateCommand();
+            var cmd = Database.MySqlConn.CreateCommand();
             cmd.CommandText = string.Format("delete from {0} where c_key=@key;", TableName);
             cmd.Parameters.AddWithValue("@key", keyString);
             try
@@ -131,7 +133,7 @@ namespace DataBase
             var tableName = table.TableName;
             var keyString = table.GetKey(key);
             MessageParser<TProto> parser = new MessageParser<TProto>(() => new TProto());
-            var cmd = Database.mySqlConn.CreateCommand();
+            var cmd = Database.MySqlConn.CreateCommand();
             cmd.CommandText = string.Format("select c_key, c_value, c_version from {0} where c_key=@key;", tableName);
             cmd.Parameters.AddWithValue("@key", keyString);
             try
@@ -153,11 +155,7 @@ namespace DataBase
                     return (null, DBError.IsNotExisted);
                 }
             }
-            catch (MySqlException ex)
-            {
-                return (null, DBError.UnKnowError);
-            }
-            catch (Exception ex)
+            catch
             {
                 return (null, DBError.UnKnowError);
             }
@@ -168,7 +166,7 @@ namespace DataBase
             TTable table = new TTable();
             var keyString = table.GetKey(key);
             var tableName = table.TableName;
-            var cmd = Database.mySqlConn.CreateCommand();
+            var cmd = Database.MySqlConn.CreateCommand();
             cmd.CommandText = string.Format("delete from {0} where c_key=@key;", tableName);
             cmd.Parameters.AddWithValue("@key", keyString);
             try

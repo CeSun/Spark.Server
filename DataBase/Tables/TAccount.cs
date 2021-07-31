@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace DataBase.Tables
 {
-    public class TAccount : Table<DBAccount, (DataBase.AuthType, string), TAccount>
+    public class TAccount : Table<DBAccount, (DataBase.AuthType, string, int), TAccount>
     {
         public override string TableName { get { return "DBAccount"; } }
 
         protected override string GetKey()
         {
-            return string.Format("{0}|{1}", Value.Type, Value.Account);
+            return string.Format("{0}|{1}|{2}", Value.Type, Value.Account,Value.Zone);
         }
 
-        protected override string GetKey((AuthType, string) key)
+        protected override string GetKey((AuthType, string, int) key)
         {
-            return string.Format("{0}|{1}", key.Item1, key.Item2);
+            return string.Format("{0}|{1}|{2}", key.Item1, key.Item2, key.Item3);
         }
     }
 }

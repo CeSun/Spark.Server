@@ -10,14 +10,25 @@ namespace Frame
 {
     public class SingleThreadSynchronizationContext : SynchronizationContext
     {
-        BufferBlock<(SendOrPostCallback d, object? state)> bufferBlock = new BufferBlock<(SendOrPostCallback d, object? state)>();
-        public override void Post(SendOrPostCallback d, object? state)
+        int mainThreadId;
+        public SingleThreadSynchronizationContext()
         {
-            bufferBlock.Post((d, state));
+            mainThreadId = Thread.CurrentThread.ManagedThreadId;
         }
+        BufferBlock<(SendOrPostCallback d, object state)> bufferBlock = new BufferBlock<(SendOrPostCallback d, object state)>();
+        public override void Post(SendOrPostCallback d, object state)
+        {
+            // 如果是主线程，直接执行，其他线程写到队列里
+            var threadId = Thread.CurrentThread.ManagedThreadId;
+            if (threadId == mainThreadId)
+                d?.Invoke(state);
+            else
+                bufferBlock.Post((d, state));
+        }
+
         public void Update()
         {
-            IList<(SendOrPostCallback d, object? state)> list = new List<(SendOrPostCallback d, object? state)>();
+            IList<(SendOrPostCallback d, object state)> list = new List<(SendOrPostCallback d, object state)>();
             if (bufferBlock.TryReceiveAll(out list))
                 foreach (var item in list)
                     item.d?.Invoke(item.state);

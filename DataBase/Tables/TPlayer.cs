@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace DataBase.Tables
 {
-    public class TPlayer : Table<DBPlayer, ulong, TPlayer>
+    public class TPlayer : Table<DBPlayer, (int, ulong), TPlayer>
     {
         public override string TableName { get { return "DBPlayer"; } }
 
         protected override string GetKey()
         {
-            return string.Format("{0}", Value.Uin);
+            return string.Format("{0}|{1}", Value.Zone, Value.Uin);
         }
 
-        protected override string GetKey(ulong key)
+        protected override string GetKey((int, ulong) key)
         {
-            return string.Format("{0}", key);
+            return string.Format("{0}|{1}", key.Item1, key.Item2);
         }
 
 
