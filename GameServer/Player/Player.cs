@@ -36,11 +36,17 @@ namespace GameServer.Player
             dispatcher.Bind<TestReq>(EOpcode.TestReq, HelloHandler);
             dispatcher.Bind<LoginReq>(EOpcode.LoginReq, LoginAsync);
             dispatcher.requestHandlers.Add(RequestHandler);
+            InitFSM();
+        }
+
+        private void InitFSM()
+        {
+
             fsm.AddState(EState.Init, null, null, null);
             fsm.AddState(EState.Logining, null, null, null);
             fsm.AddState(EState.LogOut, null, null, null);
             fsm.AddState(EState.Online, null, null, null);
-            fsm.AddState(EState.LogOut, null, null, null);
+            fsm.AddState(EState.LogOut, OnLogOut, null, null);
 
             // 每个事件对应的处理函数还没有捋一遍
             fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
@@ -56,6 +62,12 @@ namespace GameServer.Player
             fsm.Start(EState.Init);
         }
 
+        void OnLogOut()
+        {
+            // 登出时保存数据
+            DBData.LoginServerId = 0;
+            _ = tPlayer.SaveAync();
+        }
         bool RequestHandler(SHead reqHead)
         {
             LatestTime = DateTime.Now;
