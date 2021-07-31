@@ -1,10 +1,9 @@
 ﻿using DataBase;
 using DataBase.Tables;
 using Frame;
-using MySql.Data.MySqlClient;
+using GameServer.Module;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,16 +11,26 @@ namespace UnitTest
 {
     class Program
     {
+        static UinMngr uinMngr = new UinMngr();
         static void Main(string[] args)
         {
             SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
             Database.Init();
-            TestDataBase();
+            uinMngr.Init(1);
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+            TestUinMngr();
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
             while (true)
             {
-                SyncContext.Update();
+                try
+                {
+                    SyncContext.Update();
+                    uinMngr.Update();
+                } catch
+                { break; }
             }
+            uinMngr.Fini();
             Database.Fini();
 
         }
@@ -47,7 +56,18 @@ namespace UnitTest
             ret = await players2[1].SaveAync();
             Console.WriteLine(ret);
 
+        }
 
+        static async Task TestUinMngr()
+        {
+            var uin = await uinMngr.GetUinAsync();
+            Console.WriteLine("uin:" + uin);
+            uin = await uinMngr.GetUinAsync();
+            Console.WriteLine("uin:" + uin);
+            uin = await uinMngr.GetUinAsync();
+            Console.WriteLine("uin:" + uin);
+            uin = await uinMngr.GetUinAsync();
+            Console.WriteLine("uin:" + uin);
         }
     }
 }

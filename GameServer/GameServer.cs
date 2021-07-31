@@ -3,12 +3,13 @@ using GameServer.Player;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataBase;
+using GameServer.Module;
 
 namespace GameServer
 {
     public class Server : ServerApp<Server>
     {
-        public PlayerPool playerPool = new PlayerPool();
+        public PlayerMngr playerPool = new PlayerMngr();
         public int Zone { get { return 1; } }
         public int InstanceId { get { return 1; } }
         public UinMngr UinMngr { get; private set; }
@@ -17,7 +18,7 @@ namespace GameServer
             UinMngr = new UinMngr();
             Database.Init();
             playerPool.Init();
-            UinMngr.Init(); 
+            UinMngr.Init(Zone); 
         }
         protected override void OnUpdate()
         {
@@ -34,12 +35,12 @@ namespace GameServer
 
         protected async override Task OnHandlerData(Session session, byte[] data)
         {
-           var player = playerPool.playerPool.GetValueOrDefault(session.SessionId);
+            var player = playerPool.GetPlayer(session.SessionId);
            if (player == null)
            {
                 player = new Player.Player(session);
                 player.Init();
-                playerPool.playerPool.Add(session.SessionId, player);
+                playerPool.AddPlayer(session.SessionId, player);
            }
            await player.processData(data);
         }

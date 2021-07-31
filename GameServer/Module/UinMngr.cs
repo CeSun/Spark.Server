@@ -1,51 +1,18 @@
 ﻿using DataBase.Tables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameServer.Player
+namespace GameServer.Module
 {
-    public class PlayerPool
+    public class UinMngr
     {
-        public Dictionary<UInt64, Player> playerPool { get; private set; }
-
-        public PlayerPool()
+        private int zone;
+        public void Init(int zone)
         {
-            playerPool = new Dictionary<UInt64, Player>();
-        }
-        public void Init()
-        {
-
-        }
-        public void Update()
-        {
-            List<UInt64> waitDeletePlayer = new List<UInt64>();
-            foreach (var playerPair in playerPool)
-            {
-                playerPair.Value.Update();
-                if (playerPair.Value.IsDisConnected == true)
-                {
-                    waitDeletePlayer.Add(playerPair.Key);
-                }
-            }
-            waitDeletePlayer.ForEach(x => playerPool.Remove(x));
-        }
-
-        public void Fini()
-        {
-            foreach(var playerPair in playerPool)
-            {
-                playerPair.Value.Fini();
-            }
-            playerPool.Clear();
-        }
-
-    }
-
-    public class UinMngr { 
-        public void Init()
-        {
+            this.zone = zone;
             state = State.Loading;
             updateMngrAsync();
         }
@@ -60,8 +27,8 @@ namespace GameServer.Player
         private State state;
         private async Task updateMngrAsync()
         {
-            var exception =  new Exception("error");
-            var ret = await TUin.QueryAync(Server.Instance.Zone);
+            var exception = new Exception("error");
+            var ret = await TUin.QueryAync(zone);
             if (ret.Error == DataBase.DBError.IsNotExisted)
             {
                 var uin = TUin.New();
@@ -70,7 +37,8 @@ namespace GameServer.Player
                 var ret2 = await uin.SaveAync();
                 if (ret2 == DataBase.DBError.IsExisted)
                 {
-                    await Task.Delay((int)(Random.Shared.NextDouble() * 1000));
+                    Random random = new Random(DateTime.Now.Second);
+                    await Task.Delay((int)(random.NextDouble() * 1000));
                     ret = await TUin.QueryAync(Server.Instance.Zone);
                     if (ret.Error != DataBase.DBError.Success)
                     {
@@ -109,7 +77,7 @@ namespace GameServer.Player
                 throw exception;
             }
             state = State.Loaded;
-            foreach(var tcs in tasks)
+            foreach (var tcs in tasks)
             {
                 tcs.SetResult();
             }
@@ -150,7 +118,7 @@ namespace GameServer.Player
             return ++StartNum;
         }
 
-        
+
         public void Update()
         {
 
