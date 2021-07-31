@@ -16,7 +16,7 @@ namespace Frame
         BufferBlock<(Session, byte[])> recBufferBlock = new BufferBlock<(Session, byte[])>();
         public delegate Task DataHandler(Session session, byte[] data);
         private DataHandler dataHandler;
-        internal BufferBlock<(Session, byte[])> sendBufferBlock = new BufferBlock<(Session, byte[])>();
+        internal BufferBlock<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new BufferBlock<(Session, byte[], TaskCompletionSource)>();
         public void Init(DataHandler dataHandler)
         {
             recvTask = new Task(Recv);
@@ -60,7 +60,7 @@ namespace Frame
 
         Dictionary<ulong, Session> clientMap = new Dictionary<ulong, Session>();
         Dictionary<Socket, ulong> socketMap = new Dictionary<Socket, ulong>();
-        Dictionary<Socket, List<byte[]>> sendMap = new Dictionary<Socket, List<byte[]>>();
+        Dictionary<Socket, List<(byte[], TaskCompletionSource)>> sendMap = new Dictionary<Socket, List<(byte[], TaskCompletionSource)>>();
         ulong IdIter = 1;
         byte[] dataBuffer = new byte[1024 * 1024 * 5];
         DateTime now;
@@ -82,7 +82,7 @@ namespace Frame
                 ResetCheckList(ref readlist);
                 errorlist.AddRange(readlist);
                 Socket.Select(readlist, writelist, errorlist, 1000);
-                IList<(Session, byte[])> outListSend;
+                IList<(Session, byte[], TaskCompletionSource)> outListSend;
                 if (sendBufferBlock.TryReceiveAll(out outListSend))
                 {
                     foreach (var pair in outListSend)
@@ -92,10 +92,10 @@ namespace Frame
                             var list = sendMap.GetValueOrDefault(pair.Item1.clientSocket);
                             if (list == null)
                             {
-                                list = new List<byte[]>();
+                                list = new List<(byte[], TaskCompletionSource)>();
                                 sendMap.Add(pair.Item1.clientSocket, list);
                             }
-                            list.Add(pair.Item2);
+                            list.Add((pair.Item2, pair.Item3));
                         } else
                         {
                             sendMap.Remove(pair.Item1.clientSocket);
@@ -164,7 +164,8 @@ namespace Frame
                     {
                         try
                         {
-                            item.Send(data);
+                            item.Send(data.Item1);
+                            data.Item2.SetResult();
                         } catch
                         {
                             waitDelete.Add((sessionId, item));
@@ -249,9 +250,13 @@ namespace Frame
         internal byte[] otherData;
         public DateTime latestRec;
         internal NetworkMngr networkMngr;
-        public void Send(byte[] data)
+        public Task SendAsync(byte[] data)
         {
-            networkMngr.sendBufferBlock.Post((this, data));
+            TaskCompletionSource tcs = new TaskCompletionSource();
+
+            networkMngr.sendBufferBlock.Post((this, data, tcs));
+
+            return tcs.Task;
         }
 
     }

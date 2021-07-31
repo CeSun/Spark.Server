@@ -27,19 +27,19 @@ namespace Frame
         protected abstract void OnFini();
         public static void Start()
         {
-            SubT gameServer = new SubT();
+            Instance = new SubT();
             try
             {
-                gameServer.Init();
+                Instance.Init();
                 while (true)
                 {
-                    gameServer.Update();
+                    Instance.Update();
                 }
             }
             catch { }
-            gameServer.Fini();
+            Instance.Fini();
         }
-
+        public static SubT Instance {  get; private set; }
         NetworkMngr netWorkMngr = new NetworkMngr();
         SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
         void Init()

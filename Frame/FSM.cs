@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Frame
 {
@@ -64,10 +65,10 @@ namespace Frame
             var newCallbacks = stateDict.GetValueOrDefault(newStateNode.Value.ToState);
             if (newCallbacks == null)
                 return false;
-            oldState.Leave?.Invoke();
+             oldState.Leave?.Invoke();
             _CurrentState = newState;
-            newCallbacks.Entry?.Invoke();
-            newStateNode.Value.Action?.Invoke();
+             newCallbacks.Entry?.Invoke();
+             newStateNode.Value.Action?.Invoke();
             return true;
         }
 

@@ -3,27 +3,36 @@ using Google.Protobuf;
 using System;
 using System.Threading.Tasks;
 using Frame;
+using MySqlX.XDevAPI;
+using DataBase.Tables;
 
 namespace GameServer.Player
 {
     public class Player
     {
-        public Session Session { get; private set; }
+        public Frame.Session Session { get; private set; }
         Dispatcher<EOpcode, SHead> dispatcher = new Dispatcher<EOpcode, SHead>(head => { return head.Msgid; });
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
-        
+        DateTime LatestTime;
+        public DataBase.DBPlayer DBData { get; private set; }
         public bool IsDisConnected { get; private set; }
         public async Task processData(byte[] data)
         {
             await dispatcher.DispatcherRequest(data);
         }
 
-        public Player(Session session)
+        public Player(Frame.Session session)
         {
             IsDisConnected = false;
             Session = session;
+        }
+
+        public void Init()
+        {
+            LatestTime = DateTime.Now;
             dispatcher.Bind<TestReq>(EOpcode.TestReq, HelloHandler);
+            dispatcher.Bind<LoginReq>(EOpcode.LoginReq, LoginAsync);
             dispatcher.requestHandlers.Add(RequestHandler);
             fsm.AddState(EState.Init, null, null, null);
             fsm.AddState(EState.Logining, null, null, null);
@@ -31,40 +40,90 @@ namespace GameServer.Player
             fsm.AddState(EState.Online, null, null, null);
             fsm.AddState(EState.LogOut, null, null, null);
 
+            // 每个事件对应的处理函数还没有捋一遍
             fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
             fsm.AddEvent(EEvent.Create, EState.Logining, EState.Creating, null);
 
             fsm.AddEvent(EEvent.LoginSucc, EState.Logining, EState.Online, null);
             fsm.AddEvent(EEvent.LoginSucc, EState.Creating, EState.Online, null);
 
-
             fsm.AddEvent(EEvent.Logout, EState.Online, EState.LogOut, null);
             fsm.AddEvent(EEvent.Logout, EState.Init, EState.LogOut, null);
             fsm.AddEvent(EEvent.Logout, EState.Creating, EState.LogOut, null);
             fsm.AddEvent(EEvent.Logout, EState.Logining, EState.LogOut, null);
-
             fsm.Start(EState.Init);
         }
 
         bool RequestHandler(SHead reqHead)
         {
+            LatestTime = DateTime.Now;
+            if (LatestSeq == 0)
+            {
+                if (reqHead.Msgid != EOpcode.LoginReq)
+                {
+                    fsm.PostEvent(EEvent.Logout);
+                    return false;
+                }
+            }
             if (reqHead.Reqseq == LatestSeq)
             {
                 return true;
             }
+            if (reqHead.Msgid != EOpcode.HeartbeatReq)
+            {
+                fsm.PostEvent(EEvent.Logout);
+            }
+
             return false;
         }
 
+        async Task LoginAsync(SHead reqHead, LoginReq loginReq)
+        {
+            SHead rspHead = new SHead { Msgid = EOpcode.LoginRsp, Errcode = EErrno.EcserrnoSucc };
+            LoginRsp rspBody = new LoginRsp();
+            fsm.PostEvent(EEvent.Login);
+            var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount));
+            if (retval.Error == DataBase.DBError.Success)
+            {
+                var playerPair = await TPlayer.QueryAync(retval.Row.Value.Uin);
+                if (playerPair.Error == DataBase.DBError.Success)
+                {
+                    DBData = playerPair.Row.Value;
+                    fsm.PostEvent(EEvent.LoginSucc);
+                    rspBody.PlayerInfo = new PlayerInfo();
+                    rspBody.PlayerInfo.Uin = DBData.Uin;
+                    rspBody.PlayerInfo.NickName = DBData.Nickname;
+                    rspBody.LoginResult = ELoginResult.Success;
+                }
+                else
+                {
+                    fsm.PostEvent(EEvent.Create);
+                    rspBody.LoginResult = ELoginResult.NoPlayer;
+                }
+            }
+            else
+            {
+                var uin = await Server.Instance.UinMngr.GetUinAsync();
+                var account = TAccount.New();
+                account.Value.Uin = uin;
+                account.Value.Type = (DataBase.AuthType)loginReq.LoginType;
+                account.Value.Account = loginReq.TestAccount;
+                await account.SaveAync();
+                fsm.PostEvent(EEvent.Create);
+                rspBody.LoginResult = ELoginResult.NoPlayer;
+            }
+            await SendToClientAsync(rspHead, rspBody);
+        }
 
         async Task HelloHandler(SHead reqHead, TestReq reqBody)
         {
             SHead rspHead = new SHead {Msgid=EOpcode.TestRsp, Errcode = EErrno.EcserrnoSucc };
-            TestRsp resBody = new TestRsp { Id = 1, Name = "Test" };
+            TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
             await Task.Delay(0);
-            SendToClientAsync(rspHead, resBody);
+            await SendToClientAsync(rspHead, rspBody);
         }
 
-        public void SendToClientAsync<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
+        public async Task SendToClientAsync<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
             head.Reqseq = ++LatestSeq;
             var bodyBits = rsp.ToByteArray();
@@ -79,11 +138,18 @@ namespace GameServer.Player
             headLengthBits.CopyTo(data, sizeof(int));
             headBits.CopyTo(data, 2 * sizeof(int));
             bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
-            Session.Send(data);
+            await Session.SendAsync(data);
         }
 
         public void Update()
         {
+            if (fsm.CurrentState != EState.Init && fsm.CurrentState != EState.LogOut)
+            {
+                if ((DateTime.Now - LatestTime).TotalSeconds > 5)
+                {
+                    fsm.PostEvent(EEvent.Logout);
+                }
+            }
             fsm.Update();
         }
         public void Fini()

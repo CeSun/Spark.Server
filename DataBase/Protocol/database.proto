@@ -15,3 +15,17 @@ message DBCurrency
 	int32 id = 1;
 	uint32 nums = 2;
 }
+enum AuthType {
+	Test = 0;
+}
+message DBAccount {
+	AuthType type = 1;
+	string account = 2;
+	uint64 uin = 3;
+}
+
+message DBUin
+{
+	int32 zone = 1;
+	uint64 nums = 2;
+}

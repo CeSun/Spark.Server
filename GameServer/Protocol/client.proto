@@ -4,11 +4,13 @@ package protocol;
 
 enum EOpcode
 {
-	EOPCODE_INVAILD = 0;			// 无效协议
+	EOPCODE_INVAILD = 0;				// 无效协议
 	EOPCODE_HEARTBEAT_REQ = 1;			// 心跳请求
 	EOPCODE_HEARTBEAT_RSP = 2;			// 心跳应答
 	EOPCODE_Test_REQ = 3;
 	EOPCODE_Test_RSP = 4;
+	EOPCODE_Login_REQ = 5;				// 登录请求
+	EOPCODE_Login_RSP = 6;				// 登录应答
 
 }
 
@@ -32,4 +34,25 @@ message TestReq {
 message TestRsp {
 	string name = 1;
 	uint32 id = 2;
+}
+enum ELoginType {
+	TestLogin = 0;
+}
+message LoginReq {
+	ELoginType login_type = 1;
+	string test_account = 2;
+	int32 client_version = 3;
+}
+enum ELoginResult {
+	Success = 0;
+	NoPlayer = 1;
+}
+
+message LoginRsp {
+	ELoginResult login_result = 1;
+	PlayerInfo player_info = 2;
+}
+message PlayerInfo {
+	uint64 uin = 1;
+	string nick_name = 2;
 }
