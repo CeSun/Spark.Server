@@ -27,7 +27,7 @@ namespace GameServer.Player
         {
             await dispatcher.DispatcherRequest(data);
             // 每次请求结束 保存数据
-            if (DBData != null)
+            if (tPlayer != null)
             {
                 await tPlayer.SaveAync();
             }
@@ -133,6 +133,8 @@ namespace GameServer.Player
                 }
                 else
                 {
+
+                    DBAccount = retval.Row.Value;
                     fsm.PostEvent(EEvent.Create);
                     rspBody.LoginResult = ELoginResult.NoPlayer;
                 }
@@ -176,8 +178,8 @@ namespace GameServer.Player
             {
                 var nkName = TNickname.New();
                 nkName.Value.Nickname = reqBody.NickName;
-                nkName.Value.Uin = tPlayer.Value.Uin;
-                nkName.Value.Zone = tPlayer.Value.Zone;
+                nkName.Value.Uin = DBAccount.Uin;
+                nkName.Value.Zone = Server.Instance.Zone;
                 var ret = await nkName.SaveAync();
                 if (ret == DBError.Success)
                 {
