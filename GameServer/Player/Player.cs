@@ -12,7 +12,7 @@ namespace GameServer.Player
     public class Player
     {
         public Frame.Session Session { get; private set; }
-        Dispatcher<EOpcode, SHead> dispatcher = new Dispatcher<EOpcode, SHead>(head => { return head.Msgid; });
+        Dispatcher<EOpCode, SHead> dispatcher = new Dispatcher<EOpCode, SHead>(head => { return head.Msgid; });
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
@@ -33,8 +33,8 @@ namespace GameServer.Player
         public void Init()
         {
             LatestTime = DateTime.Now;
-            dispatcher.Bind<TestReq>(EOpcode.TestReq, HelloHandler);
-            dispatcher.Bind<LoginReq>(EOpcode.LoginReq, LoginAsync);
+            dispatcher.Bind<TestReq>(EOpCode.TestReq, HelloHandler);
+            dispatcher.Bind<LoginReq>(EOpCode.LoginReq, LoginAsync);
             dispatcher.requestHandlers.Add(RequestHandler);
             InitFSM();
         }
@@ -73,7 +73,7 @@ namespace GameServer.Player
             LatestTime = DateTime.Now;
             if (LatestSeq == 0)
             {
-                if (reqHead.Msgid != EOpcode.LoginReq)
+                if (reqHead.Msgid != EOpCode.LoginReq)
                 {
                     fsm.PostEvent(EEvent.Logout);
                     return false;
@@ -83,7 +83,7 @@ namespace GameServer.Player
             {
                 return true;
             }
-            if (reqHead.Msgid != EOpcode.HeartbeatReq)
+            if (reqHead.Msgid != EOpCode.HeartbeatReq)
             {
                 fsm.PostEvent(EEvent.Logout);
             }
@@ -93,7 +93,7 @@ namespace GameServer.Player
 
         async Task LoginAsync(SHead reqHead, LoginReq loginReq)
         {
-            SHead rspHead = new SHead { Msgid = EOpcode.LoginRsp, Errcode = EErrno.EcserrnoSucc };
+            SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
             LoginRsp rspBody = new LoginRsp();
             fsm.PostEvent(EEvent.Login);
             var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
@@ -117,7 +117,7 @@ namespace GameServer.Player
                     else
                     {
                         fsm.PostEvent(EEvent.Logout);
-                        rspHead.Errcode = EErrno.EcserrnoError;
+                        rspHead.Errcode = EErrno.Error;
                     }
                 }
                 else
@@ -140,9 +140,9 @@ namespace GameServer.Player
             await SendToClientAsync(rspHead, rspBody);
         }
 
-        async Task HelloHandler(SHead reqHead, TestReq reqBody)
+        async Task HelloHandler( SHead reqHead, TestReq reqBody)
         {
-            SHead rspHead = new SHead {Msgid=EOpcode.TestRsp, Errcode = EErrno.EcserrnoSucc };
+            SHead rspHead = new SHead {Msgid= EOpCode.TestRsp, Errcode = EErrno.Succ };
             TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
             await Task.Delay(0);
             await SendToClientAsync(rspHead, rspBody);

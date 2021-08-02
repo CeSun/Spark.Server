@@ -1,0 +1,2 @@
+﻿using DirServer;
+Server.Start(); 

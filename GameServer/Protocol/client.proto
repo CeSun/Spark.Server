@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protocol;
 
-enum EOpcode
+enum EOpCode
 {
 	EOPCODE_INVAILD = 0;				// 无效协议
 	EOPCODE_HEARTBEAT_REQ = 1;			// 心跳请求
@@ -16,15 +16,15 @@ enum EOpcode
 
 message SHead
 {
-    EOpcode msgid = 1;			// 消息ID
+    EOpCode msgid = 1;			// 消息ID
 	uint32 reqseq = 2;				// 请求序号
 	EErrno errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
 }
 
 enum EErrno
 {
-	ECSERRNO_SUCC = 0;						// 操作成功
-	ECSERRNO_Error = 1;						// 发生错误
+	EERRNO_SUCC = 0;						// 操作成功
+	EERRNO_Error = 1;						// 发生错误
 }
 
 message TestReq {

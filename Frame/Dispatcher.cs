@@ -20,7 +20,8 @@ namespace Frame
         /// <param name="head">消息头</param>
         /// <param name="body">消息体</param>
         /// <returns>无返回值</returns>
-        public delegate Task ProcessFun<TBody>(THead head, TBody body);
+        public delegate Task ProcessFunWithSession<TBody>(Session sesson, THead head, TBody body);
+        public delegate Task ProcessFun<TBody>( THead head, TBody body);
 
         /// <summary>
         /// 从Head中取消息id函数
@@ -48,14 +49,31 @@ namespace Frame
         /// <typeparam name="TBody">消息体类型</typeparam>
         /// <param name="MessageId">消息id</param>
         /// <param name="func">处理函数</param>
-        public void Bind<TBody>(TMsgId MessageId, ProcessFun<TBody> func) where TBody : IMessage<TBody>, new()
+        public void Bind<TBody>(TMsgId MessageId, ProcessFunWithSession<TBody> func) where TBody : IMessage<TBody>, new()
         {
-            Functions.Add(MessageId, async (offset, head, data) => {
+            Functions.Add(MessageId, async (sesson, offset, head, data) => {
                 MessageParser<TBody> parser = new MessageParser<TBody>(() => new TBody());
                 var rsp = parser.ParseFrom(data, offset, data.Length - offset);
                 if (rsp == null)
                     return;
-                 await func(head, rsp);
+                 await func(sesson, head, rsp);
+            });
+        }
+
+        /// <summary>
+        /// 注册协议处理函数
+        /// </summary>
+        /// <typeparam name="TBody">消息体类型</typeparam>
+        /// <param name="MessageId">消息id</param>
+        /// <param name="func">处理函数</param>
+        public void Bind<TBody>(TMsgId MessageId, ProcessFun<TBody> func) where TBody : IMessage<TBody>, new()
+        {
+            Functions.Add(MessageId, async (_, offset, head, data) => {
+                MessageParser<TBody> parser = new MessageParser<TBody>(() => new TBody());
+                var rsp = parser.ParseFrom(data, offset, data.Length - offset);
+                if (rsp == null)
+                    return;
+                await func(head, rsp);
             });
         }
 
@@ -64,7 +82,7 @@ namespace Frame
         /// </summary>
         /// <param name="data">数据二进制</param>
         /// <returns></returns>
-        public async Task DispatcherRequest(byte[] data)
+        public async Task DispatcherRequest(Session session, byte[] data)
         {
             var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
             Array.Reverse(headBits);
@@ -86,11 +104,38 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-                await fun(sizeof(int) * 2 + headLength, head, data);
+                await fun(session, sizeof(int) * 2 + headLength, head, data);
             }
         }
 
-        delegate Task ProcessFun(int offset, THead head, byte[] body);
+        public async Task DispatcherRequest(byte[] data)
+        {
+            var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
+            Array.Reverse(headBits);
+            var headLength = BitConverter.ToInt32(headBits, 0);
+
+            MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
+            var head = parser.ParseFrom(data, sizeof(int) * 2, headLength);
+            if (head == null)
+                return;
+            if (getMsgId == default)
+                return;
+            foreach (var handler in requestHandlers)
+            {
+                var ret = handler(head);
+                if (ret == false)
+                    return;
+            }
+            var id = getMsgId(head);
+            var fun = Functions.GetValueOrDefault(id);
+            if (fun != null)
+            {
+                await fun(null, sizeof(int) * 2 + headLength, head, data);
+            }
+        }
+
+
+        delegate Task ProcessFun(Session session, int offset, THead head, byte[] body);
         GetMsgIdFunc getMsgId;
         Dictionary<TMsgId, ProcessFun> Functions = new Dictionary<TMsgId, ProcessFun>();
     }

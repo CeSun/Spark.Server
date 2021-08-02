@@ -39,7 +39,7 @@ namespace DataBase
 
         public abstract string TableName {  get; }
 
-        int version = 0;
+        long version = 0;
         protected abstract string GetKey();
         protected abstract string GetKey(TKey key);
         public async Task<DBError> SaveAync()
@@ -144,7 +144,7 @@ namespace DataBase
                 {
                     reader.GetFieldValue<string>("c_key");
                     var buffer = reader.GetFieldValue<byte[]>("c_value");
-                    var version = reader.GetFieldValue<int>("c_version");
+                    var version = reader.GetFieldValue<long>("c_version");
                     table.Value = parser.ParseFrom(buffer);
                     table.version = version;
                     reader.Close();
@@ -156,7 +156,11 @@ namespace DataBase
                     return (null, DBError.IsNotExisted);
                 }
             }
-            catch
+            catch (MySqlException ex)
+            {
+                return (null, DBError.UnKnowError);
+            }
+            catch (Exception e)
             {
                 return (null, DBError.UnKnowError);
             }

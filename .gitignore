@@ -2,16 +2,8 @@
 # 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
 ################################################################################
 
-/Frame/bin
-/GameServer/bin/Debug/net5.0/ref/GameServer.dll
-/.vs/GameServer/v16
-/GameServer/bin
-/GameServer/obj
-/Frame/obj
-/.vs/GameServer/DesignTimeBuild
-/.vs/GameServer/v17
-/DataBase/bin
-/DataBase/obj
-/UnitTest/bin
-/UnitTest/obj
-/.vs/Server
+/*/bin/*
+/*/obj/*
+/*/*/obj/*
+/*/*/bin/*
+/.*/*

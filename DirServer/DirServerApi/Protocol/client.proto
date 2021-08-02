@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package dirapi;
+
+enum EOpCode {
+	EOPCODE_INVAILD = 0;				// 无效协议
+	EOPCODE_REGISTER_REQ = 1;			// 注册服务请求
+	EOPCODE_REGISTER_RSP = 2;			// 注册服务应答
+	EOPCODE_GET_REQ = 3;				// 获取服务列表请求
+	EOPCODE_GET_RSP = 4;				// 获取服务列表应答
+}
+
+enum EErrno {
+	EERRNO_SUCC = 0;					// 成功
+	EERRNO_FAIL = 1;					// 失败
+}
+
+message SHead {
+    EOpCode msgid = 1;				// 消息ID
+	uint64 sync = 2;				// 透传信息
+	EErrno errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
+}
+
+message RegisterReq {
+	string name = 1;
+	ServerInfo info = 2;
+}
+
+message RegisterRsp {
+}
+
+message ServerInfo {
+	int32 id = 1;
+	int32 zone = 2;
+	IpAndPort url = 3;
+}
+
+message IpAndPort {
+	string ip = 1;
+	int32 port = 2;
+}
