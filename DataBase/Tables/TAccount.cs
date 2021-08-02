@@ -12,12 +12,12 @@ namespace DataBase.Tables
 
         protected override string GetKey()
         {
-            return string.Format("{0}|{1}|{2}", Value.Type, Value.Account,Value.Zone);
+            return string.Format("{0}|{1}|{2}", ((int)Value.Type), Value.Account,Value.Zone);
         }
 
         protected override string GetKey((AuthType, string, int) key)
         {
-            return string.Format("{0}|{1}|{2}", key.Item1, key.Item2, key.Item3);
+            return string.Format("{0}|{1}|{2}", ((int)key.Item1), key.Item2, key.Item3);
         }
     }
 }

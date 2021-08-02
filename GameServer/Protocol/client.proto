@@ -11,6 +11,8 @@ enum EOpCode
 	EOPCODE_Test_RSP = 4;
 	EOPCODE_Login_REQ = 5;				// 登录请求
 	EOPCODE_Login_RSP = 6;				// 登录应答
+	EOPCODE_CREATEROLE_REQ = 7;			// 创建角色请求
+	EOPCODE_CREATEROLE_RSP = 8;			// 创建角色应答
 
 }
 
@@ -24,7 +26,9 @@ message SHead
 enum EErrno
 {
 	EERRNO_SUCC = 0;						// 操作成功
-	EERRNO_Error = 1;						// 发生错误
+	EERRNO_ERROR = 1;						// 发生错误
+	EERRNO_NICKNAME_EXISTED = 2;			// 发生错误
+	EERRNO_ROLE_EXISTED = 3;				// 角色已存在
 }
 
 message TestReq {
@@ -56,4 +60,12 @@ message LoginRsp {
 message PlayerInfo {
 	uint64 uin = 1;
 	string nick_name = 2;
+}
+
+message CreateRoleReq {
+	string nick_name = 1;
+}
+
+message CreateRoleRsp {
+	PlayerInfo player_info = 1;
 }

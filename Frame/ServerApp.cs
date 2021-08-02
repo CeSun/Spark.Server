@@ -12,6 +12,8 @@ namespace Frame
         /// <param name="data">二进制数据</param>
         /// <returns>无，可以await</returns>
         protected abstract Task OnHandlerData(Session session, byte[] data);
+        protected abstract void OnConnect(Session session);
+        protected abstract void OnDisconnect(Session session);
 
         /// <summary>
         /// 框架启动时调用
@@ -45,7 +47,7 @@ namespace Frame
         void Init()
         {
             SynchronizationContext.SetSynchronizationContext(SyncContext);
-            netWorkMngr.Init(OnHandlerData);
+            netWorkMngr.Init(OnHandlerData, OnConnect, OnDisconnect);
             OnInit();
         }
 

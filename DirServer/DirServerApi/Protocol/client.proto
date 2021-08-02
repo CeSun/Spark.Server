@@ -22,7 +22,6 @@ message SHead {
 }
 
 message RegisterReq {
-	string name = 1;
 	ServerInfo info = 2;
 }
 
@@ -30,9 +29,10 @@ message RegisterRsp {
 }
 
 message ServerInfo {
-	int32 id = 1;
-	int32 zone = 2;
-	IpAndPort url = 3;
+	string name = 1;
+	int32 id = 2;
+	int32 zone = 3;
+	IpAndPort url = 4;
 }
 
 message IpAndPort {

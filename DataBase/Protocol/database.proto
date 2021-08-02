@@ -35,3 +35,9 @@ message DBUin
 	int32 zone = 1;
 	uint64 nums = 2;
 }
+
+message DBNickname {
+	string nickname = 1;
+	int32 zone = 2;
+	uint64 uin = 3;
+}

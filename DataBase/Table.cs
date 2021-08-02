@@ -65,7 +65,7 @@ namespace DataBase
                         return DBError.IsExisted;
                 }
                 catch (MySqlException ex) {
-                    if (ex.Code == 1602)
+                    if (ex.Number == 1062)
                     {
                         return DBError.IsExisted;
                     }

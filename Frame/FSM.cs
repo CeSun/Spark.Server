@@ -58,7 +58,7 @@ namespace Frame
             var newStateNode = map.GetValueOrDefault(_CurrentState.State);
             if (newStateNode == null)
                 return false;
-            var newState = stateDict.GetValueOrDefault(_CurrentState.State);
+            var newState = stateDict.GetValueOrDefault(newStateNode.Value.ToState);
             if (newState == null)
                 return false;
 

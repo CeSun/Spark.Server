@@ -6,6 +6,7 @@ using Frame;
 using MySqlX.XDevAPI;
 using DataBase.Tables;
 using DataBase;
+using System.Security.Principal;
 
 namespace GameServer.Player
 {
@@ -17,11 +18,19 @@ namespace GameServer.Player
         uint LatestSeq = 0;
         DateTime LatestTime;
         public DBPlayer DBData { get { return tPlayer.Value; } }
+
+        public DBAccount DBAccount { get; private set; }
+
         private TPlayer tPlayer;
         public bool IsDisConnected { get; private set; }
         public async Task processData(byte[] data)
         {
             await dispatcher.DispatcherRequest(data);
+            // 每次请求结束 保存数据
+            if (DBData != null)
+            {
+                await tPlayer.SaveAync();
+            }
         }
 
         public Player(Frame.Session session)
@@ -35,6 +44,7 @@ namespace GameServer.Player
             LatestTime = DateTime.Now;
             dispatcher.Bind<TestReq>(EOpCode.TestReq, HelloHandler);
             dispatcher.Bind<LoginReq>(EOpCode.LoginReq, LoginAsync);
+            dispatcher.Bind<CreateRoleReq>(EOpCode.CreateroleReq, CreateRoleAsync);
             dispatcher.requestHandlers.Add(RequestHandler);
             InitFSM();
         }
@@ -44,9 +54,9 @@ namespace GameServer.Player
 
             fsm.AddState(EState.Init, null, null, null);
             fsm.AddState(EState.Logining, null, null, null);
-            fsm.AddState(EState.LogOut, null, null, null);
-            fsm.AddState(EState.Online, null, null, null);
             fsm.AddState(EState.LogOut, OnLogOut, null, null);
+            fsm.AddState(EState.Online, null, null, null);
+            fsm.AddState(EState.Creating, null, null, null);
 
             // 每个事件对应的处理函数还没有捋一遍
             fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
@@ -68,6 +78,7 @@ namespace GameServer.Player
             DBData.LoginServerId = 0;
             _ = tPlayer.SaveAync();
         }
+
         bool RequestHandler(SHead reqHead)
         {
             LatestTime = DateTime.Now;
@@ -94,7 +105,7 @@ namespace GameServer.Player
         async Task LoginAsync(SHead reqHead, LoginReq loginReq)
         {
             SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
-            LoginRsp rspBody = new LoginRsp();
+            LoginRsp rspBody = new LoginRsp() {LoginResult = ELoginResult.Success };
             fsm.PostEvent(EEvent.Login);
             var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
             if (retval.Error == DataBase.DBError.Success)
@@ -110,12 +121,12 @@ namespace GameServer.Player
                     {
                         fsm.PostEvent(EEvent.LoginSucc);
                         rspBody.PlayerInfo = new PlayerInfo();
-                        rspBody.PlayerInfo.Uin = DBData.Uin;
-                        rspBody.PlayerInfo.NickName = DBData.Nickname;
+                        fillPlayerInfo(rspBody.PlayerInfo);
                         rspBody.LoginResult = ELoginResult.Success;
                     }
                     else
                     {
+                        DBAccount = retval.Row.Value;
                         fsm.PostEvent(EEvent.Logout);
                         rspHead.Errcode = EErrno.Error;
                     }
@@ -131,11 +142,20 @@ namespace GameServer.Player
                 var uin = await Server.Instance.UinMngr.GetUinAsync();
                 var account = TAccount.New();
                 account.Value.Uin = uin;
+                account.Value.Zone = Server.Instance.Zone;
                 account.Value.Type = (DataBase.AuthType)loginReq.LoginType;
                 account.Value.Account = loginReq.TestAccount;
-                await account.SaveAync();
-                fsm.PostEvent(EEvent.Create);
-                rspBody.LoginResult = ELoginResult.NoPlayer;
+                var ret = await account.SaveAync();
+                if (ret == DBError.Success)
+                {
+                    DBAccount = account.Value;
+                    fsm.PostEvent(EEvent.Create);
+                    rspBody.LoginResult = ELoginResult.NoPlayer;
+                } else
+                {
+                    fsm.PostEvent(EEvent.Logout);
+                    rspHead.Errcode = EErrno.Error;
+                }
             }
             await SendToClientAsync(rspHead, rspBody);
         }
@@ -148,6 +168,51 @@ namespace GameServer.Player
             await SendToClientAsync(rspHead, rspBody);
         }
 
+        async Task CreateRoleAsync(SHead reqHead, CreateRoleReq reqBody)
+        {
+            SHead rspHead = new SHead { Msgid = EOpCode.CreateroleRsp, Errcode = EErrno.Succ };
+            CreateRoleRsp rspBody = new CreateRoleRsp { };
+            if (fsm.CurrentState == EState.Creating)
+            {
+                var nkName = TNickname.New();
+                nkName.Value.Nickname = reqBody.NickName;
+                nkName.Value.Uin = tPlayer.Value.Uin;
+                nkName.Value.Zone = tPlayer.Value.Zone;
+                var ret = await nkName.SaveAync();
+                if (ret == DBError.Success)
+                {
+                    tPlayer = TPlayer.New();
+                    tPlayer.Value.Uin = DBAccount.Uin;
+                    tPlayer.Value.Zone = Server.Instance.Zone;
+                    tPlayer.Value.LastLoginTime = DateTime.Now.Millisecond;
+                    tPlayer.Value.LoginServerId = Server.Instance.InstanceId;
+                    tPlayer.Value.Nickname = reqBody.NickName;
+                    fsm.PostEvent(EEvent.LoginSucc);
+                }
+                else if(ret == DBError.IsExisted)
+                {
+                    rspHead.Errcode = EErrno.NicknameExisted;
+                }
+                else
+                {
+                    rspHead.Errcode = EErrno.Error;
+                }
+            }
+            else if (fsm.CurrentState == EState.Online)
+            {
+                rspHead.Errcode = EErrno.RoleExisted;
+            } else
+            {
+                rspHead.Errcode = EErrno.Error;
+            }
+            await SendToClientAsync(rspHead, rspBody);
+        }
+
+        void fillPlayerInfo (PlayerInfo playerInfo)
+        {
+            playerInfo.Uin = DBData.Uin;
+            playerInfo.NickName = DBData.Nickname;
+        }
         public async Task SendToClientAsync<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
             head.Reqseq = ++LatestSeq;
@@ -170,9 +235,9 @@ namespace GameServer.Player
         {
             if (fsm.CurrentState != EState.Init && fsm.CurrentState != EState.LogOut)
             {
-                if ((DateTime.Now - LatestTime).TotalSeconds > 5)
+                if ((DateTime.Now - LatestTime).TotalSeconds > 100)
                 {
-                    fsm.PostEvent(EEvent.Logout);
+                    // fsm.PostEvent(EEvent.Logout);
                 }
             }
             fsm.Update();

@@ -27,9 +27,9 @@ namespace Dirapi {
             "CixEaXJTZXJ2ZXIvRGlyU2VydmVyQXBpL1Byb3RvY29sL2NsaWVudC5wcm90",
             "bxIGZGlyYXBpIlYKBVNIZWFkEh4KBW1zZ2lkGAEgASgOMg8uZGlyYXBpLkVP",
             "cENvZGUSDAoEc3luYxgCIAEoBBIfCgdlcnJjb2RlGAMgASgOMg4uZGlyYXBp",
-            "LkVFcnJubyI9CgtSZWdpc3RlclJlcRIMCgRuYW1lGAEgASgJEiAKBGluZm8Y",
-            "AiABKAsyEi5kaXJhcGkuU2VydmVySW5mbyINCgtSZWdpc3RlclJzcCJGCgpT",
-            "ZXJ2ZXJJbmZvEgoKAmlkGAEgASgFEgwKBHpvbmUYAiABKAUSHgoDdXJsGAMg",
+            "LkVFcnJubyIvCgtSZWdpc3RlclJlcRIgCgRpbmZvGAIgASgLMhIuZGlyYXBp",
+            "LlNlcnZlckluZm8iDQoLUmVnaXN0ZXJSc3AiVAoKU2VydmVySW5mbxIMCgRu",
+            "YW1lGAEgASgJEgoKAmlkGAIgASgFEgwKBHpvbmUYAyABKAUSHgoDdXJsGAQg",
             "ASgLMhEuZGlyYXBpLklwQW5kUG9ydCIlCglJcEFuZFBvcnQSCgoCaXAYASAB",
             "KAkSDAoEcG9ydBgCIAEoBSp8CgdFT3BDb2RlEhMKD0VPUENPREVfSU5WQUlM",
             "RBAAEhgKFEVPUENPREVfUkVHSVNURVJfUkVREAESGAoURU9QQ09ERV9SRUdJ",
@@ -40,9 +40,9 @@ namespace Dirapi {
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Dirapi.EOpCode), typeof(global::Dirapi.EErrno), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.SHead), global::Dirapi.SHead.Parser, new[]{ "Msgid", "Sync", "Errcode" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.RegisterReq), global::Dirapi.RegisterReq.Parser, new[]{ "Name", "Info" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.RegisterReq), global::Dirapi.RegisterReq.Parser, new[]{ "Info" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.RegisterRsp), global::Dirapi.RegisterRsp.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.ServerInfo), global::Dirapi.ServerInfo.Parser, new[]{ "Id", "Zone", "Url" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.ServerInfo), global::Dirapi.ServerInfo.Parser, new[]{ "Name", "Id", "Zone", "Url" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Dirapi.IpAndPort), global::Dirapi.IpAndPort.Parser, new[]{ "Ip", "Port" }, null, null, null, null)
           }));
     }
@@ -393,7 +393,6 @@ namespace Dirapi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public RegisterReq(RegisterReq other) : this() {
-      name_ = other.name_;
       info_ = other.info_ != null ? other.info_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -402,18 +401,6 @@ namespace Dirapi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public RegisterReq Clone() {
       return new RegisterReq(this);
-    }
-
-    /// <summary>Field number for the "name" field.</summary>
-    public const int NameFieldNumber = 1;
-    private string name_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Name {
-      get { return name_; }
-      set {
-        name_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
     }
 
     /// <summary>Field number for the "info" field.</summary>
@@ -443,7 +430,6 @@ namespace Dirapi {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (Name != other.Name) return false;
       if (!object.Equals(Info, other.Info)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -452,7 +438,6 @@ namespace Dirapi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Name.Length != 0) hash ^= Name.GetHashCode();
       if (info_ != null) hash ^= Info.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -472,10 +457,6 @@ namespace Dirapi {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Name.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Name);
-      }
       if (info_ != null) {
         output.WriteRawTag(18);
         output.WriteMessage(Info);
@@ -490,10 +471,6 @@ namespace Dirapi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Name.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Name);
-      }
       if (info_ != null) {
         output.WriteRawTag(18);
         output.WriteMessage(Info);
@@ -508,9 +485,6 @@ namespace Dirapi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Name.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
-      }
       if (info_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Info);
       }
@@ -525,9 +499,6 @@ namespace Dirapi {
     public void MergeFrom(RegisterReq other) {
       if (other == null) {
         return;
-      }
-      if (other.Name.Length != 0) {
-        Name = other.Name;
       }
       if (other.info_ != null) {
         if (info_ == null) {
@@ -550,10 +521,6 @@ namespace Dirapi {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
-            Name = input.ReadString();
-            break;
-          }
           case 18: {
             if (info_ == null) {
               Info = new global::Dirapi.ServerInfo();
@@ -576,10 +543,6 @@ namespace Dirapi {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
-            Name = input.ReadString();
-            break;
-          }
           case 18: {
             if (info_ == null) {
               Info = new global::Dirapi.ServerInfo();
@@ -780,6 +743,7 @@ namespace Dirapi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public ServerInfo(ServerInfo other) : this() {
+      name_ = other.name_;
       id_ = other.id_;
       zone_ = other.zone_;
       url_ = other.url_ != null ? other.url_.Clone() : null;
@@ -792,8 +756,20 @@ namespace Dirapi {
       return new ServerInfo(this);
     }
 
+    /// <summary>Field number for the "name" field.</summary>
+    public const int NameFieldNumber = 1;
+    private string name_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Name {
+      get { return name_; }
+      set {
+        name_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     /// <summary>Field number for the "id" field.</summary>
-    public const int IdFieldNumber = 1;
+    public const int IdFieldNumber = 2;
     private int id_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -805,7 +781,7 @@ namespace Dirapi {
     }
 
     /// <summary>Field number for the "zone" field.</summary>
-    public const int ZoneFieldNumber = 2;
+    public const int ZoneFieldNumber = 3;
     private int zone_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -817,7 +793,7 @@ namespace Dirapi {
     }
 
     /// <summary>Field number for the "url" field.</summary>
-    public const int UrlFieldNumber = 3;
+    public const int UrlFieldNumber = 4;
     private global::Dirapi.IpAndPort url_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -843,6 +819,7 @@ namespace Dirapi {
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if (Name != other.Name) return false;
       if (Id != other.Id) return false;
       if (Zone != other.Zone) return false;
       if (!object.Equals(Url, other.Url)) return false;
@@ -853,6 +830,7 @@ namespace Dirapi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      if (Name.Length != 0) hash ^= Name.GetHashCode();
       if (Id != 0) hash ^= Id.GetHashCode();
       if (Zone != 0) hash ^= Zone.GetHashCode();
       if (url_ != null) hash ^= Url.GetHashCode();
@@ -874,16 +852,20 @@ namespace Dirapi {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      if (Name.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Name);
+      }
       if (Id != 0) {
-        output.WriteRawTag(8);
+        output.WriteRawTag(16);
         output.WriteInt32(Id);
       }
       if (Zone != 0) {
-        output.WriteRawTag(16);
+        output.WriteRawTag(24);
         output.WriteInt32(Zone);
       }
       if (url_ != null) {
-        output.WriteRawTag(26);
+        output.WriteRawTag(34);
         output.WriteMessage(Url);
       }
       if (_unknownFields != null) {
@@ -896,16 +878,20 @@ namespace Dirapi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Name.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Name);
+      }
       if (Id != 0) {
-        output.WriteRawTag(8);
+        output.WriteRawTag(16);
         output.WriteInt32(Id);
       }
       if (Zone != 0) {
-        output.WriteRawTag(16);
+        output.WriteRawTag(24);
         output.WriteInt32(Zone);
       }
       if (url_ != null) {
-        output.WriteRawTag(26);
+        output.WriteRawTag(34);
         output.WriteMessage(Url);
       }
       if (_unknownFields != null) {
@@ -918,6 +904,9 @@ namespace Dirapi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      if (Name.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
+      }
       if (Id != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(Id);
       }
@@ -938,6 +927,9 @@ namespace Dirapi {
     public void MergeFrom(ServerInfo other) {
       if (other == null) {
         return;
+      }
+      if (other.Name.Length != 0) {
+        Name = other.Name;
       }
       if (other.Id != 0) {
         Id = other.Id;
@@ -966,15 +958,19 @@ namespace Dirapi {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 8: {
-            Id = input.ReadInt32();
+          case 10: {
+            Name = input.ReadString();
             break;
           }
           case 16: {
+            Id = input.ReadInt32();
+            break;
+          }
+          case 24: {
             Zone = input.ReadInt32();
             break;
           }
-          case 26: {
+          case 34: {
             if (url_ == null) {
               Url = new global::Dirapi.IpAndPort();
             }
@@ -996,15 +992,19 @@ namespace Dirapi {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 8: {
-            Id = input.ReadInt32();
+          case 10: {
+            Name = input.ReadString();
             break;
           }
           case 16: {
+            Id = input.ReadInt32();
+            break;
+          }
+          case 24: {
             Zone = input.ReadInt32();
             break;
           }
-          case 26: {
+          case 34: {
             if (url_ == null) {
               Url = new global::Dirapi.IpAndPort();
             }

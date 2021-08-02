@@ -45,6 +45,14 @@ namespace GameServer
            await player.processData(data);
         }
 
+        protected override void OnConnect(Session session)
+        {
 
+        }
+
+        protected override void OnDisconnect(Session session)
+        {
+
+        }
     }
 }

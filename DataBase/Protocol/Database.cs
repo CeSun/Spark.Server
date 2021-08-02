@@ -32,14 +32,16 @@ namespace DataBase {
             "cxgCIAEoDSJZCglEQkFjY291bnQSIAoEdHlwZRgBIAEoDjISLkRhdGFCYXNl",
             "LkF1dGhUeXBlEg8KB2FjY291bnQYAiABKAkSDAoEem9uZRgDIAEoBRILCgN1",
             "aW4YBCABKAQiIwoFREJVaW4SDAoEem9uZRgBIAEoBRIMCgRudW1zGAIgASgE",
-            "KhQKCEF1dGhUeXBlEggKBFRlc3QQAGIGcHJvdG8z"));
+            "IjkKCkRCTmlja25hbWUSEAoIbmlja25hbWUYASABKAkSDAoEem9uZRgCIAEo",
+            "BRILCgN1aW4YAyABKAQqFAoIQXV0aFR5cGUSCAoEVGVzdBAAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DataBase.AuthType), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBPlayer), global::DataBase.DBPlayer.Parser, new[]{ "Zone", "Uin", "Nickname", "LastLoginTime", "LoginServerId", "Currency" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBCurrency), global::DataBase.DBCurrency.Parser, new[]{ "Id", "Nums" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBAccount), global::DataBase.DBAccount.Parser, new[]{ "Type", "Account", "Zone", "Uin" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBUin), global::DataBase.DBUin.Parser, new[]{ "Zone", "Nums" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBUin), global::DataBase.DBUin.Parser, new[]{ "Zone", "Nums" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DataBase.DBNickname), global::DataBase.DBNickname.Parser, new[]{ "Nickname", "Zone", "Uin" }, null, null, null, null)
           }));
     }
     #endregion
@@ -1183,6 +1185,269 @@ namespace DataBase {
           }
           case 16: {
             Nums = input.ReadUInt64();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class DBNickname : pb::IMessage<DBNickname>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<DBNickname> _parser = new pb::MessageParser<DBNickname>(() => new DBNickname());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<DBNickname> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::DataBase.DatabaseReflection.Descriptor.MessageTypes[4]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public DBNickname() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public DBNickname(DBNickname other) : this() {
+      nickname_ = other.nickname_;
+      zone_ = other.zone_;
+      uin_ = other.uin_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public DBNickname Clone() {
+      return new DBNickname(this);
+    }
+
+    /// <summary>Field number for the "nickname" field.</summary>
+    public const int NicknameFieldNumber = 1;
+    private string nickname_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Nickname {
+      get { return nickname_; }
+      set {
+        nickname_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "zone" field.</summary>
+    public const int ZoneFieldNumber = 2;
+    private int zone_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Zone {
+      get { return zone_; }
+      set {
+        zone_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "uin" field.</summary>
+    public const int UinFieldNumber = 3;
+    private ulong uin_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong Uin {
+      get { return uin_; }
+      set {
+        uin_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as DBNickname);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(DBNickname other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Nickname != other.Nickname) return false;
+      if (Zone != other.Zone) return false;
+      if (Uin != other.Uin) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Nickname.Length != 0) hash ^= Nickname.GetHashCode();
+      if (Zone != 0) hash ^= Zone.GetHashCode();
+      if (Uin != 0UL) hash ^= Uin.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Nickname.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Nickname);
+      }
+      if (Zone != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Zone);
+      }
+      if (Uin != 0UL) {
+        output.WriteRawTag(24);
+        output.WriteUInt64(Uin);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Nickname.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Nickname);
+      }
+      if (Zone != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Zone);
+      }
+      if (Uin != 0UL) {
+        output.WriteRawTag(24);
+        output.WriteUInt64(Uin);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Nickname.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Nickname);
+      }
+      if (Zone != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Zone);
+      }
+      if (Uin != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(Uin);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(DBNickname other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Nickname.Length != 0) {
+        Nickname = other.Nickname;
+      }
+      if (other.Zone != 0) {
+        Zone = other.Zone;
+      }
+      if (other.Uin != 0UL) {
+        Uin = other.Uin;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            Nickname = input.ReadString();
+            break;
+          }
+          case 16: {
+            Zone = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            Uin = input.ReadUInt64();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            Nickname = input.ReadString();
+            break;
+          }
+          case 16: {
+            Zone = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            Uin = input.ReadUInt64();
             break;
           }
         }

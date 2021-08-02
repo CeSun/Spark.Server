@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Frame
 {
@@ -15,14 +16,20 @@ namespace Frame
         TcpListener tcpServer;
         BufferBlock<(Session, byte[])> recBufferBlock = new BufferBlock<(Session, byte[])>();
         public delegate Task DataHandler(Session session, byte[] data);
+        public delegate void ConnectHandler(Session session);
         private DataHandler dataHandler;
+        private ConnectHandler connectHandler;
+        private ConnectHandler disconnectHandler;
+        BufferBlock<(Session, bool)> NewSessionBufferBlock = new BufferBlock<(Session, bool)>();
         internal BufferBlock<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new BufferBlock<(Session, byte[], TaskCompletionSource)>();
-        public void Init(DataHandler dataHandler)
+        public void Init(DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
             recvTask = new Task(Recv);
             Stop = false;
             recvTask.Start();
-            this.dataHandler = dataHandler; 
+            this.dataHandler = dataHandler;
+            this.connectHandler = connectHandler;
+            this.disconnectHandler = disconnectHandler;
         }
         DateTime datetime = default;
         int packnums = 0;
@@ -34,9 +41,21 @@ namespace Frame
             {
                 foreach(var item in list)
                 {
-                    dataHandler(item.Item1, item.Item2);
+                    dataHandler?.Invoke(item.Item1, item.Item2);
                 }
                 packnums += list.Count;
+            }
+            IList<(Session, bool)> list2;
+            NewSessionBufferBlock.TryReceiveAll(out list2);
+            if (connectHandler != null && list2 != null)
+            {
+                foreach (var item in list2)
+                {
+                    if (item.Item2)
+                        connectHandler?.Invoke(item.Item1);
+                    else
+                        disconnectHandler?.Invoke(item.Item1);
+                }
             }
             
             var nnow = DateTime.Now;
@@ -114,8 +133,10 @@ namespace Frame
                         if (socket != null)
                         {
                             var id = IdIter++;
-                            clientMap.Add(id, new Session {clientSocket= socket, SessionId = id , networkMngr =this, latestRec = now });
+                            var session = new Session { clientSocket = socket, SessionId = id, networkMngr = this, latestRec = now };
+                            clientMap.Add(id, session);
                             socketMap.Add(socket, id);
+                            NewSessionBufferBlock.Post((session, true));
                         }
                     }
                     else
@@ -188,9 +209,12 @@ namespace Frame
                 }
                 waitDelete.ForEach(pair => {
                     pair.Item2.Shutdown(SocketShutdown.Both);
+                    var session = clientMap.GetValueOrDefault(pair.Item1);
                     clientMap.Remove(pair.Item1);
                     socketMap.Remove(pair.Item2);
                     sendMap.Remove(pair.Item2);
+                    if (session != null)
+                        NewSessionBufferBlock.Post((session, false));
                 });
                 Thread.Sleep(0);
             }
