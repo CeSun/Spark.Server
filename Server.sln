@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frame", "Frame\Frame.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataBase", "DataBase\DataBase.csproj", "{ECD92FAA-FEA9-49B6-BEFA-08200079307F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest", "UnitTest\UnitTest.csproj", "{DDB2C193-CD58-4A8F-BC89-136728BFC521}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest", "Test\UnitTest\UnitTest.csproj", "{DDB2C193-CD58-4A8F-BC89-136728BFC521}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraris", "Libraris", "{A51A3B6C-CB7C-420B-AF45-AD546D396766}"
 EndProject
@@ -19,11 +19,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{094B7061-7
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DirServer", "DirServer", "{8169CF3A-F8DF-496C-9F1C-B831AC3F48E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirServer", "DirServer\DirServer\DirServer.csproj", "{6D32B2D0-7260-4038-95F6-521CE21C3C0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirServer", "DirServer\DirServer\DirServer.csproj", "{6D32B2D0-7260-4038-95F6-521CE21C3C0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirServerApi", "DirServer\DirServerApi\DirServerApi.csproj", "{BB54DD69-D60F-43F5-809B-3F896D303524}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirServerApi", "DirServer\DirServerApi\DirServerApi.csproj", "{BB54DD69-D60F-43F5-809B-3F896D303524}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientTest", "ClientTest\ClientTest.csproj", "{B44E1E5C-7F02-4EFF-96AF-0A7906FB9042}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTest", "Test\ClientTest\ClientTest.csproj", "{B44E1E5C-7F02-4EFF-96AF-0A7906FB9042}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

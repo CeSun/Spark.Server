@@ -10,9 +10,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DataBase\DataBase.csproj" />
-    <ProjectReference Include="..\Frame\Frame.csproj" />
-    <ProjectReference Include="..\GameServer\GameServer.csproj" />
+    <ProjectReference Include="..\..\DataBase\DataBase.csproj" />
+    <ProjectReference Include="..\..\Frame\Frame.csproj" />
+    <ProjectReference Include="..\..\GameServer\GameServer.csproj" />
   </ItemGroup>
 
 </Project>
