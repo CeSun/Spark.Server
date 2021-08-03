@@ -4,15 +4,13 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Frame
 {
     /// <summary>
     /// 网络管理类
     /// </summary>
-    public class NetworkMngr
+    class NetworkMngr
     {
         Task recvTask;
         bool Stop;
@@ -25,7 +23,7 @@ namespace Frame
         private ConnectHandler connectHandler;
         private ConnectHandler disconnectHandler;
         LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
-        internal BufferBlock<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new BufferBlock<(Session, byte[], TaskCompletionSource)>();
+        internal LockFreeQueue<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new LockFreeQueue<(Session, byte[], TaskCompletionSource)>();
         public void Init(DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
             recvTask = new Task(Recv);
@@ -105,8 +103,8 @@ namespace Frame
                 ResetCheckList(ref readlist);
                 errorlist.AddRange(readlist);
                 Socket.Select(readlist, writelist, errorlist, 1000);
-                IList<(Session, byte[], TaskCompletionSource)> outListSend;
-                if (sendBufferBlock.TryReceiveAll(out outListSend))
+                List<(Session, byte[], TaskCompletionSource)> outListSend;
+                if (sendBufferBlock.TryGetAll(out outListSend))
                 {
                     foreach (var pair in outListSend)
                     {
@@ -121,6 +119,7 @@ namespace Frame
                             list.Add((pair.Item2, pair.Item3));
                         } else
                         {
+                            pair.Item3.SetResult();
                             sendMap.Remove(pair.Item1.clientSocket);
                         }
                     }
@@ -216,9 +215,13 @@ namespace Frame
                     var session = clientMap.GetValueOrDefault(pair.Item1);
                     clientMap.Remove(pair.Item1);
                     socketMap.Remove(pair.Item2);
+                    var list = sendMap.GetValueOrDefault(pair.Item2);
+                    if (list != null)
+                        list.ForEach(res => res.Item2.SetResult());
                     sendMap.Remove(pair.Item2);
                     if (session != null)
                         while(!NewSessionBufferBlock.Add((session, false)));
+
                 });
                 Thread.Sleep(0);
             }
@@ -281,9 +284,7 @@ namespace Frame
         public Task SendAsync(byte[] data)
         {
             TaskCompletionSource tcs = new TaskCompletionSource();
-
-            networkMngr.sendBufferBlock.Post((this, data, tcs));
-
+            networkMngr.sendBufferBlock.Add((this, data, tcs));
             return tcs.Task;
         }
 
