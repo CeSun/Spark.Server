@@ -8,6 +8,9 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Frame
 {
+    /// <summary>
+    /// 单线程调度异步的对象
+    /// </summary>
     public class SingleThreadSynchronizationContext : SynchronizationContext
     {
         int mainThreadId;

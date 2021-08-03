@@ -3,6 +3,10 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
+    /// <summary>
+    /// 服务基类
+    /// </summary>
+    /// <typeparam name="SubT">子类</typeparam>
     public abstract class ServerApp <SubT> where SubT : ServerApp<SubT>, new()
     {
         /// <summary>

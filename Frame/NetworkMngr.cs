@@ -9,18 +9,22 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace Frame
 {
+    /// <summary>
+    /// 网络管理类
+    /// </summary>
     public class NetworkMngr
     {
         Task recvTask;
         bool Stop;
         TcpListener tcpServer;
-        BufferBlock<(Session, byte[])> recBufferBlock = new BufferBlock<(Session, byte[])>();
+        LockFreeQueue<(Session, byte[])> recBufferBlock = new LockFreeQueue<(Session, byte[])>(20000);
+
         public delegate Task DataHandler(Session session, byte[] data);
         public delegate void ConnectHandler(Session session);
         private DataHandler dataHandler;
         private ConnectHandler connectHandler;
         private ConnectHandler disconnectHandler;
-        BufferBlock<(Session, bool)> NewSessionBufferBlock = new BufferBlock<(Session, bool)>();
+        LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
         internal BufferBlock<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new BufferBlock<(Session, byte[], TaskCompletionSource)>();
         public void Init(DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
@@ -35,8 +39,8 @@ namespace Frame
         int packnums = 0;
         public void Update()
         {
-            IList<(Session, byte[])> list;
-            recBufferBlock.TryReceiveAll(out list);
+            List<(Session, byte[])> list;
+            recBufferBlock.TryGetAll(out list);
             if (dataHandler != null && list != null)
             {
                 foreach(var item in list)
@@ -45,8 +49,8 @@ namespace Frame
                 }
                 packnums += list.Count;
             }
-            IList<(Session, bool)> list2;
-            NewSessionBufferBlock.TryReceiveAll(out list2);
+            List<(Session, bool)> list2;
+            NewSessionBufferBlock.TryGetAll(out list2);
             if (connectHandler != null && list2 != null)
             {
                 foreach (var item in list2)
@@ -136,7 +140,7 @@ namespace Frame
                             var session = new Session { clientSocket = socket, SessionId = id, networkMngr = this, latestRec = now };
                             clientMap.Add(id, session);
                             socketMap.Add(socket, id);
-                            NewSessionBufferBlock.Post((session, true));
+                            while(!NewSessionBufferBlock.Add((session, true)));
                         }
                     }
                     else
@@ -170,7 +174,7 @@ namespace Frame
                         session.otherData = otherData;
                         foreach(var itemdata in outlist)
                         {
-                            recBufferBlock.Post((session, itemdata));
+                            while (!recBufferBlock.Add((session, itemdata))) ;
                         }
                         session.latestRec = now;
                     }
@@ -214,7 +218,7 @@ namespace Frame
                     socketMap.Remove(pair.Item2);
                     sendMap.Remove(pair.Item2);
                     if (session != null)
-                        NewSessionBufferBlock.Post((session, false));
+                        while(!NewSessionBufferBlock.Add((session, false)));
                 });
                 Thread.Sleep(0);
             }

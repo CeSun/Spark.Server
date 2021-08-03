@@ -3,6 +3,11 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
+    /// <summary>
+    /// 有限状态机
+    /// </summary>
+    /// <typeparam name="TEvent">事件的类型</typeparam>
+    /// <typeparam name="TState">状态的类型</typeparam>
     public class FSM<TEvent, TState>
     {
         class InState
