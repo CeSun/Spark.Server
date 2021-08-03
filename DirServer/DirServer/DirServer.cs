@@ -10,16 +10,19 @@ using Google.Protobuf;
 namespace DirServer
 {
     
-    class Server : ServerApp<Server>
+    class Server : ServerAppWithNet<Server>
     {
         Dispatcher<EOpCode, SHead> dispatcher = new Dispatcher<EOpCode, SHead>(head => { return head.Msgid; });
 
         Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>> servers = new Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>>();
         Dictionary<string, Dictionary<int, int>> versions = new Dictionary<string, Dictionary<int, int>>();
         Dictionary<Session, ServerInfo> sessions = new Dictionary<Session, ServerInfo>();
+
+        protected override string ConfPath => "../DirServerConfig.xml";
+
         protected override void OnFini()
         {
-            dispatcher.Bind<RegisterReq>(EOpCode.RegisterReq, RegisterServerHandler);
+            base.OnFini();
         }
 
         protected override async Task OnHandlerData(Session session, byte[] data)
@@ -70,18 +73,21 @@ namespace DirServer
             bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
             await session.SendAsync(data);
         } 
-        protected override void OnInit()
+        protected override void OnInit(dynamic Config)
         {
-
+            base.OnInit((object)Config);
+            dispatcher.Bind<RegisterReq>(EOpCode.RegisterReq, RegisterServerHandler);
         }
 
         protected override void OnUpdate()
         {
 
+            base.OnUpdate();
         }
 
         protected override void OnConnect(Session session)
         {
+
         }
 
         protected override void OnDisconnect(Session session)

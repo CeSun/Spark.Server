@@ -1,4 +1,8 @@
-﻿using System.Threading;
+﻿using DynamicXML;
+using System;
+using System.IO;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Frame
@@ -9,20 +13,13 @@ namespace Frame
     /// <typeparam name="SubT">子类</typeparam>
     public abstract class ServerApp <SubT> where SubT : ServerApp<SubT>, new()
     {
-        /// <summary>
-        /// tcp协议处理
-        /// </summary>
-        /// <param name="session">session</param>
-        /// <param name="data">二进制数据</param>
-        /// <returns>无，可以await</returns>
-        protected abstract Task OnHandlerData(Session session, byte[] data);
-        protected abstract void OnConnect(Session session);
-        protected abstract void OnDisconnect(Session session);
-
+        
+        // 配置文件
+        protected abstract string ConfPath { get; }
         /// <summary>
         /// 框架启动时调用
         /// </summary>
-        protected abstract void OnInit();
+        protected abstract void OnInit(dynamic Config);
         /// <summary>
         /// 每帧调用
         /// </summary>
@@ -42,30 +39,36 @@ namespace Frame
                     Instance.Update();
                 }
             }
-            catch { }
+            catch (Exception ex){
+                Console.WriteLine(ex.Message);
+            }
             Instance.Fini();
         }
         public static SubT Instance {  get; private set; }
-        NetworkMngr netWorkMngr = new NetworkMngr();
         SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
-        void Init()
+        protected virtual void Init()
         {
+            dynamic config = null;
+            if (ConfPath != null) {
+                StreamReader streamReader = new StreamReader(ConfPath);
+                var xml = streamReader.ReadToEnd();
+                streamReader.Close();
+                config = new DynamicXml(xml);
+                config = config.Config;
+            }
             SynchronizationContext.SetSynchronizationContext(SyncContext);
-            netWorkMngr.Init(OnHandlerData, OnConnect, OnDisconnect);
-            OnInit();
+            OnInit(config);
         }
 
-        void Update()
+        protected virtual void Update()
         {
             SyncContext.Update();
-            netWorkMngr.Update();
             Thread.Sleep(0);
             OnUpdate();
         }
-        
-        void Fini()
+
+        protected virtual void Fini()
         {
-            netWorkMngr.Fini();
             OnFini();
         }
 

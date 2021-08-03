@@ -7,14 +7,20 @@ using GameServer.Module;
 
 namespace GameServer
 {
-    public class Server : ServerApp<Server>
+    public class Server : ServerAppWithNet<Server>
     {
         public PlayerMngr playerPool = new PlayerMngr();
         public int Zone { get { return 1; } }
         public int InstanceId { get { return 1; } }
         public UinMngr UinMngr { get; private set; }
-        protected override void OnInit()
+
+        protected override string ConfPath => "../GameServerConfig.xml";
+
+        protected override void OnInit(dynamic config) 
         {
+            // 奇怪的问题，动态类型不能直接传给父类的OnInit函数
+            base.OnInit((object)config);
+
             UinMngr = new UinMngr();
             Database.Init();
             playerPool.Init();
@@ -22,15 +28,17 @@ namespace GameServer
         }
         protected override void OnUpdate()
         {
+            base.OnUpdate();
             Database.Update();
             playerPool.Update();
             UinMngr.Update();
         }
         protected override void OnFini()
         {
+            base.OnFini();
             Database.Fini();
-            playerPool.Fini();
-            UinMngr.Fini();
+            playerPool?.Fini();
+            UinMngr?.Fini();
         }
 
         protected async override Task OnHandlerData(Session session, byte[] data)

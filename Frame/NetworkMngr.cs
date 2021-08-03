@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,8 +25,11 @@ namespace Frame
         private ConnectHandler disconnectHandler;
         LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
         internal LockFreeQueue<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new LockFreeQueue<(Session, byte[], TaskCompletionSource)>();
-        public void Init(DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
+
+        IPEndPoint ListenIpEndPoint;
+        public void Init(IPEndPoint ListenIpEndPoint, DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
+            this.ListenIpEndPoint = ListenIpEndPoint;
             recvTask = new Task(Recv);
             Stop = false;
             recvTask.Start();
@@ -87,7 +91,7 @@ namespace Frame
         DateTime now;
         void Recv()
         {
-            tcpServer = new TcpListener(System.Net.IPAddress.Any, 2007);
+            tcpServer = new TcpListener(ListenIpEndPoint);
             tcpServer.Start();
             var serverSocket = tcpServer.Server;
             List<Socket> readlist = new List<Socket>();
