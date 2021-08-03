@@ -17,13 +17,15 @@ namespace GameServer.Player
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
-        public DBPlayer DBData { get { return tPlayer.Value; } }
 
         // 数据库数据的pb
-        public DBAccount DBAccount { get; private set; }
+        public DBPlayer DBData { get { return tPlayer.Value; } }
 
         // 数据库数据的orm, 对外修改等使用上面的
         private TPlayer tPlayer;
+
+        public DBAccount DBAccount { get; private set; }
+
 
         public bool IsDisConnected { get; private set; }
         public async Task processData(byte[] data)
