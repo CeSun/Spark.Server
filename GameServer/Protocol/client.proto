@@ -9,10 +9,12 @@ enum EOpCode
 	EOPCODE_HEARTBEAT_RSP = 2;			// 心跳应答
 	EOPCODE_Test_REQ = 3;
 	EOPCODE_Test_RSP = 4;
-	EOPCODE_Login_REQ = 5;				// 登录请求
-	EOPCODE_Login_RSP = 6;				// 登录应答
+	EOPCODE_LOGIN_REQ = 5;				// 登录请求
+	EOPCODE_LOGIN_RSP = 6;				// 登录应答
 	EOPCODE_CREATEROLE_REQ = 7;			// 创建角色请求
 	EOPCODE_CREATEROLE_RSP = 8;			// 创建角色应答
+	EOPCODE_LOGOUT_REQ = 9;				// 登出请求
+	EOPCODE_LOGOUT_RSP = 10;			// 登出应答
 
 }
 
@@ -68,4 +70,11 @@ message CreateRoleReq {
 
 message CreateRoleRsp {
 	PlayerInfo player_info = 1;
+}
+message LogoutReq {
+
+}
+
+message LogoutRsp {
+
 }

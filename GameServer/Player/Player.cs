@@ -50,6 +50,7 @@ namespace GameServer.Player
             dispatcher.Bind<TestReq>(EOpCode.TestReq, HelloHandler);
             dispatcher.Bind<LoginReq>(EOpCode.LoginReq, LoginAsync);
             dispatcher.Bind<CreateRoleReq>(EOpCode.CreateroleReq, CreateRoleAsync);
+            dispatcher.Bind<LogoutReq>(EOpCode.LogoutReq, Logout);
             dispatcher.requestHandlers.Add(RequestHandler);
             InitFSM();
         }
@@ -76,7 +77,12 @@ namespace GameServer.Player
             fsm.AddEvent(EEvent.Logout, EState.Logining, EState.LogOut, null);
             fsm.Start(EState.Init);
         }
-
+        async Task Logout(SHead head, LogoutReq reqBody)
+        {
+            // 登出
+            fsm.PostEvent(EEvent.Logout);
+            await SendToClientAsync(new SHead {Msgid=EOpCode.LogoutRsp, Errcode = EErrno.Succ }, new LogoutRsp { });
+        }
         void OnLogOut()
         {
             // 登出时保存数据
