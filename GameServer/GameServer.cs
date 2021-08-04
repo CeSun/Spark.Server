@@ -16,11 +16,9 @@ namespace GameServer
 
         protected override string ConfPath => "../GameServerConfig.xml";
 
-        protected override void OnInit(dynamic config) 
+        protected override void OnInit() 
         {
-            // 奇怪的问题，动态类型不能直接传给父类的OnInit函数
-            base.OnInit((object)config);
-
+            base.OnInit();
             UinMngr = new UinMngr();
             Database.Init();
             playerPool.Init();

@@ -21,7 +21,7 @@ namespace Frame
         protected abstract void OnDisconnect(Session session);
 
 
-        protected override void OnInit(dynamic Config)
+        protected override void OnInit()
         {
             IPEndPoint iPEndPoint = null;
             if (Config != null)

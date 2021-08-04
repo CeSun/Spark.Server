@@ -19,7 +19,7 @@ namespace Frame
         /// <summary>
         /// 框架启动时调用
         /// </summary>
-        protected abstract void OnInit(dynamic Config);
+        protected abstract void OnInit();
         /// <summary>
         /// 每帧调用
         /// </summary>
@@ -28,6 +28,8 @@ namespace Frame
         /// 框架结束时调用
         /// </summary>
         protected abstract void OnFini();
+
+        protected dynamic Config { get; set; }
         public static void Start()
         {
             Instance = new SubT();
@@ -41,33 +43,33 @@ namespace Frame
             }
             catch (Exception ex){
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
             Instance.Fini();
         }
         public static SubT Instance {  get; private set; }
         SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
-        protected virtual void Init()
+        protected void Init()
         {
-            dynamic config = null;
             if (ConfPath != null) {
                 StreamReader streamReader = new StreamReader(ConfPath);
                 var xml = streamReader.ReadToEnd();
                 streamReader.Close();
-                config = new DynamicXml(xml);
-                config = config.Config;
+                dynamic cfg = new DynamicXml(xml);
+                Config = cfg.Config;
             }
             SynchronizationContext.SetSynchronizationContext(SyncContext);
-            OnInit(config);
+            OnInit();
         }
 
-        protected virtual void Update()
+        protected void Update()
         {
             SyncContext.Update();
             Thread.Sleep(0);
             OnUpdate();
         }
 
-        protected virtual void Fini()
+        protected void Fini()
         {
             OnFini();
         }

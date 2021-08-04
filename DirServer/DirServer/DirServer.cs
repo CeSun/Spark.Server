@@ -73,9 +73,9 @@ namespace DirServer
             bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
             await session.SendAsync(data);
         } 
-        protected override void OnInit(dynamic Config)
+        protected override void OnInit()
         {
-            base.OnInit((object)Config);
+            base.OnInit();
             dispatcher.Bind<RegisterReq>(EOpCode.RegisterReq, RegisterServerHandler);
         }
 
