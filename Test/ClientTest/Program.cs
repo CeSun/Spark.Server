@@ -15,9 +15,10 @@ namespace ClientTest
         {
             await Task.Delay(5000);
             List<Task> tasks = new List<Task>();
-            for(int i= 0; i < 100; i++)
+            for(int i= 0; i < 10000; i++)
             {
-                tasks.Add(fun(string.Format("{0}{0}{0}|", i)));
+                tasks.Add(fun(string.Format("{0}{0}{0}----", i)));
+                // tasks.Add(fun());
             }
             foreach(var task in tasks)
             {
@@ -59,7 +60,7 @@ namespace ClientTest
             await stream.ReadAsync(readBuffer);
             LoginRsp loginRsp;
             unpack(out head, out loginRsp, readBuffer);
-            
+            return;
             if (loginRsp.LoginResult == ELoginResult.NoPlayer)
             {
                 head.Msgid = EOpCode.CreateroleReq;
@@ -83,7 +84,6 @@ namespace ClientTest
             {
 
             }
-
 
 
         }
