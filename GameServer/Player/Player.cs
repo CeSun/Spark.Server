@@ -19,15 +19,28 @@ namespace GameServer.Player
         DateTime LatestTime;
 
         // 数据库数据的pb
-        public DBPlayer DBData { get { return tPlayer.Value; } }
+        public DBPlayer DBData 
+        {
+            get
+            {
+                if (tPlayer != null)
+                    return tPlayer.Value;
+                else
+                    return null;
+            }
+        }
 
         // 数据库数据的orm, 对外修改等使用上面的
         private TPlayer tPlayer;
 
         public DBAccount DBAccount { get; private set; }
 
-
+        public void Disconnected()
+        {
+            fsm.PostEvent(EEvent.Logout);
+        }
         public bool IsDisConnected { get; private set; }
+
         public async Task processData(byte[] data)
         {
             await dispatcher.DispatcherRequest(data);
@@ -86,8 +99,12 @@ namespace GameServer.Player
         void OnLogOut()
         {
             // 登出时保存数据
-            DBData.LoginServerId = 0;
-            _ = tPlayer.SaveAync();
+            if (DBData != null )
+            {
+                DBData.LoginServerId = 0;
+                _ = tPlayer.SaveAync();
+            }
+            IsDisConnected = true;
         }
 
         bool RequestHandler(SHead reqHead)
@@ -177,7 +194,6 @@ namespace GameServer.Player
         {
             SHead rspHead = new SHead {Msgid= EOpCode.TestRsp, Errcode = EErrno.Succ };
             TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
-            await Task.Delay(0);
             await SendToClientAsync(rspHead, rspBody);
         }
 

@@ -61,6 +61,14 @@ namespace GameServer.Module
                     tasks.Clear();
                     throw exception;
                 }
+                else if (ret.Error != DataBase.DBError.Success)
+                {
+                    throw exception;
+                }
+            }
+            else if (ret.Error != DataBase.DBError.Success)
+            {
+                throw exception;
             }
             this.StartNum = ret.Row.Value.Nums;
             ret.Row.Value.Nums += (ulong)AddNums;

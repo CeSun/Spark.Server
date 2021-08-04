@@ -30,6 +30,7 @@ namespace GameServer
             Database.Update();
             playerPool.Update();
             UinMngr.Update();
+            
         }
         protected override void OnFini()
         {
@@ -41,24 +42,26 @@ namespace GameServer
 
         protected async override Task OnHandlerData(Session session, byte[] data)
         {
-            var player = playerPool.GetPlayer(session.SessionId);
-           if (player == null)
-           {
-                player = new Player.Player(session);
-                player.Init();
-                playerPool.AddPlayer(session.SessionId, player);
-           }
-           await player.processData(data);
+           var player = playerPool.GetPlayer(session.SessionId);
+           if (player != null)
+            await player.processData(data);
         }
 
         protected override void OnConnect(Session session)
         {
-
+            var player = playerPool.GetPlayer(session.SessionId);
+            if (player == null)
+            {
+                player = new Player.Player(session);
+                player.Init();
+                playerPool.AddPlayer(session.SessionId, player);
+            }
         }
 
         protected override void OnDisconnect(Session session)
         {
-
+            var player = playerPool.GetPlayer(session.SessionId);
+            player?.Disconnected();
         }
     }
 }

@@ -46,63 +46,40 @@ namespace Frame
             if (back == front)
                 return false;
             outlist = new List<T>();
-            int len = list.Length;
-            if (front > back)
-                len = front;
-            for (int i = back; i < len; i++)
+            T t = default;
+            while(TryGet(out t))
             {
-                outlist.Add(list[i]);
-                back = i + 1;
-                if (back >= list.Length)
-                    back = GetIndex(back);
-            }
-            for (int i = back; i < front; i++)
-            {
-                outlist.Add(list[i]);
-                back = i + 1;
-                if (back >= list.Length)
-                    back = GetIndex(back);
+                outlist.Add(t);
             }
             return true;
         }
+        public bool TryGet(out T value)
+        {
+            value = default;
+            if (back == front)
+                return false;
 
+            value = list[back];
+            back = GetIndex(back + 1);
+            return true;
+        }
         public bool Get(out List<T> outlist, int max)
         {
             outlist = null;
             if (back == front)
                 return false;
-
             outlist = new List<T>();
-            int len = 0;
-            if (front < back)
-                len = front + list.Length - back;
-            else
-                len = front - back;
-            int newfront = GetIndex(back + max);
-            if (len < max)
+            T t = default;
+            int i = 0;
+            while (TryGet(out t))
             {
-                newfront = front;
-            }
-            int arraylen = list.Length;
-            if (newfront >= back)
-            {
-                arraylen = newfront;
-            }
-            for (int i = back; i < arraylen; i++)
-            {
-                outlist.Add(list[i]);
-                back = i + 1;
-                if (back >= list.Length)
-                    back = GetIndex(back);
-            }
-            for (int i = back; i < newfront; i++)
-            {
-                outlist.Add(list[i]);
-                back = i + 1;
-                if (back >= list.Length)
-                    back = GetIndex(back);
+                outlist.Add(t);
+                ++i;
+                if (i >= max)
+                    break;
             }
             return true;
+
         }
     }
 

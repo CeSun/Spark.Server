@@ -13,7 +13,7 @@ namespace Frame
     /// </summary>
     class NetworkMngr
     {
-        Task recvTask;
+        Thread recvTask;
         bool Stop;
         TcpListener tcpServer;
         LockFreeQueue<(Session, byte[])> recBufferBlock = new LockFreeQueue<(Session, byte[])>(20000);
@@ -30,29 +30,34 @@ namespace Frame
         public void Init(IPEndPoint ListenIpEndPoint, DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
             this.ListenIpEndPoint = ListenIpEndPoint;
-            recvTask = new Task(Recv);
+            tcpServer = new TcpListener(ListenIpEndPoint);
+            tcpServer.Start();
+            recvTask = new Thread(Recv);
             Stop = false;
             recvTask.Start();
             this.dataHandler = dataHandler;
             this.connectHandler = connectHandler;
             this.disconnectHandler = disconnectHandler;
         }
-        DateTime datetime = default;
-        int packnums = 0;
+
         public void Update()
         {
             List<(Session, byte[])> list;
+
             recBufferBlock.Get(out list, 10);
             if (dataHandler != null && list != null)
             {
-                foreach(var item in list)
+                foreach (var item in list)
                 {
+                    var start = DateTime.Now;
                     dataHandler?.Invoke(item.Item1, item.Item2);
+                    var time = (DateTime.Now - start).TotalMilliseconds;
+                    if (time > 5)
+                        Console.WriteLine("handler:" + time);
                 }
-                packnums += list.Count;
             }
             List<(Session, bool)> list2;
-            NewSessionBufferBlock.TryGetAll(out list2);
+            NewSessionBufferBlock.Get(out list2, 10);
             if (connectHandler != null && list2 != null)
             {
                 foreach (var item in list2)
@@ -63,18 +68,7 @@ namespace Frame
                         disconnectHandler?.Invoke(item.Item1);
                 }
             }
-            
-            var nnow = DateTime.Now;
-            if (datetime == default)
-            {
-                datetime = nnow;
-            }
-            if ((nnow - datetime).TotalMilliseconds > 1000)
-            {
-                Console.WriteLine("packNums:" + packnums);
-                packnums = 0;
-                datetime = nnow;
-            }
+           
             
         }
 
@@ -91,143 +85,152 @@ namespace Frame
         DateTime now;
         void Recv()
         {
-            tcpServer = new TcpListener(ListenIpEndPoint);
-            tcpServer.Start();
-            var serverSocket = tcpServer.Server;
-            List<Socket> readlist = new List<Socket>();
-            List<Socket> writelist = new List<Socket>();
-            List<Socket> errorlist = new List<Socket>();
-            List<(ulong, Socket)> waitDelete = new List<(ulong, Socket)>();
-            while (!Stop)
+            try
             {
-                errorlist.Clear();
-                writelist.Clear();
-                waitDelete.Clear();
-                now = DateTime.Now;
-                ResetCheckList(ref readlist);
-                errorlist.AddRange(readlist);
-                Socket.Select(readlist, writelist, errorlist, 1000);
-                List<(Session, byte[], TaskCompletionSource)> outListSend;
-                if (sendBufferBlock.TryGetAll(out outListSend))
+                var serverSocket = tcpServer.Server;
+                List<Socket> readlist = new List<Socket>();
+                List<Socket> writelist = new List<Socket>();
+                List<Socket> errorlist = new List<Socket>();
+                List<(ulong, Socket)> waitDelete = new List<(ulong, Socket)>();
+                while (!Stop)
                 {
-                    foreach (var pair in outListSend)
+                    errorlist.Clear();
+                    writelist.Clear();
+                    waitDelete.Clear();
+                    now = DateTime.Now;
+                    ResetCheckList(ref readlist);
+                    errorlist.AddRange(readlist);
+                    Socket.Select(readlist, writelist, errorlist, 1000);
+                    List<(Session, byte[], TaskCompletionSource)> outListSend;
+                    if (sendBufferBlock.TryGetAll(out outListSend))
                     {
-                        if (socketMap.GetValueOrDefault(pair.Item1.clientSocket) != 0)
+                        foreach (var pair in outListSend)
                         {
-                            var list = sendMap.GetValueOrDefault(pair.Item1.clientSocket);
-                            if (list == null)
+                            if (socketMap.GetValueOrDefault(pair.Item1.clientSocket) != 0)
                             {
-                                list = new List<(byte[], TaskCompletionSource)>();
-                                sendMap.Add(pair.Item1.clientSocket, list);
+                                var list = sendMap.GetValueOrDefault(pair.Item1.clientSocket);
+                                if (list == null)
+                                {
+                                    list = new List<(byte[], TaskCompletionSource)>();
+                                    sendMap.Add(pair.Item1.clientSocket, list);
+                                }
+                                list.Add((pair.Item2, pair.Item3));
+                            } else
+                            {
+                                pair.Item3.SetResult();
+                                sendMap.Remove(pair.Item1.clientSocket);
                             }
-                            list.Add((pair.Item2, pair.Item3));
-                        } else
-                        {
-                            pair.Item3.SetResult();
-                            sendMap.Remove(pair.Item1.clientSocket);
                         }
                     }
-                }
-                foreach(var item in sendMap)
-                {
-                    writelist.Add(item.Key);
-                }
-                foreach (var item in readlist)
-                {
-                    if (item == serverSocket)
+                    foreach(var item in sendMap)
                     {
-                        var socket = serverSocket.Accept();
-                        if (socket != null)
+                        writelist.Add(item.Key);
+                    }
+                    foreach (var item in readlist)
+                    {
+                        if (item == serverSocket)
                         {
-                            var id = IdIter++;
-                            var session = new Session { clientSocket = socket, SessionId = id, networkMngr = this, latestRec = now };
-                            clientMap.Add(id, session);
-                            socketMap.Add(socket, id);
-                            while(!NewSessionBufferBlock.Add((session, true)));
+                            var socket = serverSocket.Accept();
+                            if (socket != null)
+                            {
+                                var id = IdIter++;
+                                var session = new Session { clientSocket = socket, SessionId = id, networkMngr = this, latestRec = now };
+                                clientMap.Add(id, session);
+                                socketMap.Add(socket, id);
+                                NewSessionBufferBlock.Add((session, true));
+                            }
+                        }
+                        else
+                        {
+                            var sessionId = socketMap.GetValueOrDefault(item);
+                            var len = 0;
+                            try
+                            {
+                                len = item.Receive(dataBuffer);
+                            }
+                            catch
+                            {
+                                waitDelete.Add((sessionId, item));
+                            }
+                            if (len == 0)
+                            {
+                                waitDelete.Add((sessionId, item));
+                            }
+                            var id = socketMap.GetValueOrDefault(item);
+                            if (id == 0)
+                                continue;
+                            var session = clientMap.GetValueOrDefault(id);
+                            if (session == null)
+                                continue;
+                            List<byte[]> outlist = new List<byte[]> ();
+                            if (session.otherData != null)
+                            {
+                                len += session.otherData.Length;
+                                
+                            }
+                            
+                            var otherData = ReadPackFromBuffer(dataBuffer, session.otherData, len, out outlist);
+                            session.otherData = otherData;
+                            foreach(var itemdata in outlist)
+                            {
+                                recBufferBlock.Add((session, itemdata));
+                            }
+                            session.latestRec = now;
                         }
                     }
-                    else
+                    foreach(var item in writelist)
                     {
                         var sessionId = socketMap.GetValueOrDefault(item);
-                        var len = 0;
-                        try
-                        {
-                            len = item.Receive(dataBuffer);
-                        }
-                        catch
-                        {
-                            waitDelete.Add((sessionId, item));
-                        }
-                        if (len == 0)
-                        {
-                            waitDelete.Add((sessionId, item));
-                        }
-                        var id = socketMap.GetValueOrDefault(item);
-                        if (id == 0)
+                        var list  =sendMap.GetValueOrDefault(item);
+                        if (list == null)
                             continue;
-                        var session = clientMap.GetValueOrDefault(id);
-                        if (session == null)
-                            continue;
-                        List<byte[]> outlist = new List<byte[]> ();
-                        if (session.otherData != null)
+                        foreach(var data in list)
                         {
-                            len += session.otherData.Length;
+                            try
+                            {
+                                item.Send(data.Item1);
+                                data.Item2.SetResult();
+                            } catch
+                            {
+                                waitDelete.Add((sessionId, item));
+                                break;
+                            }
                         }
-                        var otherData = ReadPackFromBuffer(dataBuffer, session.otherData, len, out outlist);
-                        session.otherData = otherData;
-                        foreach(var itemdata in outlist)
-                        {
-                            while (!recBufferBlock.Add((session, itemdata))) ;
-                        }
-                        session.latestRec = now;
+                        list.Clear();
                     }
-                }
-                foreach(var item in writelist)
-                {
-                    var sessionId = socketMap.GetValueOrDefault(item);
-                    var list  =sendMap.GetValueOrDefault(item);
-                    if (list == null)
-                        continue;
-                    foreach(var data in list)
+                    foreach(var item in errorlist)
                     {
-                        try
+                        var sessionId = socketMap.GetValueOrDefault(item);
+                        waitDelete.Add((sessionId, item));
+                    }
+                    foreach(var pair in clientMap)
+                    {
+                        if ((now - pair.Value.latestRec).Seconds >= 10000)
                         {
-                            item.Send(data.Item1);
-                            data.Item2.SetResult();
-                        } catch
-                        {
-                            waitDelete.Add((sessionId, item));
-                            break;
+                            waitDelete.Add((pair.Key, pair.Value.clientSocket));
                         }
                     }
-                    list.Clear();
-                }
-                foreach(var item in errorlist)
-                {
-                    var sessionId = socketMap.GetValueOrDefault(item);
-                    waitDelete.Add((sessionId, item));
-                }
-                foreach(var pair in clientMap)
-                {
-                    if ((now - pair.Value.latestRec).Seconds >= 10000)
-                    {
-                        waitDelete.Add((pair.Key, pair.Value.clientSocket));
-                    }
-                }
-                waitDelete.ForEach(pair => {
-                    pair.Item2.Shutdown(SocketShutdown.Both);
-                    var session = clientMap.GetValueOrDefault(pair.Item1);
-                    clientMap.Remove(pair.Item1);
-                    socketMap.Remove(pair.Item2);
-                    var list = sendMap.GetValueOrDefault(pair.Item2);
-                    if (list != null)
-                        list.ForEach(res => res.Item2.SetResult());
-                    sendMap.Remove(pair.Item2);
-                    if (session != null)
-                        while(!NewSessionBufferBlock.Add((session, false)));
+                    waitDelete.ForEach(pair => {
+                        pair.Item2.Shutdown(SocketShutdown.Both);
+                        var session = clientMap.GetValueOrDefault(pair.Item1);
+                        clientMap.Remove(pair.Item1);
+                        socketMap.Remove(pair.Item2);
+                        var list = sendMap.GetValueOrDefault(pair.Item2);
+                        if (list != null)
+                            list.ForEach(res => res.Item2.SetResult());
+                        sendMap.Remove(pair.Item2);
+                        if (session != null)
+                            NewSessionBufferBlock.Add((session, false));
 
-                });
-                Thread.Sleep(0);
+                    });
+                    Thread.Sleep(0);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
         }
 
@@ -275,6 +278,10 @@ namespace Frame
                 var lengthHEX = buffer.Skip(start).Take(sizeof(int)).ToArray();
                 Array.Reverse(lengthHEX);
                 length = BitConverter.ToInt32(lengthHEX, 0);
+                if (length == 0)
+                {
+                    return null;
+                }
             } while (true);
         }
     }
