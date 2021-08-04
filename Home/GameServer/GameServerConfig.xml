@@ -4,7 +4,13 @@
 		<Port>2007</Port>
 		<Host>0.0.0.0</Host>
 	</Network>
-	
+	<Mysql>
+		<Host>localhost</Host>
+		<Port>3306</Port>
+		<Username>game</Username>
+		<Password>1024</Password>
+		<Database>Game01</Database>
+	</Mysql>
 	<GameServer>
 		
 	</GameServer>

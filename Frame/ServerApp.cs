@@ -36,9 +36,18 @@ namespace Frame
             try
             {
                 Instance.Init();
+                ulong frameNo = 0;
+                var start = DateTime.Now;
                 while (true)
                 {
+                    frameNo++;
                     Instance.Update();
+                    if ((DateTime.Now - start).TotalMilliseconds >= 1000)
+                    {
+                        Console.WriteLine(frameNo);
+                        start = DateTime.Now;
+                        frameNo = 0;
+                    }
                 }
             }
             catch (Exception ex){

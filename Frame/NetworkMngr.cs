@@ -42,7 +42,7 @@ namespace Frame
         public void Update()
         {
             List<(Session, byte[])> list;
-            recBufferBlock.TryGetAll(out list);
+            recBufferBlock.Get(out list, 10);
             if (dataHandler != null && list != null)
             {
                 foreach(var item in list)

@@ -20,7 +20,7 @@ namespace GameServer
         {
             base.OnInit();
             UinMngr = new UinMngr();
-            Database.Init();
+            Database.Init(Config.Mysql);
             playerPool.Init();
             UinMngr.Init(Zone); 
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace Frame
         {
             mainThreadId = Thread.CurrentThread.ManagedThreadId;
         }
-        BufferBlock<(SendOrPostCallback d, object state)> bufferBlock = new BufferBlock<(SendOrPostCallback d, object state)>();
+        BlockingCollection<(SendOrPostCallback d, object state)> bufferBlock = new BlockingCollection<(SendOrPostCallback d, object state)>();
         public override void Post(SendOrPostCallback d, object state)
         {
             // 如果是主线程，直接执行，其他线程写到队列里
@@ -26,15 +27,21 @@ namespace Frame
             if (threadId == mainThreadId)
                 d?.Invoke(state);
             else
-                bufferBlock.Post((d, state));
+                bufferBlock.Add((d, state));
         }
 
         public void Update()
         {
             IList<(SendOrPostCallback d, object state)> list = new List<(SendOrPostCallback d, object state)>();
-            if (bufferBlock.TryReceiveAll(out list))
-                foreach (var item in list)
-                    item.d?.Invoke(item.state);
+            for (int i = 0; i < 10; i++ )
+            {
+                (SendOrPostCallback d, object state) data = default;
+                if (!bufferBlock.TryTake(out data))
+                {
+                    break;
+                }
+                data.d?.Invoke(data.state);
+            }
         }
     }
 }

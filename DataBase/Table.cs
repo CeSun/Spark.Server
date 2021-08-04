@@ -7,6 +7,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Zstandard.Net.ZstandardInterop;
 
 namespace DataBase
 {
@@ -44,7 +45,8 @@ namespace DataBase
         protected abstract string GetKey(TKey key);
         public async Task<DBError> SaveAync()
         {
-            var bitData = Value.ToByteArray();
+            byte[] bitData = null;
+            await Task.Run(() => { bitData = Value.ToByteArray(); });
             var keyString = GetKey();
             // 版本号是0即新增
             if (version == 0)
@@ -142,17 +144,17 @@ namespace DataBase
                 var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    reader.GetFieldValue<string>("c_key");
-                    var buffer = reader.GetFieldValue<byte[]>("c_value");
-                    var version = reader.GetFieldValue<long>("c_version");
-                    table.Value = parser.ParseFrom(buffer);
+                    await reader.GetFieldValueAsync<string>("c_key");
+                    var buffer = await reader.GetFieldValueAsync<byte[]>("c_value");
+                    var version = await reader.GetFieldValueAsync<long>("c_version");
+                    await Task.Run(() => { table.Value = parser.ParseFrom(buffer); });
                     table.version = version;
-                    reader.Close();
+                    await reader.CloseAsync();
                     return (table, DBError.Success);
                 }
                 else
                 {
-                    reader.Close();
+                    await reader.CloseAsync();
                     return (null, DBError.IsNotExisted);
                 }
             }

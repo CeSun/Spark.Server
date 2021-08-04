@@ -21,10 +21,15 @@ namespace DataBase
 #pragma warning restore CS8603 // 可能返回 null 引用。
 
         static string[] tables;
-        public static void Init()
+        public static void Init(dynamic Mysql)
         {
+            string host = (string)Mysql.Host.Value;
+            string username = (string)Mysql.Username.Value;
+            string password = (string)Mysql.Password.Value;
+            string database = (string)Mysql.Database.Value;
+            int port = int.Parse(Mysql.Port.Value);
             tables = new string[]{"DBAccount", "DBNickname", "DBPlayer", "DBUin" };
-            mySqlConn = new MySqlConnection("Server=localhost;Port=3306;Database=Game01; User=game;Password=1024;sslmode=Required");
+            mySqlConn = new MySqlConnection(string.Format("Server={0};Port={1};Database={2}; User={3};Password={4};sslmode=Required", host, port, database, username, password));
             mySqlConn.Open();
             InitTable();
         }

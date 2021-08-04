@@ -5,39 +5,71 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace ClientTest
 {
     class Program
     {
-        static byte[] readBuffer = new byte[1024 * 1024];
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            await Task.Delay(5000);
+            List<Task> tasks = new List<Task>();
+            for(int i= 0; i < 100; i++)
+            {
+                tasks.Add(fun(string.Format("{0}{0}{0}|", i)));
+            }
+            foreach(var task in tasks)
+            {
+                await task;
+            }
+
+        }
+
+        static async Task fun()
+        {
+            byte[] readBuffer = new byte[1024 * 1024];
             TcpClient client = new TcpClient();
-            client.Connect("127.0.0.1", 2007);
+            await client.ConnectAsync("127.0.0.1", 2007);
+            SHead head = new SHead();
+            head.Msgid = EOpCode.TestReq;
+            head.Reqseq = 0;
+            var testReq = new TestReq();
+            var reqByte = pack(head, testReq);
+            var stream = client.GetStream();
+            await stream.WriteAsync(reqByte);
+            await stream.ReadAsync(readBuffer);
+            TestRsp rsp;
+            unpack(out head, out rsp, readBuffer);
+        }
+        static async Task fun(string name)
+        {
+            byte[] readBuffer = new byte[1024 * 1024];
+            TcpClient client = new TcpClient();
+            await client.ConnectAsync("127.0.0.1", 2007);
             SHead head = new SHead();
             head.Msgid = EOpCode.LoginReq;
             head.Reqseq = 0;
             LoginReq loginReq = new LoginReq();
             loginReq.LoginType = ELoginType.TestLogin;
-            loginReq.TestAccount = "3213";
+            loginReq.TestAccount = name;
             var reqByte = pack(head, loginReq);
             var stream = client.GetStream();
-            stream.Write(reqByte);
-            stream.Read(readBuffer);
+            await stream.WriteAsync(reqByte);
+            await stream.ReadAsync(readBuffer);
             LoginRsp loginRsp;
             unpack(out head, out loginRsp, readBuffer);
             
             if (loginRsp.LoginResult == ELoginResult.NoPlayer)
             {
                 head.Msgid = EOpCode.CreateroleReq;
-                CreateRoleReq createrole = new CreateRoleReq() { NickName = "测试名称" };
+                CreateRoleReq createrole = new CreateRoleReq() { NickName = name };
                 reqByte = pack(head, createrole);
 
-                stream.Write(reqByte);
-                stream.Read(readBuffer);
+                await stream.WriteAsync(reqByte);
+                await stream.WriteAsync(readBuffer);
                 CreateRoleRsp createRoleRsp;
-                unpack(out head, out loginRsp, readBuffer);
+                unpack(out head, out createRoleRsp, readBuffer);
                 if (head.Errcode == EErrno.Succ)
                 {
                    
