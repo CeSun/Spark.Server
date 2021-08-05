@@ -46,7 +46,7 @@ namespace DataBase
         public async Task<DBError> SaveAync()
         {
             byte[] bitData = null;
-            await Task.Run(() => { bitData = Value.ToByteArray(); });
+            bitData = Value.ToByteArray();
             var keyString = GetKey();
             // 版本号是0即新增
             if (version == 0)
@@ -147,7 +147,7 @@ namespace DataBase
                     await reader.GetFieldValueAsync<string>("c_key");
                     var buffer = await reader.GetFieldValueAsync<byte[]>("c_value");
                     var version = await reader.GetFieldValueAsync<long>("c_version");
-                    await Task.Run(() => { table.Value = parser.ParseFrom(buffer); });
+                    table.Value = parser.ParseFrom(buffer);
                     table.version = version;
                     await reader.CloseAsync();
                     return (table, DBError.Success);

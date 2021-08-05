@@ -60,12 +60,11 @@ namespace DataBase
                     continue;
                 var createCmd = mySqlConn.CreateCommand();
                 createCmd.CommandText = string.Format("CREATE TABLE `{0}` (" +
-                "`c_key` CHAR(255) NOT NULL COLLATE 'utf8mb4_0900_ai_ci'," +
+                "`c_key` CHAR(255) NOT NULL ," +
                 "`c_value` LONGBLOB NOT NULL," +
                 "`c_version` BIGINT(19) NOT NULL DEFAULT '0'," +
                 "PRIMARY KEY(`c_key`) USING BTREE"+
                 ")"+
-                "COLLATE = 'utf8mb4_0900_ai_ci'"+
                 "ENGINE = InnoDB"+
                 "; ", table);
                 Console.WriteLine(createCmd.CommandText);

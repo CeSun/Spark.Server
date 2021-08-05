@@ -7,6 +7,7 @@ using MySqlX.XDevAPI;
 using DataBase.Tables;
 using DataBase;
 using System.Security.Principal;
+using System.Diagnostics;
 
 namespace GameServer.Player
 {
@@ -66,17 +67,19 @@ namespace GameServer.Player
             dispatcher.Bind<LogoutReq>(EOpCode.LogoutReq, Logout);
             dispatcher.requestHandlers.Add(RequestHandler);
             InitFSM();
+
         }
 
         private void InitFSM()
         {
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             fsm.AddState(EState.Init, null, null, null);
             fsm.AddState(EState.Logining, null, null, null);
             fsm.AddState(EState.LogOut, OnLogOut, null, null);
             fsm.AddState(EState.Online, null, null, null);
             fsm.AddState(EState.Creating, null, null, null);
-
             // 每个事件对应的处理函数还没有捋一遍
             fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
             fsm.AddEvent(EEvent.Create, EState.Logining, EState.Creating, null);
@@ -88,7 +91,11 @@ namespace GameServer.Player
             fsm.AddEvent(EEvent.Logout, EState.Init, EState.LogOut, null);
             fsm.AddEvent(EEvent.Logout, EState.Creating, EState.LogOut, null);
             fsm.AddEvent(EEvent.Logout, EState.Logining, EState.LogOut, null);
+
+            stopwatch.Stop();
+            Console.WriteLine("handler" + stopwatch.Elapsed.TotalMilliseconds);
             fsm.Start(EState.Init);
+
         }
         async Task Logout(SHead head, LogoutReq reqBody)
         {
@@ -135,6 +142,7 @@ namespace GameServer.Player
             SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
             LoginRsp rspBody = new LoginRsp() {LoginResult = ELoginResult.Success };
             fsm.PostEvent(EEvent.Login);
+            Console.WriteLine("LoginAsync end: " + DateTime.Now.Ticks);
             var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
             if (retval.Error == DataBase.DBError.Success)
             {
@@ -264,9 +272,9 @@ namespace GameServer.Player
         {
             if (fsm.CurrentState != EState.Init && fsm.CurrentState != EState.LogOut)
             {
-                if ((DateTime.Now - LatestTime).TotalSeconds > 100)
+                if ((DateTime.Now - LatestTime).TotalSeconds > 5)
                 {
-                    // fsm.PostEvent(EEvent.Logout);
+                    fsm.PostEvent(EEvent.Logout);
                 }
             }
             fsm.Update();

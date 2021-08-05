@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -110,12 +111,15 @@ namespace Frame
 
         public async Task DispatcherRequest(byte[] data)
         {
-            var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
-            Array.Reverse(headBits);
-            var headLength = BitConverter.ToInt32(headBits, 0);
-
-            MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
-            var head = parser.ParseFrom(data, sizeof(int) * 2, headLength);
+            THead head = default;
+            int headLength = default;
+            await Task.Run(() => {
+                var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
+                Array.Reverse(headBits);
+                headLength = BitConverter.ToInt32(headBits, 0);
+                MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
+                head = parser.ParseFrom(data, sizeof(int) * 2, headLength);
+            });
             if (head == null)
                 return;
             if (getMsgId == default)
@@ -133,7 +137,6 @@ namespace Frame
                 await fun(null, sizeof(int) * 2 + headLength, head, data);
             }
         }
-
 
         delegate Task ProcessFun(Session session, int offset, THead head, byte[] body);
         GetMsgIdFunc getMsgId;

@@ -23,7 +23,9 @@ namespace GameServer.Player
 
         public Player GetPlayer(ulong sessionId)
         {
-            return playerPool.GetValueOrDefault(sessionId);
+            if (playerPool.ContainsKey(sessionId))
+                return  playerPool[sessionId];
+            return null;
         }
         public void Init()
         {

@@ -1,9 +1,10 @@
 ﻿using Frame;
 using GameServer.Player;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataBase;
 using GameServer.Module;
+using System;
+using System.Diagnostics;
 
 namespace GameServer
 {
@@ -22,7 +23,8 @@ namespace GameServer
             UinMngr = new UinMngr();
             Database.Init(Config.Mysql);
             playerPool.Init();
-            UinMngr.Init(Zone); 
+            UinMngr.Init(Zone);
+
         }
         protected override void OnUpdate()
         {
@@ -30,7 +32,7 @@ namespace GameServer
             Database.Update();
             playerPool.Update();
             UinMngr.Update();
-            
+        
         }
         protected override void OnFini()
         {
@@ -39,15 +41,7 @@ namespace GameServer
             playerPool?.Fini();
             UinMngr?.Fini();
         }
-
         protected async override Task OnHandlerData(Session session, byte[] data)
-        {
-           var player = playerPool.GetPlayer(session.SessionId);
-           if (player != null)
-            await player.processData(data);
-        }
-
-        protected override void OnConnect(Session session)
         {
             var player = playerPool.GetPlayer(session.SessionId);
             if (player == null)
@@ -56,12 +50,18 @@ namespace GameServer
                 player.Init();
                 playerPool.AddPlayer(session.SessionId, player);
             }
+            if (player != null)
+            await player.processData(data);
+        }
+
+        protected override void OnConnect(Session session)
+        {
+            throw new System.NotImplementedException();
         }
 
         protected override void OnDisconnect(Session session)
         {
-            var player = playerPool.GetPlayer(session.SessionId);
-            player?.Disconnected();
+            throw new System.NotImplementedException();
         }
     }
 }

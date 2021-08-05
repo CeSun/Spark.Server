@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -43,33 +45,20 @@ namespace Frame
         public void Update()
         {
             List<(Session, byte[])> list;
-
             recBufferBlock.Get(out list, 10);
             if (dataHandler != null && list != null)
             {
                 foreach (var item in list)
                 {
-                    var start = DateTime.Now;
-                    dataHandler?.Invoke(item.Item1, item.Item2);
-                    var time = (DateTime.Now - start).TotalMilliseconds;
-                    if (time > 5)
-                        Console.WriteLine("handler:" + time);
+
+                    Stopwatch stopWatch = new Stopwatch();
+                    stopWatch.Start();
+                    _ = dataHandler(item.Item1, item.Item2);
+                    stopWatch.Stop();
+                    Console.WriteLine("once call: " + stopWatch.Elapsed.TotalMilliseconds);
+
                 }
             }
-            List<(Session, bool)> list2;
-            NewSessionBufferBlock.Get(out list2, 10);
-            if (connectHandler != null && list2 != null)
-            {
-                foreach (var item in list2)
-                {
-                    if (item.Item2)
-                        connectHandler?.Invoke(item.Item1);
-                    else
-                        disconnectHandler?.Invoke(item.Item1);
-                }
-            }
-           
-            
         }
 
         public void Fini()
@@ -223,7 +212,6 @@ namespace Frame
                             NewSessionBufferBlock.Add((session, false));
 
                     });
-                    Thread.Sleep(0);
                 }
 
             }

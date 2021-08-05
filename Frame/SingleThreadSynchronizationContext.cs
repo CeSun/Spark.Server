@@ -22,25 +22,17 @@ namespace Frame
         BlockingCollection<(SendOrPostCallback d, object state)> bufferBlock = new BlockingCollection<(SendOrPostCallback d, object state)>();
         public override void Post(SendOrPostCallback d, object state)
         {
-            // 如果是主线程，直接执行，其他线程写到队列里
-            var threadId = Thread.CurrentThread.ManagedThreadId;
-            if (threadId == mainThreadId)
-                d?.Invoke(state);
-            else
-                bufferBlock.Add((d, state));
+            bufferBlock.Add((d, state));
         }
 
         public void Update()
         {
-            IList<(SendOrPostCallback d, object state)> list = new List<(SendOrPostCallback d, object state)>();
-            for (int i = 0; i < 10; i++ )
+            (SendOrPostCallback d, object state) data = default;
+            for (int i = 0; i < 20 ; i++)
             {
-                (SendOrPostCallback d, object state) data = default;
                 if (!bufferBlock.TryTake(out data))
-                {
                     break;
-                }
-                data.d?.Invoke(data.state);
+                // data.d(data.state);
             }
         }
     }
