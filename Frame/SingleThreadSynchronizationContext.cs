@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -28,11 +29,11 @@ namespace Frame
         public void Update()
         {
             (SendOrPostCallback d, object state) data = default;
-            for (int i = 0; i < 20 ; i++)
+            for (int i = 0; i < 10 ; i++)
             {
                 if (!bufferBlock.TryTake(out data))
                     break;
-                // data.d(data.state);
+                 data.d(data.state);
             }
         }
     }

@@ -15,7 +15,7 @@ namespace ClientTest
         {
             await Task.Delay(5000);
             List<Task> tasks = new List<Task>();
-            for(int i= 0; i < 10000; i++)
+            for(int i= 0; i < 1000; i++)
             {
                 tasks.Add(fun(string.Format("{0}{0}{0}----", i)));
                 // tasks.Add(fun());
@@ -60,29 +60,18 @@ namespace ClientTest
             await stream.ReadAsync(readBuffer);
             LoginRsp loginRsp;
             unpack(out head, out loginRsp, readBuffer);
-            return;
-            if (loginRsp.LoginResult == ELoginResult.NoPlayer)
-            {
-                head.Msgid = EOpCode.CreateroleReq;
-                CreateRoleReq createrole = new CreateRoleReq() { NickName = name };
-                reqByte = pack(head, createrole);
 
+            head.Msgid = EOpCode.HeartbeatReq;
+            var heartbeatReq = new HeartBeatReq();
+            reqByte = pack(head, heartbeatReq);
+            while(true)
+            {
                 await stream.WriteAsync(reqByte);
-                await stream.WriteAsync(readBuffer);
-                CreateRoleRsp createRoleRsp;
-                unpack(out head, out createRoleRsp, readBuffer);
-                if (head.Errcode == EErrno.Succ)
-                {
-                   
-                }
-                else
-                {
-
-                }
-
-            } else
-            {
-
+                await stream.ReadAsync(readBuffer);
+                HeartBeatRsp heartBeatRsp;
+                unpack(out head, out heartBeatRsp, readBuffer);
+                await Task.Delay(3000);
+                Console.WriteLine("已收到应答包！");
             }
 
 

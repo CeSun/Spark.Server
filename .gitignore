@@ -8,3 +8,5 @@
 /*/*/bin/*
 /.*/*
 /Home/*/net5.0
+/*/*.user
+*.user

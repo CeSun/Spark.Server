@@ -41,7 +41,7 @@ namespace GameServer
             playerPool?.Fini();
             UinMngr?.Fini();
         }
-        protected async override Task OnHandlerData(Session session, byte[] data)
+        protected override void OnHandlerData(Session session, byte[] data)
         {
             var player = playerPool.GetPlayer(session.SessionId);
             if (player == null)
@@ -51,17 +51,7 @@ namespace GameServer
                 playerPool.AddPlayer(session.SessionId, player);
             }
             if (player != null)
-            await player.processData(data);
-        }
-
-        protected override void OnConnect(Session session)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        protected override void OnDisconnect(Session session)
-        {
-            throw new System.NotImplementedException();
+                _ = player.processData(data);
         }
     }
 }

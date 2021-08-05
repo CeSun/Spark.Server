@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Frame
 {
+    public delegate Task TaskAction();
     /// <summary>
     /// 协议派发类
     /// </summary>
@@ -31,10 +33,13 @@ namespace Frame
         /// <returns>返回消息id</returns>
         public delegate TMsgId GetMsgIdFunc(THead head);
 
-        public delegate bool RequestHandler(THead head);
+        public delegate Task RequestHandler(THead head, TaskAction next);
 
-        public List<RequestHandler> requestHandlers = new List<RequestHandler>();
+        private RequestHandler requestHandler = async (head, next) => await next();
 
+        public RequestHandler Filter { get => requestHandler; set {
+                if (value != null) requestHandler = value; 
+            } }
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -95,17 +100,11 @@ namespace Frame
                 return;
             if (getMsgId == default)
                 return;
-            foreach (var handler in requestHandlers)
-            {
-                var ret = handler(head);
-                if (ret == false)
-                    return;
-            }
             var id = getMsgId(head);
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-                await fun(session, sizeof(int) * 2 + headLength, head, data);
+               await requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data));
             }
         }
 
@@ -124,17 +123,11 @@ namespace Frame
                 return;
             if (getMsgId == default)
                 return;
-            foreach (var handler in requestHandlers)
-            {
-                var ret = handler(head);
-                if (ret == false)
-                    return;
-            }
             var id = getMsgId(head);
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-                await fun(null, sizeof(int) * 2 + headLength, head, data);
+                await requestHandler(head, async () => await fun(null, sizeof(int) * 2 + headLength, head, data));
             }
         }
 

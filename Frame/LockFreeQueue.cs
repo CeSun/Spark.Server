@@ -42,14 +42,14 @@ namespace Frame
 
         public bool TryGetAll(out List<T> outlist)
         {
+            int _front = front;
             outlist = null;
-            if (back == front)
+            if (back == _front)
                 return false;
             outlist = new List<T>();
-            T t = default;
-            while(TryGet(out t))
+            for (; back != _front; back = GetIndex(back + 1))
             {
-                outlist.Add(t);
+                outlist.Add(list[back]);
             }
             return true;
         }
@@ -65,18 +65,14 @@ namespace Frame
         }
         public bool Get(out List<T> outlist, int max)
         {
+            int _front = front;
             outlist = null;
-            if (back == front)
+            if (back == _front)
                 return false;
             outlist = new List<T>();
-            T t = default;
-            int i = 0;
-            while (TryGet(out t))
+            for (int i = 0; i < max && back != _front; i++,back = GetIndex(back+ 1))
             {
-                outlist.Add(t);
-                ++i;
-                if (i >= max)
-                    break;
+                outlist.Add(list[back]);
             }
             return true;
 

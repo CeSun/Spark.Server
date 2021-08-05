@@ -20,16 +20,14 @@ namespace Frame
         TcpListener tcpServer;
         LockFreeQueue<(Session, byte[])> recBufferBlock = new LockFreeQueue<(Session, byte[])>(20000);
 
-        public delegate Task DataHandler(Session session, byte[] data);
+        public delegate void DataHandler(Session session, byte[] data);
         public delegate void ConnectHandler(Session session);
-        private DataHandler dataHandler;
-        private ConnectHandler connectHandler;
-        private ConnectHandler disconnectHandler;
         LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
         internal LockFreeQueue<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new LockFreeQueue<(Session, byte[], TaskCompletionSource)>();
-
+        SynchronizationContext synchronizationContext;
+        DataHandler dataHandler;
         IPEndPoint ListenIpEndPoint;
-        public void Init(IPEndPoint ListenIpEndPoint, DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
+        public void Init(IPEndPoint ListenIpEndPoint, SynchronizationContext synchronizationContext, DataHandler dataHandler)
         {
             this.ListenIpEndPoint = ListenIpEndPoint;
             tcpServer = new TcpListener(ListenIpEndPoint);
@@ -37,28 +35,13 @@ namespace Frame
             recvTask = new Thread(Recv);
             Stop = false;
             recvTask.Start();
+            this.synchronizationContext = synchronizationContext;
             this.dataHandler = dataHandler;
-            this.connectHandler = connectHandler;
-            this.disconnectHandler = disconnectHandler;
         }
 
         public void Update()
         {
-            List<(Session, byte[])> list;
-            recBufferBlock.Get(out list, 10);
-            if (dataHandler != null && list != null)
-            {
-                foreach (var item in list)
-                {
 
-                    Stopwatch stopWatch = new Stopwatch();
-                    stopWatch.Start();
-                    _ = dataHandler(item.Item1, item.Item2);
-                    stopWatch.Stop();
-                    Console.WriteLine("once call: " + stopWatch.Elapsed.TotalMilliseconds);
-
-                }
-            }
         }
 
         public void Fini()
@@ -162,7 +145,7 @@ namespace Frame
                             session.otherData = otherData;
                             foreach(var itemdata in outlist)
                             {
-                                recBufferBlock.Add((session, itemdata));
+                                synchronizationContext?.Post(e => dataHandler(session, itemdata), null);
                             }
                             session.latestRec = now;
                         }

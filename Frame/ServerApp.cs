@@ -57,7 +57,11 @@ namespace Frame
             Instance.Fini();
         }
         public static SubT Instance {  get; private set; }
-        SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
+        protected SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
+        protected void PostAsyncTask(Action action)
+        {
+            SyncContext.Post(state => action(), null);
+        }
         protected void Init()
         {
             if (ConfPath != null) {

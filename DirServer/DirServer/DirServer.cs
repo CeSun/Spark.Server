@@ -25,9 +25,9 @@ namespace DirServer
             base.OnFini();
         }
 
-        protected override async Task OnHandlerData(Session session, byte[] data)
+        protected override void OnHandlerData(Session session, byte[] data)
         {
-            await dispatcher.DispatcherRequest(session, data);
+            _= dispatcher.DispatcherRequest(session, data);
         }
 
         async Task RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
@@ -85,19 +85,5 @@ namespace DirServer
             base.OnUpdate();
         }
 
-        protected override void OnConnect(Session session)
-        {
-
-        }
-
-        protected override void OnDisconnect(Session session)
-        {
-           var info = sessions.GetValueOrDefault(session);
-           if (info != null)
-           {
-                servers[info.Name][info.Zone].Remove(info.Id);
-                versions[info.Name][info.Id] += 1;
-           }
-        }
     }
 }

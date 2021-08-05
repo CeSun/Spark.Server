@@ -24,7 +24,12 @@ message SHead
 	uint32 reqseq = 2;				// 请求序号
 	EErrno errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
 }
+message HeartBeatReq {
 
+}
+message HeartBeatRsp {
+
+}
 enum EErrno
 {
 	EERRNO_SUCC = 0;						// 操作成功

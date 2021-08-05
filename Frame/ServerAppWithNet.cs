@@ -16,9 +16,7 @@ namespace Frame
         /// <param name="session">session</param>
         /// <param name="data">二进制数据</param>
         /// <returns>无，可以await</returns>
-        protected abstract Task OnHandlerData(Session session, byte[] data);
-        protected abstract void OnConnect(Session session);
-        protected abstract void OnDisconnect(Session session);
+        protected abstract void OnHandlerData(Session session, byte[] data);
 
 
         protected override void OnInit()
@@ -29,7 +27,7 @@ namespace Frame
                 var port = int.Parse(Config.Network.Port.Value);
                 iPEndPoint = IPEndPoint.Parse(Config.Network.Host.Value + ":" + port);
             }
-            netWorkMngr.Init(iPEndPoint, OnHandlerData, OnConnect, OnDisconnect);
+            netWorkMngr.Init(iPEndPoint, SyncContext, OnHandlerData);
         }
 
         protected override void OnUpdate()

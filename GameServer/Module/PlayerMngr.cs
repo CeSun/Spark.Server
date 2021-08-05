@@ -13,9 +13,7 @@ namespace GameServer.Player
         public PlayerMngr()
         {
             playerPool = new Dictionary<ulong, Player>();
-            
         }
-
         public void AddPlayer(ulong sessionId, Player player)
         {
             playerPool.Add(sessionId, player);
