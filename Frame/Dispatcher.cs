@@ -88,12 +88,11 @@ namespace Frame
         /// </summary>
         /// <param name="data">数据二进制</param>
         /// <returns></returns>
-        public async Task DispatcherRequest(Session session, byte[] data)
+        public void DispatcherRequest(Session session, byte[] data)
         {
             var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
             Array.Reverse(headBits);
             var headLength = BitConverter.ToInt32(headBits, 0);
-
             MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
             var head = parser.ParseFrom(data, sizeof(int) *2, headLength);
             if (head == null)
@@ -104,21 +103,17 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-               await requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data));
+               _ = requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data));
             }
         }
 
-        public async Task DispatcherRequest(byte[] data)
+        public void DispatcherRequest(byte[] data)
         {
-            THead head = default;
-            int headLength = default;
-            await Task.Run(() => {
-                var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
-                Array.Reverse(headBits);
-                headLength = BitConverter.ToInt32(headBits, 0);
-                MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
-                head = parser.ParseFrom(data, sizeof(int) * 2, headLength);
-            });
+            var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
+            Array.Reverse(headBits);
+            int headLength = BitConverter.ToInt32(headBits, 0);
+            MessageParser<THead> parser = new MessageParser<THead>(() => new THead());
+            THead head = parser.ParseFrom(data, sizeof(int) * 2, headLength);
             if (head == null)
                 return;
             if (getMsgId == default)
@@ -127,7 +122,7 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-                await requestHandler(head, async () => await fun(null, sizeof(int) * 2 + headLength, head, data));
+                _ = requestHandler(head, async () => await fun(null, sizeof(int) * 2 + headLength, head, data));
             }
         }
 

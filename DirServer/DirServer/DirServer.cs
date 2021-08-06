@@ -27,12 +27,18 @@ namespace DirServer
 
         protected override void OnHandlerData(Session session, byte[] data)
         {
-            _= dispatcher.DispatcherRequest(session, data);
+             dispatcher.DispatcherRequest(session, data);
         }
 
         async Task RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
         {
-            sessions[session] = reqBody.Info;
+            try
+            {
+                sessions[session] = reqBody.Info;
+            }catch (Exception e)
+            {
+
+            }
             var svrs = servers.GetValueOrDefault(reqBody.Info.Name);
             if (svrs == null)
             {
@@ -49,7 +55,14 @@ namespace DirServer
                 }
                 else
                 {
-                    zones.Add(reqBody.Info.Id, reqBody.Info);
+                    if (zones.ContainsKey(reqBody.Info.Id))
+                    {
+                        zones[reqBody.Info.Id] = reqBody.Info;
+                    }
+                    else
+                    {
+                        zones.Add(reqBody.Info.Id, reqBody.Info);
+                    }
                     versions[reqBody.Info.Name][reqBody.Info.Zone] += 1;
                 }
             }

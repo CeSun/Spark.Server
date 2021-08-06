@@ -16,25 +16,41 @@ namespace Frame
     public class SingleThreadSynchronizationContext : SynchronizationContext
     {
         int mainThreadId;
+        enum Source
+        {
+            Task,
+            Start
+        }
         public SingleThreadSynchronizationContext()
         {
             mainThreadId = Thread.CurrentThread.ManagedThreadId;
         }
-        BlockingCollection<(SendOrPostCallback d, object state)> bufferBlock = new BlockingCollection<(SendOrPostCallback d, object state)>();
+        BlockingCollection<(SendOrPostCallback d, object state, Source)> bufferBlock = new BlockingCollection<(SendOrPostCallback d, object state, Source)>();
         public override void Post(SendOrPostCallback d, object state)
         {
-            bufferBlock.Add((d, state));
+            bufferBlock.Add((d, state, Source.Task));
         }
-
+        public void PostStart(SendOrPostCallback d, object state)
+        {
+            bufferBlock.Add((d, state, Source.Start));
+        }
         public void Update()
         {
-            (SendOrPostCallback d, object state) data = default;
+            Stopwatch sw = Stopwatch.StartNew();
+            (SendOrPostCallback d, object state, Source) data = default;
             for (int i = 0; i < 10 ; i++)
             {
                 if (!bufferBlock.TryTake(out data))
                     break;
-                 data.d(data.state);
+                Stopwatch sw2 = Stopwatch.StartNew();
+                data.d(data.state);
+                sw2.Stop();
+                if (data.Item3 == Source.Start)
+                {
+
+                }
             }
+            sw.Stop();
         }
     }
 }

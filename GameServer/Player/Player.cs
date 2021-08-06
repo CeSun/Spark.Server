@@ -3,7 +3,6 @@ using Google.Protobuf;
 using System;
 using System.Threading.Tasks;
 using Frame;
-using MySqlX.XDevAPI;
 using DataBase.Tables;
 using DataBase;
 using System.Security.Principal;
@@ -42,9 +41,9 @@ namespace GameServer.Player
         }
         public bool IsDisConnected { get; private set; }
 
-        public  async Task processData(byte[] data)
+        public void processData(byte[] data)
         {
-            await dispatcher.DispatcherRequest(data);
+            dispatcher.DispatcherRequest(data);
         }
 
         public Player(Frame.Session session)
@@ -68,7 +67,7 @@ namespace GameServer.Player
 
         private void InitFSM()
         {
-
+            
             fsm.AddState(EState.Init, null, null, null);
             fsm.AddState(EState.Logining, null, null, null);
             fsm.AddState(EState.LogOut, OnLogOut, null, null);
@@ -85,7 +84,6 @@ namespace GameServer.Player
             ret = fsm.AddEvent(EEvent.Logout, EState.Init, EState.LogOut, null);
             ret = fsm.AddEvent(EEvent.Logout, EState.Creating, EState.LogOut, null);
             ret = fsm.AddEvent(EEvent.Logout, EState.Logining, EState.LogOut, null);
-
             fsm.Start(EState.Init);
 
         }
@@ -131,7 +129,6 @@ namespace GameServer.Player
                     await tPlayer.SaveAync();
             }
         }
-
         async Task LoginAsync(SHead reqHead, LoginReq loginReq)
         {
             SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
@@ -191,6 +188,13 @@ namespace GameServer.Player
             await SendToClientAsync(rspHead, rspBody);
         }
 
+        async Task LoginFake(SHead reqHead, LoginReq reqBody)
+        {
+            SHead rspHead = new SHead { Msgid = EOpCode.TestRsp, Errcode = EErrno.Succ };
+            TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
+            var retval = await TAccount.QueryAync((DataBase.AuthType.Test, "112", Server.Instance.Zone));
+            await SendToClientAsync(rspHead, rspBody);
+        }
         async Task HelloHandler( SHead reqHead, TestReq reqBody)
         {
             SHead rspHead = new SHead {Msgid= EOpCode.TestRsp, Errcode = EErrno.Succ };
@@ -217,6 +221,9 @@ namespace GameServer.Player
                     tPlayer.Value.LastLoginTime = DateTime.Now.Millisecond;
                     tPlayer.Value.LoginServerId = Server.Instance.InstanceId;
                     tPlayer.Value.Nickname = reqBody.NickName;
+
+                    rspBody.PlayerInfo = new PlayerInfo();
+                    fillPlayerInfo(rspBody.PlayerInfo);
                     fsm.PostEvent(EEvent.LoginSucc);
                 }
                 else if(ret == DBError.IsExisted)
@@ -245,19 +252,23 @@ namespace GameServer.Player
         }
         public async Task SendToClientAsync<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
-            head.Reqseq = ++LatestSeq;
-            var bodyBits = rsp.ToByteArray();
-            var headBits = head.ToByteArray();
-            int packLength = bodyBits.Length + headBits.Length + 2 * sizeof(int);
-            byte[] data = new byte[packLength];
-            var packLengthBits = BitConverter.GetBytes(packLength);
-            var headLengthBits = BitConverter.GetBytes(headBits.Length);
-            Array.Reverse(packLengthBits);
-            Array.Reverse(headLengthBits);
-            packLengthBits.CopyTo(data, 0);
-            headLengthBits.CopyTo(data, sizeof(int));
-            headBits.CopyTo(data, 2 * sizeof(int));
-            bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
+            byte[] data = null;
+            await Task.Run(() =>
+            {
+                head.Reqseq = ++LatestSeq;
+                var bodyBits = rsp.ToByteArray();
+                var headBits = head.ToByteArray();
+                int packLength = bodyBits.Length + headBits.Length + 2 * sizeof(int);
+                data = new byte[packLength];
+                var packLengthBits = BitConverter.GetBytes(packLength);
+                var headLengthBits = BitConverter.GetBytes(headBits.Length);
+                Array.Reverse(packLengthBits);
+                Array.Reverse(headLengthBits);
+                packLengthBits.CopyTo(data, 0);
+                headLengthBits.CopyTo(data, sizeof(int));
+                headBits.CopyTo(data, 2 * sizeof(int));
+                bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
+            });
             await Session.SendAsync(data);
         }
 

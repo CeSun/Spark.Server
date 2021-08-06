@@ -15,10 +15,10 @@ namespace ClientTest
         {
             await Task.Delay(5000);
             List<Task> tasks = new List<Task>();
-            for(int i= 0; i < 1000; i++)
+            for(int i= 0; i <10000; i++)
             {
-                tasks.Add(fun(string.Format("{0}{0}{0}----", i)));
-                // tasks.Add(fun());
+                // tasks.Add(TestDirServer());
+                tasks.Add(fun(String.Format("测试{0}{0}888", i)));
             }
             foreach(var task in tasks)
             {
@@ -26,7 +26,30 @@ namespace ClientTest
             }
 
         }
-
+        static async Task TestDirServer()
+        {
+            byte[] readBuffer = new byte[1024 * 1024];
+            TcpClient client = new TcpClient();
+            await client.ConnectAsync("127.0.0.1", 2008);
+            Dirapi.SHead head = new Dirapi.SHead();
+            head.Msgid = Dirapi.EOpCode.RegisterReq;
+            head.Sync = 5555;
+            Dirapi.RegisterReq req = new Dirapi.RegisterReq();
+            req.Info = new Dirapi.ServerInfo();
+            req.Info.Name = "GameServer";
+            req.Info.Url = new Dirapi.IpAndPort {Ip="localhost", Port = 2007 };
+            req.Info.Zone = 1;
+            var sendbyte = pack(head, req);
+            var stream = client.GetStream();
+            if(true)
+            {
+                await stream.WriteAsync(sendbyte);
+                await stream.ReadAsync(readBuffer);
+                Dirapi.RegisterRsp rsp;
+                unpack(out head, out rsp, readBuffer);
+                Console.WriteLine("register succ");
+            }
+        }
         static async Task fun()
         {
             byte[] readBuffer = new byte[1024 * 1024];
@@ -61,14 +84,31 @@ namespace ClientTest
             LoginRsp loginRsp;
             unpack(out head, out loginRsp, readBuffer);
 
-            head.Msgid = EOpCode.HeartbeatReq;
-            var heartbeatReq = new HeartBeatReq();
-            reqByte = pack(head, heartbeatReq);
-            while(true)
+
+            head.Msgid = EOpCode.CreateroleReq;
+            var createRole = new CreateRoleReq { NickName = name};
+            reqByte = pack(head, createRole);
+            await stream.WriteAsync(reqByte);
+            await stream.ReadAsync(readBuffer);
+            CreateRoleRsp createRoleRsp;
+            unpack(out head, out createRoleRsp, readBuffer);
+            if (head.Errcode == EErrno.Succ)
             {
+                Console.WriteLine("玩家：" + createRoleRsp.PlayerInfo.NickName + ", 角色创建成功！");
+            } 
+            else
+            {
+                Console.WriteLine("玩家：" + createRoleRsp.PlayerInfo.NickName + ", 创建失败！错误码:" + head.Errcode);
+            }
+
+            while (true)
+            {
+                head.Msgid = EOpCode.TestReq;
+                var heartbeatReq = new TestReq();
+                reqByte = pack(head, heartbeatReq);
                 await stream.WriteAsync(reqByte);
                 await stream.ReadAsync(readBuffer);
-                HeartBeatRsp heartBeatRsp;
+                TestRsp heartBeatRsp;
                 unpack(out head, out heartBeatRsp, readBuffer);
                 await Task.Delay(3000);
                 Console.WriteLine("已收到应答包！");
@@ -77,7 +117,7 @@ namespace ClientTest
 
         }
 
-        static void unpack<TBody>(out Protocol.SHead head, out TBody body, byte[] data) where TBody : IMessage<TBody>, new()
+        static void unpack<THead, TBody>(out THead head, out TBody body, byte[] data) where TBody : IMessage<TBody>, new() where THead: IMessage<THead>, new()
         {
             var packlenBits = data.Skip(0).Take(sizeof(int)).ToArray();
             Array.Reverse(packlenBits);
@@ -86,7 +126,8 @@ namespace ClientTest
             var headlenBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
             Array.Reverse(headlenBits);
             var headlen = BitConverter.ToInt32(headlenBits, 0);
-            head = Protocol.SHead.Parser.ParseFrom(data, sizeof(int) * 2, headlen);
+            MessageParser<THead> header = new MessageParser<THead>(() => new THead());
+            head = header.ParseFrom(data, sizeof(int) * 2, headlen);
 
             MessageParser<TBody> parser = new MessageParser<TBody>(() => new TBody());
             body = parser.ParseFrom(data, sizeof(int) * 2 + headlen, packlen - (sizeof(int) * 2 + headlen));

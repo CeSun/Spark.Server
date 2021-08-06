@@ -30,7 +30,7 @@ namespace GameServer.Player
 
         }
         public void Update()
-        {
+        {/*
             List<ulong> waitDeletePlayer = new List<ulong>();
             foreach (var playerPair in playerPool)
             {
@@ -41,6 +41,7 @@ namespace GameServer.Player
                 }
             }
             waitDeletePlayer.ForEach(x => playerPool.Remove(x));
+            */
         }
 
         public void Fini()

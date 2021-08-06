@@ -43,15 +43,16 @@ namespace GameServer
         }
         protected override void OnHandlerData(Session session, byte[] data)
         {
-            var player = playerPool.GetPlayer(session.SessionId);
+            var player = session.GetProcess<Player.Player>();
             if (player == null)
             {
                 player = new Player.Player(session);
-                player.Init();
                 playerPool.AddPlayer(session.SessionId, player);
+                session.SetProcess(player);
+                player.Init();
             }
-            if (player != null)
-                _ = player.processData(data);
+            player.processData(data);
+
         }
     }
 }

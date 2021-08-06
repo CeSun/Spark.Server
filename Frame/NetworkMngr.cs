@@ -24,10 +24,10 @@ namespace Frame
         public delegate void ConnectHandler(Session session);
         LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
         internal LockFreeQueue<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new LockFreeQueue<(Session, byte[], TaskCompletionSource)>();
-        SynchronizationContext synchronizationContext;
+        SingleThreadSynchronizationContext synchronizationContext;
         DataHandler dataHandler;
         IPEndPoint ListenIpEndPoint;
-        public void Init(IPEndPoint ListenIpEndPoint, SynchronizationContext synchronizationContext, DataHandler dataHandler)
+        public void Init(IPEndPoint ListenIpEndPoint, SingleThreadSynchronizationContext synchronizationContext, DataHandler dataHandler)
         {
             this.ListenIpEndPoint = ListenIpEndPoint;
             tcpServer = new TcpListener(ListenIpEndPoint);
@@ -145,7 +145,7 @@ namespace Frame
                             session.otherData = otherData;
                             foreach(var itemdata in outlist)
                             {
-                                synchronizationContext?.Post(e => dataHandler(session, itemdata), null);
+                                synchronizationContext?.PostStart(e => dataHandler(session, itemdata), null);
                             }
                             session.latestRec = now;
                         }
@@ -262,6 +262,14 @@ namespace Frame
         public ulong SessionId;
         internal byte[] otherData;
         public DateTime latestRec;
+        private object process;
+        public TProcess GetProcess<TProcess>(){
+            return (TProcess)this.process;
+        }
+        public void SetProcess<TProcess>(TProcess value)
+        {
+            process = value;
+        }
         internal NetworkMngr networkMngr;
         public Task SendAsync(byte[] data)
         {
