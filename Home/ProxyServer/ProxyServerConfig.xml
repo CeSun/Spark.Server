@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Config>
+	<Network>
+		<Port>2009</Port>
+		<Host>0.0.0.0</Host>
+	</Network>
+</Config>

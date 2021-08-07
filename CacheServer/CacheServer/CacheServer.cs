@@ -7,19 +7,19 @@ using System.Threading.Tasks;
 
 namespace CacheServer
 {
-    class CacheServer : ServerBaseWithNet<CacheServer>
+    class CacheServer : ServerBase<CacheServer>
     {
-        protected override string ConfPath => throw new NotImplementedException();
+        protected override string ConfPath => "../CacheServerConfig.xml";
 
-        protected override void OnHandlerConnected(Session session)
+        protected override void OnFini()
         {
         }
 
-        protected override void OnHandlerData(Session session, byte[] data)
+        protected override void OnInit()
         {
         }
 
-        protected override void OnHandlerDisconnected(Session session)
+        protected override void OnUpdate()
         {
         }
     }

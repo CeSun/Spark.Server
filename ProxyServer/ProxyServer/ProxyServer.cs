@@ -9,7 +9,7 @@ namespace ProxyServer
 {
     public class Server : ServerBaseWithNet<Server>
     {
-        protected override string ConfPath => "../ProxyServerConf.xml";
+        protected override string ConfPath => "../ProxyServerConfig.xml";
 
         protected override void OnHandlerConnected(Session session)
         {
