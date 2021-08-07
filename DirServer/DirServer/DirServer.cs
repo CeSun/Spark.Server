@@ -12,7 +12,7 @@ namespace DirServer
     
     class Server : ServerBaseWithNet<Server>
     {
-        Dispatcher<EOpCode, SHead> dispatcher = new Dispatcher<EOpCode, SHead>(head => { return head.Msgid; });
+        Dispatcher<EOpCode, SHead, Session> dispatcher = new Dispatcher<EOpCode, SHead, Session>(head => { return head.Msgid; });
 
         Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>> servers = new Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>>();
         Dictionary<string, Dictionary<int, int>> versions = new Dictionary<string, Dictionary<int, int>>();

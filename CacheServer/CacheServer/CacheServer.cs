@@ -10,13 +10,17 @@ namespace CacheServer
     class CacheServer : ServerBase<CacheServer>
     {
         protected override string ConfPath => "../CacheServerConfig.xml";
-
         protected override void OnFini()
         {
         }
 
         protected override void OnInit()
         {
+        }
+
+        protected void DataHandler( byte[] data)
+        {
+
         }
 
         protected override void OnUpdate()

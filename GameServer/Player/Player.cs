@@ -13,7 +13,7 @@ namespace GameServer.Player
     public class Player
     {
         public Frame.Session Session { get; private set; }
-        Dispatcher<EOpCode, SHead> dispatcher = new Dispatcher<EOpCode, SHead>(head => { return head.Msgid; });
+        DispatcherLite<EOpCode, SHead> dispatcher = new DispatcherLite<EOpCode, SHead>(head => { return head.Msgid; });
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
