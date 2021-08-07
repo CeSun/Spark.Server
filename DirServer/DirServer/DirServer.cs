@@ -10,7 +10,7 @@ using Google.Protobuf;
 namespace DirServer
 {
     
-    class Server : ServerAppWithNet<Server>
+    class Server : ServerBaseWithNet<Server>
     {
         Dispatcher<EOpCode, SHead> dispatcher = new Dispatcher<EOpCode, SHead>(head => { return head.Msgid; });
 
@@ -98,5 +98,12 @@ namespace DirServer
             base.OnUpdate();
         }
 
+        protected override void OnHandlerConnected(Session session)
+        {
+        }
+
+        protected override void OnHandlerDisconnected(Session session)
+        {
+        }
     }
 }

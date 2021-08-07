@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Frame;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
+    public delegate void DataHandler(Session session, byte[] data);
+    public delegate void ConnectHandler(Session session);
+
     /// <summary>
     /// 网络管理类
     /// </summary>
@@ -19,15 +23,13 @@ namespace Frame
         bool Stop;
         TcpListener tcpServer;
         LockFreeQueue<(Session, byte[])> recBufferBlock = new LockFreeQueue<(Session, byte[])>(20000);
-
-        public delegate void DataHandler(Session session, byte[] data);
-        public delegate void ConnectHandler(Session session);
-        LockFreeQueue<(Session, bool)> NewSessionBufferBlock = new LockFreeQueue<(Session, bool)>();
         internal LockFreeQueue<(Session, byte[], TaskCompletionSource)> sendBufferBlock = new LockFreeQueue<(Session, byte[], TaskCompletionSource)>();
         SingleThreadSynchronizationContext synchronizationContext;
         DataHandler dataHandler;
         IPEndPoint ListenIpEndPoint;
-        public void Init(IPEndPoint ListenIpEndPoint, SingleThreadSynchronizationContext synchronizationContext, DataHandler dataHandler)
+        ConnectHandler connectHandler = session => { };
+        ConnectHandler disconnectHandler = session => { };
+        public void Init(IPEndPoint ListenIpEndPoint, SingleThreadSynchronizationContext synchronizationContext, DataHandler dataHandler, ConnectHandler connectHandler, ConnectHandler disconnectHandler)
         {
             this.ListenIpEndPoint = ListenIpEndPoint;
             tcpServer = new TcpListener(ListenIpEndPoint);
@@ -37,6 +39,8 @@ namespace Frame
             recvTask.Start();
             this.synchronizationContext = synchronizationContext;
             this.dataHandler = dataHandler;
+            this.disconnectHandler = disconnectHandler;
+            this.connectHandler = connectHandler;
         }
 
         public void Update()
@@ -48,7 +52,6 @@ namespace Frame
         {
             Stop = true;
         }
-
         Dictionary<ulong, Session> clientMap = new Dictionary<ulong, Session>();
         Dictionary<Socket, ulong> socketMap = new Dictionary<Socket, ulong>();
         Dictionary<Socket, List<(byte[], TaskCompletionSource)>> sendMap = new Dictionary<Socket, List<(byte[], TaskCompletionSource)>>();
@@ -109,7 +112,7 @@ namespace Frame
                                 var session = new Session { clientSocket = socket, SessionId = id, networkMngr = this, latestRec = now };
                                 clientMap.Add(id, session);
                                 socketMap.Add(socket, id);
-                                NewSessionBufferBlock.Add((session, true));
+                                synchronizationContext?.PostStart(e => connectHandler(session), null);
                             }
                         }
                         else
@@ -138,7 +141,6 @@ namespace Frame
                             if (session.otherData != null)
                             {
                                 len += session.otherData.Length;
-                                
                             }
                             
                             var otherData = ReadPackFromBuffer(dataBuffer, session.otherData, len, out outlist);
@@ -183,6 +185,7 @@ namespace Frame
                         }
                     }
                     waitDelete.ForEach(pair => {
+
                         pair.Item2.Shutdown(SocketShutdown.Both);
                         var session = clientMap.GetValueOrDefault(pair.Item1);
                         clientMap.Remove(pair.Item1);
@@ -192,7 +195,9 @@ namespace Frame
                             list.ForEach(res => res.Item2.SetResult());
                         sendMap.Remove(pair.Item2);
                         if (session != null)
-                            NewSessionBufferBlock.Add((session, false));
+                        {
+                            synchronizationContext?.PostStart(e => disconnectHandler(session), null);
+                        }
 
                     });
                 }

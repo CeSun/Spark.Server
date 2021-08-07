@@ -8,9 +8,9 @@ using System.Diagnostics;
 
 namespace GameServer
 {
-    public class Server : ServerAppWithNet<Server>
+    public class Server : ServerBaseWithNet<Server>
     {
-        public PlayerMngr playerPool = new PlayerMngr();
+        public PlayerMngr playerMngr = new PlayerMngr();
         public int Zone { get { return 1; } }
         public int InstanceId { get { return 1; } }
         public UinMngr UinMngr { get; private set; }
@@ -22,37 +22,42 @@ namespace GameServer
             base.OnInit();
             UinMngr = new UinMngr();
             Database.Init(Config.Mysql);
-            playerPool.Init();
+            playerMngr.Init();
             UinMngr.Init(Zone);
-
         }
+
         protected override void OnUpdate()
         {
             base.OnUpdate();
             Database.Update();
-            playerPool.Update();
-            UinMngr.Update();
+            playerMngr?.Update();
+            UinMngr?.Update();
         
         }
         protected override void OnFini()
         {
             base.OnFini();
             Database.Fini();
-            playerPool?.Fini();
+            playerMngr?.Fini();
             UinMngr?.Fini();
         }
         protected override void OnHandlerData(Session session, byte[] data)
         {
             var player = session.GetProcess<Player.Player>();
-            if (player == null)
-            {
-                player = new Player.Player(session);
-                playerPool.AddPlayer(session.SessionId, player);
-                session.SetProcess(player);
-                player.Init();
-            }
             player.processData(data);
+        }
 
+        protected override void OnHandlerConnected(Session session)
+        {
+            var player = new Player.Player(session);
+            playerMngr.AddPlayer(session.SessionId, player);
+            session.SetProcess(player);
+            player.Init();
+        }
+
+        protected override void OnHandlerDisconnected(Session session)
+        {
+            playerMngr.Remove(session.SessionId);
         }
     }
 }

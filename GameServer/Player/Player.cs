@@ -39,7 +39,6 @@ namespace GameServer.Player
         {
             fsm.PostEvent(EEvent.Logout);
         }
-        public bool IsDisConnected { get; private set; }
 
         public void processData(byte[] data)
         {
@@ -48,7 +47,6 @@ namespace GameServer.Player
 
         public Player(Frame.Session session)
         {
-            IsDisConnected = false;
             Session = session;
         }
 
@@ -101,7 +99,6 @@ namespace GameServer.Player
                 DBData.LoginServerId = 0;
                 _ = tPlayer.SaveAync();
             }
-            IsDisConnected = true;
         }
 
         async Task filterAsync(SHead reqHead,  TaskAction next)
@@ -272,17 +269,6 @@ namespace GameServer.Player
             await Session.SendAsync(data);
         }
 
-        public void Update()
-        {
-            if (fsm.CurrentState != EState.Init && fsm.CurrentState != EState.LogOut)
-            {
-                if ((DateTime.Now - LatestTime).TotalSeconds > 10)
-                {
-                    fsm.PostEvent(EEvent.Logout);
-                }
-            }
-            fsm.Update();
-        }
         public void Fini()
         {
 

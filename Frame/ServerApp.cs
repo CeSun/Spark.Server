@@ -11,7 +11,7 @@ namespace Frame
     /// 服务基类
     /// </summary>
     /// <typeparam name="SubT">子类</typeparam>
-    public abstract class ServerApp <SubT> where SubT : ServerApp<SubT>, new()
+    public abstract class ServerBase<SubT> where SubT : ServerBase<SubT>, new()
     {
         
         // 配置文件

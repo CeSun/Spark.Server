@@ -9,10 +9,17 @@ namespace GameServer.Player
     public class PlayerMngr
     {
         private Dictionary<ulong, Player> playerPool { get; set; }
-
+        
         public PlayerMngr()
         {
             playerPool = new Dictionary<ulong, Player>();
+        }
+
+        public void Remove(ulong sessionId)
+        {
+            var player = playerPool.GetValueOrDefault(sessionId);
+            player?.Disconnected();
+            playerPool.Remove(sessionId);
         }
         public void AddPlayer(ulong sessionId, Player player)
         {
