@@ -103,7 +103,7 @@ namespace Frame
         Dispatcher<TMsgId, THead, byte> sub;
         public DispatcherLite(Dispatcher<TMsgId, THead, byte>.GetMsgIdFunc func) 
         {
-            Dispatcher<TMsgId, THead, byte> sub = new Dispatcher<TMsgId, THead, byte>(func);
+            sub = new Dispatcher<TMsgId, THead, byte>(func);
         }
 
         public void DispatcherRequest(byte[] data)

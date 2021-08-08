@@ -1,0 +1,66 @@
+﻿syntax = "proto3";
+
+package CacheServerApi;
+
+enum EOpCode {
+	EOPCODE_INVAILD = 0;				// 无效协议
+	EOPCODE_QUERY_REQ = 1;
+	EOPCODE_QUERY_RSP = 2;
+	EOPCODE_SAVE_REQ = 3;
+	EOPCODE_SAVE_RSP = 4;
+	EOPCODE_DELETE_REQ = 5;
+	EOPCODE_DELETE_RSP = 6;
+}
+
+enum EErrno {
+	EERRNO_SUCC = 0;					// 成功
+	EERRNO_FAIL = 1;					// 失败
+	EERRNO_VERSION_ERROR = 2;			// 数据版本不对
+	EERRNO_RECORE_EXISTED = 3;			// 数据已存在
+	EERRNO_RECORE_IS_NOT_EXISTED = 4;   // 数据不存在
+}
+
+message Head {
+    EOpCode msgid = 1;				// 消息ID
+	uint64 sync = 2;				// 透传信息
+	EErrno errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
+}
+
+message QueryReq {
+	string key = 1;
+	string table = 2;
+}
+
+message QueryRsp {
+	RecordInfo record = 1;
+}
+
+message SaveReq {
+	string key = 1;
+	string table = 2;
+	RecordInfo record = 3;
+}
+message SaveRsp {
+
+}
+message DeleteReq {
+	string key = 1;
+	string table = 2;
+}
+
+message DeleteRsp {
+
+}
+
+message RecordInfo {
+	string key = 1;
+	string table = 2;
+	repeated RecordFieldInfo field = 3;
+	uint32 version = 4;
+}
+
+message RecordFieldInfo {
+	string field = 1;
+	bytes data = 2;
+}
+

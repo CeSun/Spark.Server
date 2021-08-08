@@ -1,0 +1,20 @@
+﻿using CacheServerApi;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CacheServer.Tables
+{
+    class TBNickname : Table<TBNickname>
+    {
+        Dictionary<string, string> fields = new Dictionary<string, string> {
+            { "c_base", "base" }
+        };
+        protected override Dictionary<string, string> Fields => fields;
+
+        protected override string TableName => "DBNickname";
+
+    }
+}

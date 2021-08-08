@@ -43,8 +43,7 @@ namespace DataBase
         protected abstract string GetKey(TKey key);
         public async Task<DBError> SaveAync()
         {
-            byte[] bitData = null;
-            bitData = Value.ToByteArray();
+            byte[] bitData = Value.ToByteArray();
             var keyString = GetKey();
             // 版本号是0即新增
             if (version == 0)

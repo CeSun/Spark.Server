@@ -36,21 +36,14 @@ namespace Frame
         }
         public void Update()
         {
-            Stopwatch sw = Stopwatch.StartNew();
             (SendOrPostCallback d, object state, Source) data = default;
-            for (int i = 0; i < 10 ; i++)
+            int i = 0;
+            for (i = 0; i < 10 ; i++)
             {
                 if (!bufferBlock.TryTake(out data))
                     break;
-                Stopwatch sw2 = Stopwatch.StartNew();
                 data.d(data.state);
-                sw2.Stop();
-                if (data.Item3 == Source.Start)
-                {
-
-                }
             }
-            sw.Stop();
         }
     }
 }

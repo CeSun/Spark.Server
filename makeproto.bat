@@ -4,3 +4,6 @@
 .\tools\protoc.exe .\DirServer\DirServerApi\Protocol\client.proto --csharp_out .\DirServer\DirServerApi\Protocol\
 .\tools\protoc.exe .\DirServer\DirServerApi\Protocol\client.proto --csharp_out .\DirServer\DirServer\Protocol\
 .\tools\protoc.exe .\DirServer\DirServerApi\Protocol\client.proto --csharp_out .\Test\ClientTest\api\
+.\tools\protoc.exe .\CacheServer\CacheServerApi\Protocol\protocol.proto --csharp_out .\CacheServer\CacheServerApi\Protocol
+.\tools\protoc.exe .\CacheServer\CacheServerApi\Protocol\database.proto --csharp_out .\CacheServer\CacheServerApi\Protocol
+pause

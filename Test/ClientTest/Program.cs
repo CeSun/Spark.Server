@@ -70,7 +70,6 @@ namespace ClientTest
         {
             byte[] readBuffer = new byte[1024 * 1024];
             TcpClient client = new TcpClient();
-            await client.ConnectAsync("127.0.0.1", 2007);
             SHead head = new SHead();
             head.Msgid = EOpCode.LoginReq;
             head.Reqseq = 0;

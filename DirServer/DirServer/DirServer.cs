@@ -37,7 +37,8 @@ namespace DirServer
                 sessions[session] = reqBody.Info;
             }catch (Exception e)
             {
-
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
             }
             var svrs = servers.GetValueOrDefault(reqBody.Info.Name);
             if (svrs == null)

@@ -57,7 +57,8 @@ namespace GameServer.Player
             dispatcher.Bind<LoginReq>(EOpCode.LoginReq, LoginAsync);
             dispatcher.Bind<CreateRoleReq>(EOpCode.CreateroleReq, CreateRoleAsync);
             dispatcher.Bind<LogoutReq>(EOpCode.LogoutReq, Logout);
-            dispatcher.Bind<HeartBeatReq>(EOpCode.HeartbeatReq, async (head, rsp) => { });
+            // 给个null函数没关系，这个协议会被filter拦截
+            dispatcher.Bind<HeartBeatReq>(EOpCode.HeartbeatReq, null);
             dispatcher.Filter = filterAsync;
             InitFSM();
 
@@ -74,10 +75,8 @@ namespace GameServer.Player
             // 每个事件对应的处理函数还没有捋一遍
             var ret = fsm.AddEvent(EEvent.Login, EState.Init, EState.Logining, null);
             ret = fsm.AddEvent(EEvent.Create, EState.Logining, EState.Creating, null);
-
             ret = fsm.AddEvent(EEvent.LoginSucc, EState.Logining, EState.Online, null);
             ret = fsm.AddEvent(EEvent.LoginSucc, EState.Creating, EState.Online, null);
-
             ret = fsm.AddEvent(EEvent.Logout, EState.Online, EState.LogOut, null);
             ret = fsm.AddEvent(EEvent.Logout, EState.Init, EState.LogOut, null);
             ret = fsm.AddEvent(EEvent.Logout, EState.Creating, EState.LogOut, null);
