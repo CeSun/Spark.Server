@@ -7,7 +7,16 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
-    public abstract class ServerBaseWithNet<SubT> : ServerBase<SubT> where SubT : ServerBase<SubT>, new()
+    public class BaseNetConfig: BaseConfig
+    {
+        public NetConfig Network;
+        public struct NetConfig
+        {
+            public string Host;
+            public int Port;
+        }
+    }
+    public abstract class ServerBaseWithNet<SubT, TConf> : ServerBase<SubT, TConf> where SubT : ServerBase<SubT, TConf>, new() where TConf : BaseNetConfig
     {
         NetworkMngr netWorkMngr = new NetworkMngr();
         /// <summary>
@@ -22,12 +31,7 @@ namespace Frame
 
         protected override void OnInit()
         {
-            IPEndPoint iPEndPoint = null;
-            if (Config != null)
-            {
-                var port = int.Parse(Config.Network.Port.Value);
-                iPEndPoint = IPEndPoint.Parse(Config.Network.Host.Value + ":" + port);
-            }
+            var iPEndPoint = IPEndPoint.Parse(Config.Network.Host + ":" + Config.Network.Port);
             netWorkMngr.Init(iPEndPoint, SyncContext, OnHandlerData, OnHandlerConnected, OnHandlerDisconnected);
         }
 

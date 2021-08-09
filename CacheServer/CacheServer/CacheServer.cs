@@ -3,7 +3,11 @@ using Frame;
 
 namespace CacheServer
 {
-    class CacheServer : ServerBase<CacheServer>
+    class CacheConfig : BaseConfig
+    {
+
+    }
+    class CacheServer : ServerBase<CacheServer, CacheConfig>
     {
         protected override string ConfPath => "../CacheServerConfig.xml";
 

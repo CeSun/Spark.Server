@@ -8,7 +8,11 @@ using System.Diagnostics;
 
 namespace GameServer
 {
-    public class Server : ServerBaseWithNet<Server>
+    public class Config : BaseNetConfig
+    {
+        public MysqlConfig Mysql;
+    }
+    public class Server : ServerBaseWithNet<Server, Config>
     {
         public PlayerMngr playerMngr = new PlayerMngr();
         public int Zone { get { return 1; } }
@@ -24,6 +28,7 @@ namespace GameServer
             Database.Init(Config.Mysql);
             playerMngr.Init();
             UinMngr.Init(Zone);
+            TimeMngr.Instance.Init(8);
         }
 
         protected override void OnUpdate()

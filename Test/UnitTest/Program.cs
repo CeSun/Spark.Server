@@ -16,7 +16,7 @@ namespace UnitTest
         {
             SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
-            Database.Init(null);
+            Database.Init(default);
             uinMngr.Init(1);
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
             TestUinMngr();

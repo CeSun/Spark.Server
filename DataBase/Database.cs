@@ -10,6 +10,14 @@ using System.Threading.Tasks;
 
 namespace DataBase
 {
+    public struct MysqlConfig
+    {
+        public string Host;
+        public string Username;
+        public string Password;
+        public string Database;
+        public int Port;
+    }
     public class Database
     {
 
@@ -22,15 +30,10 @@ namespace DataBase
 
         static string[] tables= new string[0];
 
-        public static void Init(dynamic Mysql)
+        public static void Init(MysqlConfig Mysql)
         {
-            string host = (string)Mysql.Host.Value;
-            string username = (string)Mysql.Username.Value;
-            string password = (string)Mysql.Password.Value;
-            string database = (string)Mysql.Database.Value;
-            int port = int.Parse(Mysql.Port.Value);
             tables = new string[]{"DBAccount", "DBNickname", "DBPlayer", "DBUin" };
-            connectStr = string.Format("Server={0};Port={1};Database={2}; User={3};Password={4};sslmode=Required", host, port, database, username, password);
+            connectStr = string.Format("Server={0};Port={1};Database={2}; User={3};Password={4};sslmode=Required", Mysql.Host, Mysql.Port, Mysql.Database, Mysql.Username, Mysql.Password);
             InitTable();
         }
         public static void Update()

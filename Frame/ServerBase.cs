@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Frame
 {
@@ -11,7 +12,7 @@ namespace Frame
     /// 服务基类
     /// </summary>
     /// <typeparam name="SubT">子类</typeparam>
-    public abstract class ServerBase<SubT> where SubT : ServerBase<SubT>, new()
+    public abstract class ServerBase<SubT, TConfig> where SubT : ServerBase<SubT, TConfig>, new() where TConfig: BaseConfig
     {
         
         // 配置文件
@@ -29,7 +30,7 @@ namespace Frame
         /// </summary>
         protected abstract void OnFini();
 
-        protected dynamic Config { get; set; }
+        protected TConfig Config { get; set; }
         public static void Start()
         {
             Instance = new SubT();
@@ -40,6 +41,7 @@ namespace Frame
                 var start = DateTime.Now;
                 while (true)
                 {
+                    TimeMngr.Instance.Update();
                     frameNo++;
                     Instance.Update();
                     if ((DateTime.Now - start).TotalMilliseconds >= 1000)
@@ -67,11 +69,14 @@ namespace Frame
             if (ConfPath != null) {
                 StreamReader streamReader = new StreamReader(ConfPath);
                 var xml = streamReader.ReadToEnd();
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(TConfig));
+                Config = (TConfig)xmlSerializer.Deserialize(streamReader);
                 streamReader.Close();
                 dynamic cfg = new DynamicXml(xml);
                 Config = cfg.Config;
             }
             SynchronizationContext.SetSynchronizationContext(SyncContext);
+            TimeMngr.Instance.Init(Config.Time.Zone);
             OnInit();
         }
 
@@ -87,5 +92,17 @@ namespace Frame
             OnFini();
         }
 
+    }
+
+    /// <summary>
+    /// 服务配置基类
+    /// </summary>
+    public class BaseConfig
+    {
+        public TimeConfig Time;
+        public struct TimeConfig
+        {
+            public int Zone;
+        }
     }
 }

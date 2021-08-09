@@ -10,7 +10,11 @@ using Google.Protobuf;
 namespace DirServer
 {
     
-    class Server : ServerBaseWithNet<Server>
+    class DirConfig: BaseNetConfig
+    {
+
+    }
+    class Server : ServerBaseWithNet<Server, DirConfig>
     {
         Dispatcher<EOpCode, SHead, Session> dispatcher = new Dispatcher<EOpCode, SHead, Session>(head => { return head.Msgid; });
 
