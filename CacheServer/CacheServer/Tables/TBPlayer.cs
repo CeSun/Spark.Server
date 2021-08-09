@@ -14,8 +14,8 @@ namespace CacheServer.Tables
 
         Dictionary<string, string> fields = new Dictionary<string, string>()
             {
-                {"base", "base"},
-                {"currency", "currency"},
+                {"c_base", "base"},
+                {"c_currency", "currency"},
             };
         protected override Dictionary<string, string> Fields => fields;
 

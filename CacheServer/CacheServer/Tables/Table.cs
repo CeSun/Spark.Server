@@ -11,7 +11,7 @@ using StackExchange.Redis;
 
 namespace CacheServer.Tables
 {
-    public abstract class Table<TSub> : Singleton<TSub> where TSub: new()
+    public abstract class Table<TSub> : Singleton<TSub> where TSub : new()
     {
         protected abstract Dictionary<string, string> Fields { get; }
         protected abstract string TableName { get; }
@@ -19,57 +19,55 @@ namespace CacheServer.Tables
         {
             EErrno errno;
             var redisKey = string.Format("{0}|{1}", TableName, key);
-            using (var redis = Redis.Instance.Borrow())
+            var redis = Redis.Instance.Database;
+            if (redis == null) return (null, EErrno.Fail);
+            var result = await redis.HashGetAllAsync(redisKey);
+            RecordInfo rtv = null;
+            do
             {
-                if (redis == null) return (null, EErrno.Fail);
-                var result = await redis.Connector.HashGetAllAsync(redisKey);
-                RecordInfo rtv = null;
-                do
+                if (result.Length > 0)
                 {
-                    if (result.Length > 0)
+                    rtv = HashEntrysToPb(result);
+                    errno = EErrno.Succ;
+                }
+                else
+                {
+                    var res = await LoadFromMysqlAsync(key);
+                    if (res.err != EErrno.Succ)
                     {
-                        rtv = HashEntrysToPb(result);
-                        errno = EErrno.Succ;
+                        errno = res.err;
+                        break;
                     }
-                    else
+                    var entrys = await SaveRedisAsync(key, res.Item1);
+                    if (entrys.err != EErrno.Succ)
                     {
-                        var res = await LoadFromMysqlAsync(key);
-                        if (res.err != EErrno.Succ)
-                        {
-                            errno = res.err;
-                            break;
-                        }
-                        var entrys = await SaveRedisAsync(key, res.Item1);
-                        if (entrys.err != EErrno.Succ)
-                        {
-                            errno = entrys.err;
-                            break;
-                        }
-                        rtv = HashEntrysToPb(entrys.Item1);
-                        errno = EErrno.Succ;
+                        errno = entrys.err;
+                        break;
                     }
-                } while (false);
-                return (rtv, errno);
-            }
+                    rtv = HashEntrysToPb(entrys.Item1);
+                    errno = EErrno.Succ;
+                }
+            } while (false);
+            return (rtv, errno);
         }
 
         public async Task<EErrno> SaveAsync(string key, RecordInfo record)
         {
             var redisKey = string.Format("{0}|{1}", TableName, key);
-            using (var redis = Redis.Instance.Borrow())
+            var redis = Redis.Instance.Database;
+
+            if (redis == null)
+                return EErrno.Fail;
+            var b = await redis.KeyExistsAsync(redisKey);
+            if (!b)
             {
-                if (redis == null)
-                    return EErrno.Fail;
-                var b = await redis.Connector.KeyExistsAsync(redisKey);
-                if (!b)
+                var res = await QueryAsync(key);
+                if (res.Item2 != EErrno.Succ)
                 {
-                    var res = await QueryAsync(key);
-                    if (res.Item2 != EErrno.Succ)
-                    {
-                        return res.Item2;
-                    }
+                    return res.Item2;
                 }
-                var updateLua = @"if tonumber(redis.call('HGET', KEYS[1], 'version')) == tonumber(ARGV[1]) then 
+            }
+            var updateLua = @"if tonumber(redis.call('HGET', KEYS[1], 'version')) == tonumber(ARGV[1]) then 
                                 for i = 1, (#ARGV - 1) do
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i + 1])
                                 end
@@ -79,52 +77,50 @@ namespace CacheServer.Tables
                             else 
                                 return 0 
                             end";
-                var entrys = PbToHashEntrys(record);
-                var keys = new RedisKey[entrys.Length + 1];
-                var args = new RedisValue[entrys.Length + 1];
-                keys[0] = key;
-                args[0] = record.Version;
-                for (int i = 0; i < entrys.Length; i++)
-                {
-                    keys[i + 1] = entrys[i].Name.ToString();
-                    args[i] = entrys[i].Value;
-                }
-                var result = await redis.Connector.ScriptEvaluateAsync(updateLua, keys, args);
-                if (((int)result) == 1)
-                {
-                    await redis.Connector.SetAddAsync("DirtyKey", redisKey);
-                    return EErrno.Succ;
-                }
-                else
-                {
-                    return EErrno.VersionError;
-                }
+            var entrys = PbToHashEntrys(record);
+            var keys = new RedisKey[entrys.Length + 1];
+            var args = new RedisValue[entrys.Length + 1];
+            keys[0] = key;
+            args[0] = record.Version;
+            for (int i = 0; i < entrys.Length; i++)
+            {
+                keys[i + 1] = entrys[i].Name.ToString();
+                args[i] = entrys[i].Value;
             }
-           
-           
+            var result = await redis.ScriptEvaluateAsync(updateLua, keys, args);
+            if (((int)result) == 1)
+            {
+                await redis.SetAddAsync("DirtyKey", redisKey);
+                return EErrno.Succ;
+            }
+            else
+            {
+                return EErrno.VersionError;
+            }
+
+
+
         }
         public async Task<EErrno> InsertAsync(string key, RecordInfo record)
         {
             record.Version = 0;
             var redisKey = string.Format("{0}|{1}", TableName, key);
-            using (var redis = Redis.Instance.Borrow())
+            var redis = Redis.Instance.Database;
+            if (redis == null)
+                return EErrno.Fail;
+            var b = await redis.KeyExistsAsync(redisKey);
+            if (b)
+                return EErrno.RecoreExisted;
+            if (await RecordIsExistedAsync(key) == EErrno.Succ)
+                return EErrno.RecoreExisted;
+            var entrys = PbToHashEntrys(record);
+            var err = await InsertRedisAsync(redisKey, entrys);
+            if (err == EErrno.Succ)
             {
-                if (redis == null)
-                    return EErrno.Fail;
-                var b = await redis.Connector.KeyExistsAsync(redisKey);
-                if (b)
-                    return EErrno.RecoreExisted;
-                if (await RecordIsExistedAsync(key) == EErrno.Succ)
-                    return EErrno.RecoreExisted;
-                var entrys = PbToHashEntrys(record);
-                var err = await InsertRedisAsync(redisKey, entrys);
-                if (err == EErrno.Succ)
-                {
-                    return EErrno.Succ;
-                }
-                else
-                    return err;
+                return EErrno.Succ;
             }
+            else
+                return err;
         }
         public RecordInfo HashEntrysToPb(HashEntry[] entrys)
         {
@@ -147,7 +143,7 @@ namespace CacheServer.Tables
             }
             return recordInfo;
         }
-        public  HashEntry[] PbToHashEntrys(RecordInfo record)
+        public HashEntry[] PbToHashEntrys(RecordInfo record)
         {
             List<HashEntry> entrys = new List<HashEntry>();
             foreach (var field in record.Field)
@@ -194,7 +190,7 @@ namespace CacheServer.Tables
 
                 }
             }
-            
+
         }
         public async Task<EErrno> RecordIsExistedAsync(string key)
         {
@@ -217,7 +213,7 @@ namespace CacheServer.Tables
 
                 }
             }
-                
+
         }
         public async Task<EErrno> SaveToMysqlAsync(string key, HashEntry[] entrys)
         {
@@ -231,8 +227,8 @@ namespace CacheServer.Tables
                 else
                     colum = Fields[entry.Name];
                 if (param == null)
-                    param = colum +  "=@" + entry.Name;
-                param  += ", " + colum + "=@" + entry.Name;
+                    param = colum + "=@" + entry.Name;
+                param += ", " + colum + "=@" + entry.Name;
             }
             sql = string.Format(sql, TableName, param);
             using (var mysql = Mysql.Instance.Borrow())
@@ -263,49 +259,47 @@ namespace CacheServer.Tables
                     return EErrno.RecoreIsNotExisted;
                 }
             }
-            
+
 
         }
         private async Task<(HashEntry[], EErrno err)> SaveRedisAsync(string key, HashEntry[] entrys)
         {
-            using (var redis = Redis.Instance.Borrow())
-            {
-                if (redis == null) return (null, EErrno.Fail);
-                var saveLua = @"if redis.call('EXISTS', KEYS[1]) == 0 then 
+            var redis = Redis.Instance.Database;
+            if (redis == null) return (null, EErrno.Fail);
+            var saveLua = @"if redis.call('EXISTS', KEYS[1]) == 0 then 
                                 for i = 1, #ARGV do
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
                                 end
                             end
                             return redis.call('hgetall', KEYS[1])";
-                var keys = new RedisKey[entrys.Length + 1];
-                var args = new RedisValue[entrys.Length];
-                keys[0] = key;
-                for (int i = 0; i < entrys.Length; i++)
-                {
-                    keys[i + 1] = entrys[i].Name.ToString();
-                    args[i] = entrys[i].Value;
-                }
+            var keys = new RedisKey[entrys.Length + 1];
+            var args = new RedisValue[entrys.Length];
+            keys[0] = key;
+            for (int i = 0; i < entrys.Length; i++)
+            {
+                keys[i + 1] = entrys[i].Name.ToString();
+                args[i] = entrys[i].Value;
+            }
 
-                var result = await redis.Connector.ScriptEvaluateAsync(saveLua, keys, args);
-                HashEntry[] resEntrys = new HashEntry[((RedisResult[])result).Length / 2];
-                int j = 1;
-                (RedisValue key, RedisValue value) pari = default;
-                foreach (var en in (RedisResult[])result)
+            var result = await redis.ScriptEvaluateAsync(saveLua, keys, args);
+            HashEntry[] resEntrys = new HashEntry[((RedisResult[])result).Length / 2];
+            int j = 1;
+            (RedisValue key, RedisValue value) pari = default;
+            foreach (var en in (RedisResult[])result)
+            {
+                if (j % 2 == 1)
                 {
-                    if (j % 2 == 1)
-                    {
-                        pari.key = ((RedisValue)en);
-                    }
-                    else
-                    {
-                        pari.value = ((RedisValue)en);
-                        resEntrys[j / 2 - 1] = new HashEntry(pari.key, pari.value);
-                    }
-                    j++;
+                    pari.key = ((RedisValue)en);
                 }
-                return (resEntrys, EErrno.Succ);
-            }    
-                
+                else
+                {
+                    pari.value = ((RedisValue)en);
+                    resEntrys[j / 2 - 1] = new HashEntry(pari.key, pari.value);
+                }
+                j++;
+            }
+            return (resEntrys, EErrno.Succ);
+
         }
         private async Task<EErrno> InsertRedisAsync(string key, HashEntry[] entrys)
         {
@@ -325,18 +319,16 @@ namespace CacheServer.Tables
                 keys[i + 1] = entrys[i].Name.ToString();
                 args[i] = entrys[i].Value;
             }
-            using (var redis = Redis.Instance.Borrow())
+            var redis = Redis.Instance.Database;
+            if (redis == null) return EErrno.Fail;
+            var result = await redis.ScriptEvaluateAsync(insretLua, keys, args);
+            if (((int)result) == 1)
             {
-                if (redis == null) return EErrno.Fail;
-                var result = await redis.Connector.ScriptEvaluateAsync(insretLua, keys, args);
-                if (((int)result) == 1)
-                {
-                    return EErrno.Succ;
-                }
-                else
-                {
-                    return EErrno.RecoreExisted;
-                }
+                return EErrno.Succ;
+            }
+            else
+            {
+                return EErrno.RecoreExisted;
             }
         }
 

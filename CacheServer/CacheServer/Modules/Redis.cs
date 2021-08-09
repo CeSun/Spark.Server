@@ -8,14 +8,13 @@ using StackExchange.Redis;
 
 namespace CacheServer.Modules
 {
-    public class Redis : Pool<IDatabase,RedisConfig ,Redis>
+    public class Redis : Singleton<Redis>
     {
-        public override void Init(RedisConfig config)
+        private IDatabase database;
+        public IDatabase Database => database;
+        public void Init(RedisConfig config)
         {
-            for (var i = 0; i < config.PoolSize; i ++)
-            {
-                connectors.Push(ConnectionMultiplexer.Connect(config.Host).GetDatabase(config.Database));
-            }
+            database = ConnectionMultiplexer.Connect(config.Host).GetDatabase(config.Database);
         }
 
         public void Update()
