@@ -18,20 +18,20 @@ namespace ClientTest
         static TcpClient[] clients;
         static async Task Main(string[] args)
         {
-             List<Task<double>> tasks = new List<Task<double>>();
+             List<Task> tasks = new List<Task>();
             await Task.Delay(1000);
-            int num = 3000;
+            int num = 5000;
             clients =  new TcpClient[num];
             for (int i = 0; i < num; i++)
             {
                 clients[i] = new TcpClient();
-                clients[i].Connect("82.156.26.148", 2007);
+                clients[i].Connect("127.0.0.1", 2007);
             }
             Console.WriteLine("Start!");
             for (int i= 0; i < num; i++)
             {
                 // tasks.Add(TestDirServer());
-                tasks.Add(fun(String.Format("openid_xxx{0}", i), i));
+                tasks.Add(fun3(String.Format("openid_xxx|{0}", i), i));
             }
             foreach (var task in tasks)
             {
