@@ -11,7 +11,7 @@ namespace Frame
         protected Stack<TConnector> connectors = new Stack<TConnector>();
         public abstract void Init(TConfig config);
         public abstract Task NewAsync(int num);
-
+        private Queue<TaskCompletionSource<PoolMeta>> tcss = new Queue<TaskCompletionSource<PoolMeta>>();
         public PoolMeta Borrow()
         {
             TConnector connector;
@@ -21,19 +21,34 @@ namespace Frame
             }
             return null;
         }
-        public async Task<PoolMeta> BorrowAsync()
+        public Task<PoolMeta> BorrowAsync()
         {
+            TaskCompletionSource<PoolMeta> tcs = new TaskCompletionSource<PoolMeta>();
             var meta = Borrow();
             if (meta != null)
-                return meta;
-            await NewAsync(3);
-            return Borrow();
-
+            {
+                tcs.SetResult(meta);
+            }
+            else
+            {
+                tcss.Append(tcs);
+                return tcs.Task;
+            }
+            return tcs.Task;
         }
+
         private void Return(ref TConnector Connection)
         {
-            connectors.Push(Connection);
-            Connection = default;
+            TaskCompletionSource<PoolMeta> tcs;
+            if (tcss.TryDequeue(out tcs))
+            {
+                tcs.SetResult(new PoolMeta(Connection));
+            }
+            else
+            {
+                connectors.Push(Connection);
+                Connection = default;
+            }
         }
         public class PoolMeta : IDisposable
         {
