@@ -68,12 +68,9 @@ namespace Frame
         {
             if (ConfPath != null) {
                 StreamReader streamReader = new StreamReader(ConfPath);
-                var xml = streamReader.ReadToEnd();
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(TConfig));
                 Config = (TConfig)xmlSerializer.Deserialize(streamReader);
                 streamReader.Close();
-                dynamic cfg = new DynamicXml(xml);
-                Config = cfg.Config;
             }
             SynchronizationContext.SetSynchronizationContext(SyncContext);
             TimeMngr.Instance.Init(Config.Time.Zone);

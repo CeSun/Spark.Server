@@ -25,6 +25,7 @@ namespace GameServer
         {
             base.OnInit();
             UinMngr = new UinMngr();
+            Config.Mysql.PoolSize = 10;
             Database.Init(Config.Mysql);
             playerMngr.Init();
             UinMngr.Init(Zone);

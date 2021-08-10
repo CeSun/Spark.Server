@@ -1,7 +1,10 @@
 ﻿using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Protocol;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -11,20 +14,30 @@ namespace ClientTest
 {
     class Program
     {
+        static BlockingCollection<double> bc = new BlockingCollection<double>();
+        static TcpClient[] clients;
         static async Task Main(string[] args)
         {
-            await Task.Delay(5000);
-            List<Task> tasks = new List<Task>();
-            for(int i= 0; i <10000; i++)
+             List<Task<double>> tasks = new List<Task<double>>();
+            await Task.Delay(1000);
+            int num = 3000;
+            clients =  new TcpClient[num];
+            for (int i = 0; i < num; i++)
+            {
+                clients[i] = new TcpClient();
+                clients[i].Connect("82.156.26.148", 2007);
+            }
+            Console.WriteLine("Start!");
+            for (int i= 0; i < num; i++)
             {
                 // tasks.Add(TestDirServer());
-                tasks.Add(fun(String.Format("测试{0}{0}888", i)));
+                tasks.Add(fun(String.Format("openid_xxx{0}", i), i));
             }
-            foreach(var task in tasks)
+            foreach (var task in tasks)
             {
                 await task;
             }
-
+            Console.WriteLine(bc.Average());
         }
         static async Task TestDirServer()
         {
@@ -66,13 +79,39 @@ namespace ClientTest
             TestRsp rsp;
             unpack(out head, out rsp, readBuffer);
         }
-        static async Task fun(string name)
+        static async Task<double> fun(string name, int index)
         {
             byte[] readBuffer = new byte[1024 * 1024];
-            TcpClient client = new TcpClient();
+            var client = clients[index];
             SHead head = new SHead();
             head.Msgid = EOpCode.LoginReq;
             head.Reqseq = 0;
+
+            TestReq loginReq = new TestReq();
+            loginReq.Id = 1;
+            loginReq.Name = name;
+            var reqByte = pack(head, loginReq);
+            var stream = client.GetStream();
+            Stopwatch sw = Stopwatch.StartNew();
+            await stream.WriteAsync(reqByte);
+            await stream.ReadAsync(readBuffer);
+            TestRsp loginRsp;
+            unpack(out head, out loginRsp, readBuffer);
+            sw.Stop();
+            bc.Add(sw.Elapsed.TotalMilliseconds);
+            client.Close();
+            return sw.Elapsed.TotalMilliseconds;
+
+
+        }
+        static async Task fun3(string name, int index)
+        {
+            byte[] readBuffer = new byte[1024 * 1024];
+            var client = clients[index];
+            SHead head = new SHead();
+            head.Msgid = EOpCode.LoginReq;
+            head.Reqseq = 0;
+
             LoginReq loginReq = new LoginReq();
             loginReq.LoginType = ELoginType.TestLogin;
             loginReq.TestAccount = name;
@@ -82,22 +121,21 @@ namespace ClientTest
             await stream.ReadAsync(readBuffer);
             LoginRsp loginRsp;
             unpack(out head, out loginRsp, readBuffer);
-
-
             head.Msgid = EOpCode.CreateroleReq;
-            var createRole = new CreateRoleReq { NickName = name};
+            var createRole = new CreateRoleReq { NickName = name };
             reqByte = pack(head, createRole);
             await stream.WriteAsync(reqByte);
             await stream.ReadAsync(readBuffer);
             CreateRoleRsp createRoleRsp;
             unpack(out head, out createRoleRsp, readBuffer);
+
             if (head.Errcode == EErrno.Succ)
             {
                 Console.WriteLine("玩家：" + createRoleRsp.PlayerInfo.NickName + ", 角色创建成功！");
-            } 
+            }
             else
             {
-                Console.WriteLine("玩家：" + createRoleRsp.PlayerInfo.NickName + ", 创建失败！错误码:" + head.Errcode);
+                Console.WriteLine("玩家：" + ", 创建失败！错误码:" + head.Errcode);
             }
 
             while (true)
@@ -115,7 +153,6 @@ namespace ClientTest
 
 
         }
-
         static void unpack<THead, TBody>(out THead head, out TBody body, byte[] data) where TBody : IMessage<TBody>, new() where THead: IMessage<THead>, new()
         {
             var packlenBits = data.Skip(0).Take(sizeof(int)).ToArray();

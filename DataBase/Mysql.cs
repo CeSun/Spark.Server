@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Frame;
 using MySqlConnector;
 
-namespace CacheServer.Modules
+namespace DataBase
 {
-    public class Mysql : Pool<MySqlConnection, MysqlConfig, Mysql>
+    public class MysqlMngr : Pool<MySqlConnection, MysqlConfig, MysqlMngr>
     {
         string connectStr = "";
         public override void Init(MysqlConfig mysqlConfig)

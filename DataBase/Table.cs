@@ -48,11 +48,11 @@ namespace DataBase
             // 版本号是0即新增
             if (version == 0)
             {
-                using (var conn = Database.GetConnection())
+                using (var mysql = await MysqlMngr.Instance.BorrowAsync())
                 {
+                    var conn = mysql.Connector;
                     try
                     {
-                        await conn.OpenAsync();
                         var cmd = conn.CreateCommand();
                         cmd.CommandText = string.Format("insert into {0} (c_key, c_value, c_version) values(@key,@value,@version);", TableName);
                         cmd.Parameters.AddWithValue("@key", keyString);
@@ -87,11 +87,11 @@ namespace DataBase
             }
             else
             {
-                using (var conn = Database.GetConnection())
+                using (var mysql = await MysqlMngr.Instance.BorrowAsync())
                 {
+                    var conn = mysql.Connector;
                     try
                     {
-                        await conn.OpenAsync();
                         var cmd = conn.CreateCommand();
                         cmd.CommandText = string.Format("update {0} set c_value=@value, c_version=@newVersion where c_key=@key and c_version=@oldVersion;", TableName);
                         cmd.Parameters.AddWithValue("@key", keyString);
@@ -123,11 +123,11 @@ namespace DataBase
             if (version == 0)
                 return DBError.ObjectIsEmpty;
             var keyString = GetKey();
-            using (var conn = Database.GetConnection())
+            using (var mysql = await MysqlMngr.Instance.BorrowAsync())
             {
+                var conn = mysql.Connector;
                 try
                 {
-                    await conn.OpenAsync();
                     var cmd = conn.CreateCommand();
                     cmd.CommandText = string.Format("delete from {0} where c_key=@key;", TableName);
                     cmd.Parameters.AddWithValue("@key", keyString);
@@ -156,9 +156,9 @@ namespace DataBase
             var tableName = table.TableName;
             var keyString = table.GetKey(key);
             MessageParser<TProto> parser = new MessageParser<TProto>(() => new TProto());
-            using (var conn = Database.GetConnection())
+            using (var mysql = await MysqlMngr.Instance.BorrowAsync())
             {
-                await conn.OpenAsync();
+                var conn = mysql.Connector;
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = string.Format("select c_key, c_value, c_version from {0} where c_key=@key;", tableName);
                 cmd.Parameters.AddWithValue("@key", keyString);
@@ -196,9 +196,9 @@ namespace DataBase
             TTable table = new TTable();
             var keyString = table.GetKey(key);
             var tableName = table.TableName;
-            using (var conn = Database.GetConnection())
+            using (var mysql = await MysqlMngr.Instance.BorrowAsync())
             {
-                await conn.OpenAsync();
+                var conn = mysql.Connector;
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = string.Format("delete from {0} where c_key=@key;", tableName);
                 cmd.Parameters.AddWithValue("@key", keyString);

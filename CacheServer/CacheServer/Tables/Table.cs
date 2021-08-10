@@ -162,7 +162,7 @@ namespace CacheServer.Tables
         public async Task<(HashEntry[], EErrno err)> LoadFromMysqlAsync(string key)
         {
             List<HashEntry> entrys = new List<HashEntry>();
-            using (var mysql = Mysql.Instance.Borrow())
+            using (var mysql = await Mysql.Instance.BorrowAsync())
             {
                 if (mysql == null) return (null, EErrno.Fail);
                 var cmd = mysql.Connector.CreateCommand();
@@ -194,7 +194,7 @@ namespace CacheServer.Tables
         }
         public async Task<EErrno> RecordIsExistedAsync(string key)
         {
-            using (var mysql = Mysql.Instance.Borrow())
+            using (var mysql = await Mysql.Instance.BorrowAsync())
             {
                 if (mysql == null) return EErrno.Fail;
                 var cmd = mysql.Connector.CreateCommand();
@@ -231,7 +231,7 @@ namespace CacheServer.Tables
                 param += ", " + colum + "=@" + entry.Name;
             }
             sql = string.Format(sql, TableName, param);
-            using (var mysql = Mysql.Instance.Borrow())
+            using (var mysql = await Mysql.Instance.BorrowAsync())
             {
                 if (mysql == null)
                     return EErrno.Fail;

@@ -10,30 +10,24 @@ using System.Threading.Tasks;
 
 namespace DataBase
 {
+
     public struct MysqlConfig
     {
         public string Host;
+        public int Port;
         public string Username;
         public string Password;
         public string Database;
-        public int Port;
+        public int PoolSize;
     }
     public class Database
     {
-
-        private static string connectStr = "";
-
-        public static MySqlConnection GetConnection()
-        {
-            return new MySqlConnection(connectStr);
-        }
-
         static string[] tables= new string[0];
 
         public static void Init(MysqlConfig Mysql)
         {
             tables = new string[]{"DBAccount", "DBNickname", "DBPlayer", "DBUin" };
-            connectStr = string.Format("Server={0};Port={1};Database={2}; User={3};Password={4};sslmode=Required", Mysql.Host, Mysql.Port, Mysql.Database, Mysql.Username, Mysql.Password);
+            MysqlMngr.Instance.Init(Mysql);
             InitTable();
         }
         public static void Update()
@@ -46,9 +40,9 @@ namespace DataBase
         }
         private static void InitTable()
         {
-            using (var conn = Database.GetConnection())
+            using (var msyql = MysqlMngr.Instance.Borrow())
             {
-                conn.Open();
+                var conn = msyql.Connector;
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = "show tables";
                 Dictionary<string, byte> dbTables = new Dictionary<string, byte>();

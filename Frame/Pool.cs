@@ -10,6 +10,8 @@ namespace Frame
     {
         protected Stack<TConnector> connectors = new Stack<TConnector>();
         public abstract void Init(TConfig config);
+        public abstract Task NewAsync(int num);
+
         public PoolMeta Borrow()
         {
             TConnector connector;
@@ -18,6 +20,15 @@ namespace Frame
                 return new PoolMeta(connector);
             }
             return null;
+        }
+        public async Task<PoolMeta> BorrowAsync()
+        {
+            var meta = Borrow();
+            if (meta != null)
+                return meta;
+            await NewAsync(3);
+            return Borrow();
+
         }
         private void Return(ref TConnector Connection)
         {
