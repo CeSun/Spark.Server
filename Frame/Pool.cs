@@ -26,17 +26,11 @@ namespace Frame
             TaskCompletionSource<PoolMeta> tcs = new TaskCompletionSource<PoolMeta>();
             var meta = Borrow();
             if (meta != null)
-            {
                 tcs.SetResult(meta);
-            }
             else
-            {
                 tcss.Append(tcs);
-                return tcs.Task;
-            }
             return tcs.Task;
         }
-
         private void Return(ref TConnector Connection)
         {
             TaskCompletionSource<PoolMeta> tcs;
