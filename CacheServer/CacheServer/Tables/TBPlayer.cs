@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CacheServer.Tables
 {
-    class TBPlayer : Table<TBPlayer>
+    class TBPlayer : Table
     {
 
         Dictionary<string, string> fields = new Dictionary<string, string>()

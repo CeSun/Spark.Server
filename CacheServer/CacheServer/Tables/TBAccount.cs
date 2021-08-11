@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CacheServer.Tables
 {
-    class TBAccount : Table<TBAccount>
+    class TBAccount : Table
     {
         Dictionary<string, string> fields = new Dictionary<string, string>
         {

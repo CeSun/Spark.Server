@@ -11,7 +11,7 @@ using StackExchange.Redis;
 
 namespace CacheServer.Tables
 {
-    public abstract class Table<TSub> : Singleton<TSub> where TSub : new()
+    public abstract class Table
     {
         protected abstract Dictionary<string, string> Fields { get; }
         protected abstract string TableName { get; }
@@ -21,6 +21,8 @@ namespace CacheServer.Tables
             var redisKey = string.Format("{0}|{1}", TableName, key);
             var redis = Redis.Instance.Database;
             if (redis == null) return (null, EErrno.Fail);
+            if (await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
+                return (null, EErrno.RecoreIsNotExisted);
             var result = await redis.HashGetAllAsync(redisKey);
             RecordInfo rtv = null;
             do
@@ -50,14 +52,12 @@ namespace CacheServer.Tables
             } while (false);
             return (rtv, errno);
         }
-
-        public async Task<EErrno> SaveAsync(string key, RecordInfo record)
+        public async Task<EErrno> UpdateAsync(string key, RecordInfo record)
         {
             var redisKey = string.Format("{0}|{1}", TableName, key);
             var redis = Redis.Instance.Database;
-
-            if (redis == null)
-                return EErrno.Fail;
+            if (await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
+                return EErrno.RecoreIsNotExisted;
             var b = await redis.KeyExistsAsync(redisKey);
             if (!b)
             {
@@ -90,7 +90,6 @@ namespace CacheServer.Tables
             var result = await redis.ScriptEvaluateAsync(updateLua, keys, args);
             if (((int)result) == 1)
             {
-                await redis.SetAddAsync("DirtyKey", redisKey);
                 return EErrno.Succ;
             }
             else
@@ -111,18 +110,39 @@ namespace CacheServer.Tables
             var b = await redis.KeyExistsAsync(redisKey);
             if (b)
                 return EErrno.RecoreExisted;
-            if (await RecordIsExistedAsync(key) == EErrno.Succ)
-                return EErrno.RecoreExisted;
+            if (!await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
+            {
+                if (await RecordIsExistedAsync(key) == EErrno.Succ)
+                    return EErrno.RecoreExisted;
+            }
             var entrys = PbToHashEntrys(record);
             var err = await InsertRedisAsync(redisKey, entrys);
-            if (err == EErrno.Succ)
+            return err;
+        }
+
+        public async Task<EErrno> DeleteAsync(string key)
+        {
+            var redis = Redis.Instance.Database;
+
+            var redisKey = string.Format("{0}|{1}", TableName, key);
+            EErrno err;
+            if (!await redis.KeyExistsAsync(redisKey))
             {
+                await redis.SetAddAsync("DeleteDirtyKey", redisKey);
+                await redis.KeyDeleteAsync(redisKey);
+                return EErrno.Succ;
+            }
+            else if ((err = await RecordIsExistedAsync(key)) == EErrno.Succ)
+            {
+                await redis.SetAddAsync("DeleteDirtyKey", redisKey);
                 return EErrno.Succ;
             }
             else
+            {
                 return err;
+            }
         }
-        public RecordInfo HashEntrysToPb(HashEntry[] entrys)
+        private RecordInfo HashEntrysToPb(HashEntry[] entrys)
         {
             RecordInfo recordInfo = new RecordInfo();
             foreach (var entry in entrys)
@@ -143,7 +163,7 @@ namespace CacheServer.Tables
             }
             return recordInfo;
         }
-        public HashEntry[] PbToHashEntrys(RecordInfo record)
+        private HashEntry[] PbToHashEntrys(RecordInfo record)
         {
             List<HashEntry> entrys = new List<HashEntry>();
             foreach (var field in record.Field)
@@ -159,7 +179,7 @@ namespace CacheServer.Tables
 
             return entrys.ToArray();
         }
-        public async Task<(HashEntry[], EErrno err)> LoadFromMysqlAsync(string key)
+        private async Task<(HashEntry[], EErrno err)> LoadFromMysqlAsync(string key)
         {
             List<HashEntry> entrys = new List<HashEntry>();
             using (var mysql = await Mysql.Instance.BorrowAsync())
@@ -192,7 +212,7 @@ namespace CacheServer.Tables
             }
 
         }
-        public async Task<EErrno> RecordIsExistedAsync(string key)
+        private async Task<EErrno> RecordIsExistedAsync(string key)
         {
             using (var mysql = await Mysql.Instance.BorrowAsync())
             {
@@ -256,6 +276,7 @@ namespace CacheServer.Tables
                 }
                 else
                 {
+                    // todo 更新失败的时候要保存
                     return EErrno.RecoreIsNotExisted;
                 }
             }
@@ -308,6 +329,7 @@ namespace CacheServer.Tables
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
                                 end
                                 redis.call('SADD', 'DirtyKey', KEYS[1])
+                                redis.call('SREM', 'DeleteDirtyKey', KEYS[1])
                                 return 1
                             end
                                 return 0";
@@ -331,7 +353,6 @@ namespace CacheServer.Tables
                 return EErrno.RecoreExisted;
             }
         }
-
-
+        
     }
 }

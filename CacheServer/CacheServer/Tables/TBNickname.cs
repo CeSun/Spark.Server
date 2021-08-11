@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CacheServer.Tables
 {
-    class TBNickname : Table<TBNickname>
+    class TBNickname : Table
     {
         Dictionary<string, string> fields = new Dictionary<string, string> {
             { "c_base", "base" }

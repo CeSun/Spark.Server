@@ -11,8 +11,13 @@ namespace CacheServer
     {
         public MysqlConfig Mysql;
         public RedisConfig Redis;
+        public CacheServerConf CacheServer;
     }
-
+    public struct CacheServerConf
+    {
+        public int SaveInterval;
+        
+    }
     public struct MysqlConfig
     {
         public string Host;
