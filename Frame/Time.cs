@@ -11,27 +11,43 @@ namespace Frame
         public int Zone => zone;
 
         private long offset;
-        public long Timestamp => utcTimestamp + (zone * 60 * 60) + offset;
-        public long UtcTimestamp => utcTimestamp + offset;
-        public long RealTimestamp => utcTimestamp + (zone * 60 * 60);
-        public long RealUtcTimestamp => utcTimestamp;
+        public long Timestamp { get; private set; }
+        public long UtcTimestamp { get; private set; }
+        public long RealTimestamp { get; private set; }
+        public long RealUtcTimestamp { get; private set; }
 
         private int zone;
 
-        private long utcTimestamp;
+        /// <summary>
+        /// 初始化
+        /// </summary>
+        /// <param name="zone"></param>
         public void Init(int zone)
         {
-            this.zone = zone;
+            this.zone = zone; 
+            Update();
         }
+
         DateTime initTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
 
+        /// <summary>
+        /// 设置时间偏移 (用于GM改时间)
+        /// </summary>
+        /// <param name="offset"></param>
         public void SetTimeOffset(long offset)
         {
             this.offset = offset;
         }
+
+        /// <summary>
+        /// 每帧调用 用于更新时间
+        /// </summary>
         public void Update()
         {
-            utcTimestamp = (long)(DateTime.UtcNow - initTime).TotalMilliseconds;
+            RealUtcTimestamp = (long)(DateTime.UtcNow - initTime).TotalMilliseconds;
+            RealTimestamp = RealUtcTimestamp + (zone * 60 * 60 * 1000);
+            UtcTimestamp = RealUtcTimestamp + offset;
+            Timestamp = RealTimestamp + offset;
         }
         public bool IsSameDay(long time1, long time2)
         {

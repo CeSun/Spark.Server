@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Frame;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace CacheServer
 {
-    public struct Config
+    public class Config : BaseConfig
     {
-        public MysqlConfig mysqlConfig;
-        public RedisConfig redisConfig;
+        public MysqlConfig Mysql;
+        public RedisConfig Redis;
     }
 
     public struct MysqlConfig
@@ -29,6 +30,5 @@ namespace CacheServer
         public string Username;
         public string Password;
         public int Database;
-        public int PoolSize;
     }
 }

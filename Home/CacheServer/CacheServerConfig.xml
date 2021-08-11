@@ -1,3 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Config>
+	<Time>
+		<Zone>8</Zone>
+	</Time>
+	<Redis>
+		<Host>localhost</Host>
+		<Port>123</Port>
+		<Username>user</Username>
+		<Password>123</Password>
+		<Database>0</Database>
+	</Redis>
+	<Mysql>
+		<Host>localhost</Host>
+		<Port>123</Port>
+		<Username>user</Username>
+		<Password>123</Password>
+		<Database>Game01</Database>
+		<PoolSize>20</PoolSize>
+	</Mysql>
 </Config>

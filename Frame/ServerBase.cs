@@ -69,7 +69,7 @@ namespace Frame
             if (ConfPath != null) {
                 StreamReader streamReader = new StreamReader(ConfPath);
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(TConfig));
-                Config = (TConfig)xmlSerializer.Deserialize(streamReader);
+                Config = xmlSerializer.Deserialize(streamReader) as TConfig;
                 streamReader.Close();
             }
             SynchronizationContext.SetSynchronizationContext(SyncContext);

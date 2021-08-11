@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace ProxyServer
 {
-    public class ProxyConfig : BaseNetConfig
+    public class Config : BaseNetConfig
     {
 
     }
-    public class Server : ServerBaseWithNet<Server, ProxyConfig>
+    public class Server : ServerBaseWithNet<Server, Config>
     {
         protected override string ConfPath => "../ProxyServerConfig.xml";
 

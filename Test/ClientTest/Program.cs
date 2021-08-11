@@ -19,8 +19,8 @@ namespace ClientTest
         static async Task Main(string[] args)
         {
              List<Task> tasks = new List<Task>();
-            await Task.Delay(1000);
-            int num = 5000;
+            await Task.Delay(3000);
+            int num = 4000;
             clients =  new TcpClient[num];
             for (int i = 0; i < num; i++)
             {

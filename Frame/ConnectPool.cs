@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
-    public abstract class Pool<TConnector, TConfig, TSub>: Singleton<TSub> where TSub: Pool<TConnector, TConfig, TSub>, new ()
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TConnector"></typeparam>
+    /// <typeparam name="TConfig"></typeparam>
+    /// <typeparam name="TSub"></typeparam>
+    public abstract class ConnectPool<TConnector, TConfig, TSub>: Singleton<TSub> where TSub: ConnectPool<TConnector, TConfig, TSub>, new ()
     {
         protected Stack<TConnector> connectors = new Stack<TConnector>();
         public abstract void Init(TConfig config);
@@ -16,11 +22,10 @@ namespace Frame
         {
             TConnector connector;
             if (connectors.TryPop(out connector))
-            {
                 return new PoolMeta(connector);
-            }
             return null;
         }
+
         public Task<PoolMeta> BorrowAsync()
         {
             TaskCompletionSource<PoolMeta> tcs = new TaskCompletionSource<PoolMeta>();
@@ -35,14 +40,10 @@ namespace Frame
         {
             TaskCompletionSource<PoolMeta> tcs;
             if (tcss.TryDequeue(out tcs))
-            {
                 tcs.SetResult(new PoolMeta(Connection));
-            }
             else
-            {
                 connectors.Push(Connection);
-                Connection = default;
-            }
+            Connection = default;
         }
         public class PoolMeta : IDisposable
         {

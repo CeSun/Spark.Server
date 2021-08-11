@@ -32,7 +32,7 @@ namespace Frame
         protected override void OnInit()
         {
             var iPEndPoint = IPEndPoint.Parse(Config.Network.Host + ":" + Config.Network.Port);
-            netWorkMngr.Init(iPEndPoint, SyncContext, OnHandlerData, OnHandlerConnected, OnHandlerDisconnected);
+            netWorkMngr.Init(iPEndPoint, OnHandlerData, OnHandlerConnected, OnHandlerDisconnected);
         }
 
         protected override void OnUpdate()

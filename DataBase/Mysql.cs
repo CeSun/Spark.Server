@@ -8,7 +8,7 @@ using MySqlConnector;
 
 namespace DataBase
 {
-    public class MysqlMngr : Pool<MySqlConnection, MysqlConfig, MysqlMngr>
+    public class MysqlMngr : ConnectPool<MySqlConnection, MysqlConfig, MysqlMngr>
     {
         string connectStr = "";
         public override void Init(MysqlConfig mysqlConfig)

@@ -8,7 +8,7 @@ using MySqlConnector;
 
 namespace CacheServer.Modules
 {
-    public class Mysql : Pool<MySqlConnection, MysqlConfig, Mysql>
+    public class Mysql : ConnectPool<MySqlConnection, MysqlConfig, Mysql>
     {
         string connectStr = "";
         public override void Init(MysqlConfig mysqlConfig)
