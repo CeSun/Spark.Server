@@ -8,21 +8,10 @@
 
 1. **Frame**
 
-   服务器的框架，包含服务器的通用基础类：
+   服务器的框架库, 将多个服务器中可复用的类分离到本项目
+   
 
-   ① LockFreeQueue 无锁队列
-
-   ② Dispatcher 协议派发类
-
-   ③ FSM 有限状态机
-
-   ④ NetworkMngr 网络管理类
-
-   ⑤ SingleThreadSynchronizationContext C#的异步调度上下文
-
-   ⑥ ServerApp 服务器类的基类，实现新服务器只需要包含此类即可
-
-2. **DataBase**
+2. **DataBase** (即将废弃)
 
    数据库访问api, 数据库使用的是mysql, 实现了一个K-V模式。
 
@@ -34,9 +23,10 @@
 
    ​	① 数据的二进制需要分段，目前整个二进制都会传输，导致数据变大时数据库操作效率不高。
 
-   ​	② 自动建表
+   ​	② 自动建表 (已完成)
 
-   ​	③ 做专门数据库服务进行缓存，计划是一个GameServer对应一个数据库缓存Server
+   ​	③ 做专门数据库服务进行缓存，计划是一个GameServer对应一个数据库缓存Server (在做)
+   
 
 3. **GameServer**
 
@@ -44,15 +34,22 @@
 
    已完成功能：登录，创角
    
+   
 4. **DirServer** (未完成)
 
    目录服务器，所有服务将把自己的服务器类型, 服务器大区(Zone), 服务器id以及ip和端口号注册到此服务。
+   
+      
+5. **CacheServer** (进行中，替代Database)
 
-5. **DirServerApi** (未完成)
+   数据库缓存服务，所有服务的数据库操作均走此服务。使用redis+cache。
+   
+6. **ProxyServer**
 
-   调用目录服务器的接口
-
-6. **ClientTest**
+  代理服务，服务间通信都是由此服务转发，以达到解耦效果。
+  
+  
+8. **ClientTest**
 
    模拟客户端发协议，来测试GameServer接口
 
@@ -62,8 +59,4 @@
 
 
 
-# 规划功能
-
-1. ProxyServer：所有服务间通信通过此服务转发
-2. CacheServer：mysql数据库缓存服务，目前各个服务通过DataBase库直接访问mysql，以后需要做数据缓存
 
