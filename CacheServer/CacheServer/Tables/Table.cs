@@ -119,7 +119,6 @@ namespace CacheServer.Tables
             var err = await InsertRedisAsync(redisKey, entrys);
             return err;
         }
-
         public async Task<EErrno> DeleteAsync(string key)
         {
             var redis = Redis.Instance.Database;
@@ -245,7 +244,7 @@ namespace CacheServer.Tables
                 if (entry.Name == "version")
                     colum = "c_version";
                 else
-                    colum = Fields[entry.Name];
+                    colum = Fields.FirstOrDefault(res => res.Value == entry.Name).Key;
                 if (param == null)
                     param = colum + "=@" + entry.Name;
                 param += ", " + colum + "=@" + entry.Name;
@@ -276,13 +275,38 @@ namespace CacheServer.Tables
                 }
                 else
                 {
+                    sql = "insert into {0}({1}) values({2});";
+                    var column = "'c_key'";
+                    var values = "@key, @version";
+                    cmd = mysql.Connector.CreateCommand();
+                    cmd.Parameters.AddWithValue("@key" , key);
+                    foreach (var entry in entrys)
+                    {
+                        column += ",'" + Fields.FirstOrDefault(res => res.Value == entry.Name).Key +"'";
+                        values += ", @" + entry.Name;
+                        if (entry.Name == "version")
+                        {
+                            cmd.Parameters.AddWithValue("@" + entry.Name, (uint)entry.Value);
+                        }
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@" + entry.Name, entry.Value);
+                        }
+                    }
+                    cmd.CommandText = string.Format(sql, column, values);
+                    rows = await cmd.ExecuteNonQueryAsync();
+                    if (rows == 1)
+                    {
+                        return EErrno.Succ;
+                    }
                     // todo 更新失败的时候要保存
-                    return EErrno.RecoreIsNotExisted;
+                    return EErrno.Fail;
                 }
             }
 
 
         }
+
         private async Task<(HashEntry[], EErrno err)> SaveRedisAsync(string key, HashEntry[] entrys)
         {
             var redis = Redis.Instance.Database;
@@ -325,6 +349,9 @@ namespace CacheServer.Tables
         private async Task<EErrno> InsertRedisAsync(string key, HashEntry[] entrys)
         {
             var insretLua = @"if redis.call('EXISTS', KEYS[1]) == 0 then 
+                                if redis.call('sismember', 'DirtyKey', KEYS[1]) == 1 then
+                                    return 0
+                                end
                                 for i = 1, #ARGV do
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
                                 end

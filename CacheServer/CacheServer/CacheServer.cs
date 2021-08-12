@@ -1,10 +1,13 @@
 ﻿using CacheServer.Modules;
 using CacheServer.Tables;
+using CacheServerApi;
 using Frame;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace CacheServer
 {
@@ -41,7 +44,48 @@ namespace CacheServer
             {
                 try
                 {
-                    await redis.SetPopAsync("");
+                    var hashEntrys = await redis.HashGetAllAsync("DirtyKey");
+                    foreach (var entry in hashEntrys)
+                    {
+                        var data = await redis.HashGetAllAsync((string)entry.Value);
+                        var strs = ((string)entry.Name).Split('|');
+                        if (strs.Length < 2)
+                            continue;
+                        var msyqlkey = string.Join(',', strs.Skip(1).ToArray());
+                        var table = tables.GetValueOrDefault(strs[0]);
+                        if (table == null)
+                            continue;
+                        if (await table.SaveToMysqlAsync(msyqlkey, data) == EErrno.Succ)
+                        {
+                            Condition cond = null;
+                            if (data == null || data.Length == 0)
+                            {
+                                cond = Condition.KeyNotExists((string)entry.Value);
+                            }
+                            else
+                            {
+                                uint version = 0;
+                                foreach (var field in data)
+                                {
+                                    if (field.Name == "version")
+                                    {
+                                        version = (uint)field.Value;
+                                    }
+                                }
+                                cond = Condition.HashEqual((string)entry.Value, "version", version);
+                            }
+                            var tx = redis.CreateTransaction();
+                            tx.AddCondition(cond);
+                            await tx.SetRemoveAsync("DirtyKey", entry.Value);
+                            await tx.ExecuteAsync();
+                        }
+                       
+                    }
+                    hashEntrys = await redis.HashGetAllAsync("DeleteDirtyKey");
+                    foreach (var entry in hashEntrys)
+                    {
+
+                    }
                 }
                 catch (Exception e)
                 {
