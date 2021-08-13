@@ -58,16 +58,13 @@ namespace CacheServer.Tables
             var redis = Redis.Instance.Database;
             if (await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
                 return EErrno.RecoreIsNotExisted;
-            var b = await redis.KeyExistsAsync(redisKey);
-            if (!b)
-            {
-                var res = await QueryAsync(key);
-                if (res.Item2 != EErrno.Succ)
-                {
-                    return res.Item2;
-                }
-            }
-            var updateLua = @"if tonumber(redis.call('HGET', KEYS[1], 'version')) == tonumber(ARGV[1]) then 
+            var res = await QueryAsync(key);
+            if (res.Item2 != EErrno.Succ)
+               return res.Item2;
+            var updateLua = @"if redis.call('SISMEMBER', 'DeleteDirtyKey', KEY[1]) == 0  then
+                                return 0    
+                            end
+                            if tonumber(redis.call('HGET', KEYS[1], 'version')) == tonumber(ARGV[1]) then 
                                 for i = 1, (#ARGV - 1) do
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i + 1])
                                 end
@@ -107,14 +104,9 @@ namespace CacheServer.Tables
             var redis = Redis.Instance.Database;
             if (redis == null)
                 return EErrno.Fail;
-            var b = await redis.KeyExistsAsync(redisKey);
-            if (b)
+            var b = await QueryAsync(key);
+            if (b.Item2 == EErrno.Succ)
                 return EErrno.RecoreExisted;
-            if (!await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
-            {
-                if (await RecordIsExistedAsync(key) == EErrno.Succ)
-                    return EErrno.RecoreExisted;
-            }
             var entrys = PbToHashEntrys(record);
             var err = await InsertRedisAsync(redisKey, entrys);
             return err;
@@ -123,24 +115,27 @@ namespace CacheServer.Tables
         public async Task<EErrno> DeleteAsync(string key)
         {
             var redis = Redis.Instance.Database;
-
             var redisKey = string.Format("{0}|{1}", TableName, key);
-            EErrno err;
-            if (!await redis.KeyExistsAsync(redisKey))
-            {
-                await redis.SetAddAsync("DeleteDirtyKey", redisKey);
-                await redis.KeyDeleteAsync(redisKey);
-                return EErrno.Succ;
-            }
-            else if ((err = await RecordIsExistedAsync(key)) == EErrno.Succ)
-            {
-                await redis.SetAddAsync("DeleteDirtyKey", redisKey);
-                return EErrno.Succ;
-            }
+            var ret = await QueryAsync(key);
+            if (ret.Item2 != EErrno.Succ)
+                return ret.Item2;
+            if (await redis.SetContainsAsync("DeleteDirtyKey", redisKey))
+                return EErrno.RecoreIsNotExisted;
+            var result = await redis.ScriptEvaluateAsync(@"
+                            if redis.call('SISMEMBER', 'DeleteDirtyKey', KEY[1]) != 0  then
+                                return 0
+                            end
+                            if redis.call('EXISTS', KEY[1] ) == 0 then
+                                return 0
+                            end
+                            redis.call('DEL', KEY[1])
+                            redis.call('SADD', 'DeleteDirtyKey', KEY[1])
+                            return 1
+            ");
+            if (((int)result) == 0)
+                return EErrno.RecoreIsNotExisted;
             else
-            {
-                return err;
-            }
+                return EErrno.Succ;
         }
         private RecordInfo HashEntrysToPb(HashEntry[] entrys)
         {
@@ -287,7 +282,10 @@ namespace CacheServer.Tables
         {
             var redis = Redis.Instance.Database;
             if (redis == null) return (null, EErrno.Fail);
-            var saveLua = @"if redis.call('EXISTS', KEYS[1]) == 0 then 
+            var saveLua = @"if redis.call('SISMEMBER', 'DeleteDirtyKey', KEY[1]) == 0  then
+                                return nil    
+                            end
+                            if redis.call('EXISTS', KEYS[1]) == 0 then 
                                 for i = 1, #ARGV do
                                     redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
                                 end
@@ -303,6 +301,8 @@ namespace CacheServer.Tables
             }
 
             var result = await redis.ScriptEvaluateAsync(saveLua, keys, args);
+            if (result.IsNull)
+                return (null, EErrno.RecoreIsNotExisted);
             HashEntry[] resEntrys = new HashEntry[((RedisResult[])result).Length / 2];
             int j = 1;
             (RedisValue key, RedisValue value) pari = default;
@@ -324,15 +324,15 @@ namespace CacheServer.Tables
         }
         private async Task<EErrno> InsertRedisAsync(string key, HashEntry[] entrys)
         {
-            var insretLua = @"if redis.call('EXISTS', KEYS[1]) == 0 then 
-                                for i = 1, #ARGV do
-                                    redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
-                                end
-                                redis.call('SADD', 'DirtyKey', KEYS[1])
-                                redis.call('SREM', 'DeleteDirtyKey', KEYS[1])
-                                return 1
+            var insretLua = @"if redis.call('EXISTS', KEYS[1]) != 0 then 
+                                return 0
                             end
-                                return 0";
+                            for i = 1, #ARGV do
+                                redis.call('HSET',KEYS[1], KEYS[i+1], ARGV[i])
+                            end
+                            redis.call('SADD', 'DirtyKey', KEYS[1])
+                            redis.call('SREM', 'DeleteDirtyKey', KEYS[1])
+                            return 1";
             var keys = new RedisKey[entrys.Length + 1];
             var args = new RedisValue[entrys.Length];
             keys[0] = key;
