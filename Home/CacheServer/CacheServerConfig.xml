@@ -5,17 +5,17 @@
 	</Time>
 	<Redis>
 		<Host>localhost</Host>
-		<Port>123</Port>
-		<Username>user</Username>
-		<Password>123</Password>
-		<Database>0</Database>
+		<Port>6379</Port>
+		<Username></Username>
+		<Password></Password>
+		<Database>1</Database>
 	</Redis>
 	<Mysql>
 		<Host>localhost</Host>
-		<Port>123</Port>
-		<Username>user</Username>
-		<Password>123</Password>
-		<Database>Game01</Database>
+		<Port>3306</Port>
+		<Username>root</Username>
+		<Password>1024</Password>
+		<Database>Game02</Database>
 		<PoolSize>20</PoolSize>
 	</Mysql>
 </Config>
