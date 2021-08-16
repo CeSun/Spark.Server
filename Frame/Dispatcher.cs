@@ -34,9 +34,9 @@ namespace Frame
         /// <returns>返回消息id</returns>
         public delegate TMsgId GetMsgIdFunc(THead head);
 
-        public delegate Task RequestHandler(THead head, TaskAction next);
+        public delegate Task RequestHandler(THead head, TaskAction next,int offset, byte[] data);
 
-        private RequestHandler requestHandler = async (head, next) => await next();
+        private RequestHandler requestHandler = async (head, next, offset, data) => await next();
 
         public RequestHandler Filter { get => requestHandler; set {
                 if (value != null) requestHandler = value; 
@@ -88,7 +88,7 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-               _ = requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data));
+               _ = requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
             }
         }
 

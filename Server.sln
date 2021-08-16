@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31521.260
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameServer", "GameServer\GameServer.csproj", "{30C82D82-2427-4404-86F0-45F1696D9060}"
 EndProject
@@ -33,9 +33,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProxyServerApi", "ProxyServ
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CacheServer", "CacheServer", "{96A0D479-4489-4961-BA0B-AC4F1D1D0D1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CacheServer", "CacheServer\CacheServer\CacheServer.csproj", "{8C723E08-C437-4CC8-9C8C-5C2DB10B3962}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CacheServer", "CacheServer\CacheServer\CacheServer.csproj", "{8C723E08-C437-4CC8-9C8C-5C2DB10B3962}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CacheServerApi", "CacheServer\CacheServerApi\CacheServerApi.csproj", "{9A8FA936-F7FF-4D20-9960-8C12D6B1A8BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CacheServerApi", "CacheServer\CacheServerApi\CacheServerApi.csproj", "{9A8FA936-F7FF-4D20-9960-8C12D6B1A8BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

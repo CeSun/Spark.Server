@@ -59,7 +59,7 @@ namespace GameServer.Player
             dispatcher.Bind<LogoutReq>(EOpCode.LogoutReq, Logout);
             // 给个null函数没关系，这个协议会被filter拦截
             dispatcher.Bind<HeartBeatReq>(EOpCode.HeartbeatReq, null);
-            // dispatcher.Filter = filterAsync;
+            dispatcher.Filter = filterAsync;
             InitFSM();
 
         }
@@ -100,7 +100,7 @@ namespace GameServer.Player
             }
         }
 
-        async Task filterAsync(SHead reqHead,  TaskAction next)
+        async Task filterAsync(SHead reqHead,  TaskAction next, int offset, byte[] data)
         {
             LatestTime = DateTime.Now;
             if (LatestSeq == 0 && reqHead.Msgid != EOpCode.LoginReq)
