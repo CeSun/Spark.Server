@@ -34,9 +34,9 @@ namespace Frame
         /// <returns>返回消息id</returns>
         public delegate TMsgId GetMsgIdFunc(THead head);
 
-        public delegate Task RequestHandler(THead head, TaskAction next,int offset, byte[] data);
+        public delegate Task RequestHandler(TTransparent transparent, THead head, TaskAction next,int offset, byte[] data);
 
-        private RequestHandler requestHandler = async (head, next, offset, data) => await next();
+        private RequestHandler requestHandler = async (transparent, head, next, offset, data) => await next();
 
         public RequestHandler Filter { get => requestHandler; set {
                 if (value != null) requestHandler = value; 
@@ -88,7 +88,7 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-               _ = requestHandler(head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
+               _ = requestHandler(session, head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
             }
         }
 
@@ -105,7 +105,7 @@ namespace Frame
         {
             sub = new Dispatcher<TMsgId, THead, byte>(func);
         }
-
+        public delegate Task RequestHandler(THead head, TaskAction next);
         public void DispatcherRequest(byte[] data)
         {
             sub.DispatcherRequest(default, data);
@@ -115,11 +115,14 @@ namespace Frame
             Dispatcher<TMsgId, THead, byte>.ProcessFunWithSession<TBody> newfunc =  async (_, head, body) => await func(head, body);
             sub.Bind(MessageId, newfunc);
         }
-
-        public Dispatcher<TMsgId, THead, byte>.RequestHandler Filter
+        RequestHandler handler;
+        public RequestHandler Filter
         {
-            get => sub.Filter;
-            set => sub.Filter = value;
+            get => handler;
+            set  {
+                handler = value;
+                sub.Filter = async (session, head, next, offset, data) => await handler(head, next);
+            }
         }
     }
 }

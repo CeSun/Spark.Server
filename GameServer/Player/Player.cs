@@ -100,7 +100,7 @@ namespace GameServer.Player
             }
         }
 
-        async Task filterAsync(SHead reqHead,  TaskAction next, int offset, byte[] data)
+        async Task filterAsync(SHead reqHead,  TaskAction next)
         {
             LatestTime = DateTime.Now;
             if (LatestSeq == 0 && reqHead.Msgid != EOpCode.LoginReq)
@@ -248,10 +248,10 @@ namespace GameServer.Player
         }
         public async Task SendToClientAsync<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
+            head.Reqseq = ++LatestSeq;
             byte[] data = null;
             await Task.Run(() =>
             {
-                head.Reqseq = ++LatestSeq;
                 var bodyBits = rsp.ToByteArray();
                 var headBits = head.ToByteArray();
                 int packLength = bodyBits.Length + headBits.Length + 2 * sizeof(int);

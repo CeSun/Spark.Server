@@ -36,9 +36,9 @@ namespace Proxyapi {
             "SU5WQUlMRBAAEhcKE0VPUENPREVfUkVHSVNURV9SRVEQARIXChNFT1BDT0RF",
             "X1JFR0lTVEVfUlNQEAISGQoVRU9QQ09ERV9IRUFSVEJFQVRfUkVREAMSGQoV",
             "RU9QQ09ERV9IRUFSVEJFQVRfUlNQEAQSFAoQRU9QQ09ERV9UUkFOU01JVBAF",
-            "KioKBkVFcnJubxIPCgtFRVJSTk9fU1VDQxAAEg8KC0VFUlJOT19GQUlMEAEq",
-            "KAoNRVRyYW5zbWl0VHlwZRINCglCcm9hZGNhc3QQABIICgRQb2xsEAFiBnBy",
-            "b3RvMw=="));
+            "KkAKBkVFcnJubxIPCgtFRVJSTk9fU1VDQxAAEg8KC0VFUlJOT19GQUlMEAES",
+            "FAoQRUVSUk5PX0RVUExJQ0FURRACKigKDUVUcmFuc21pdFR5cGUSDQoJQnJv",
+            "YWRjYXN0EAASCAoEUG9sbBABYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proxyapi.EOpCode), typeof(global::Proxyapi.EErrno), typeof(global::Proxyapi.ETransmitType), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -90,6 +90,10 @@ namespace Proxyapi {
     /// Ê§°Ü
     /// </summary>
     [pbr::OriginalName("EERRNO_FAIL")] Fail = 1,
+    /// <summary>
+    /// ÖØ¸´×¢²á
+    /// </summary>
+    [pbr::OriginalName("EERRNO_DUPLICATE")] Duplicate = 2,
   }
 
   /// <summary>

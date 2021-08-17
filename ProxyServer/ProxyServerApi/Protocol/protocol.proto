@@ -14,6 +14,7 @@ enum EOpCode {
 enum EErrno {
 	EERRNO_SUCC = 0;					// 成功
 	EERRNO_FAIL = 1;					// 失败
+	EERRNO_DUPLICATE = 2;				// 重复注册
 }
 
 // 转发类型

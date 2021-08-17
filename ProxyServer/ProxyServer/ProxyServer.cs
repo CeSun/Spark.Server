@@ -1,5 +1,7 @@
 ﻿using Frame;
+using Google.Protobuf;
 using Proxyapi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace ProxyServer
             dispatcher.Filter = Filter;
         }
 
-        async Task Filter (SHead head, TaskAction next, int offset, byte[] data)
+        async Task Filter (Session session, SHead head, TaskAction next, int offset, byte[] data)
         {
             if (head.Msgid != EOpCode.Transmit)
             {
@@ -42,18 +44,49 @@ namespace ProxyServer
                 // todo 打log
                 return;
             }
+
+            var svrInfo = session.GetProcess<RegistReq>();
+            if (svrInfo == null)
+                return;
+
             var body = data.Skip(offset).ToArray();
-            await svrSet.SendTo(head.Target, body);
+            SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone } };
+            var headBits = toHead.ToByteArray();
+            var toData = new byte[body.Length + body.Length];
+            headBits.CopyTo(toData, 0);
+            body.CopyTo(toData, headBits.Length);
+            await svrSet.SendTo(head.Target, toData);
 
         }
         async Task RegistReqAsync (Session session, SHead head, RegistReq reqBody)
         {
-
+            var serverTypeSet = servers.GetValueOrDefault(reqBody.Name);
+            if (serverTypeSet == null)
+            {
+                serverTypeSet = new Dictionary<int, ServerSet>();
+                servers.Add(reqBody.Name, serverTypeSet);
+            }
+            var ServerSet = serverTypeSet.GetValueOrDefault(reqBody.Zone);
+            if (ServerSet == null)
+            {
+                ServerSet = new ServerSet();
+                serverTypeSet.Add(reqBody.Zone, ServerSet);
+            }
+            var ret = ServerSet.InsertServer(session, reqBody.Id);
+            if (ret)
+                session.SetProcess(reqBody);
+            SHead rspHead = new SHead{Msgid = EOpCode.RegisteRsp, Sync = head.Sync, Errcode = ret?EErrno.Succ:EErrno.Duplicate};
+            RegistRsp rspBody = new RegistRsp();
+            var data = ProtoUtil.Pack(rspHead, rspBody);
+            await session.SendAsync(data);
         }
 
         async Task HeartBeatReqAsync(Session session, SHead head, HeartBeatReq reqBody)
         {
-
+            SHead rspHead = new SHead { Msgid = EOpCode.HeartbeatRsp, Sync = head.Sync,Errcode = EErrno.Succ};
+            HeartBeatRsp rspBody = new HeartBeatRsp();
+            var data = ProtoUtil.Pack(rspHead, rspBody);
+            await session.SendAsync(data);
         }
         protected override void OnHandlerConnected(Session session)
         {
@@ -67,7 +100,16 @@ namespace ProxyServer
 
         protected override void OnHandlerDisconnected(Session session)
         {
-
+            var svrInfo = session.GetProcess<RegistReq>();
+            if (svrInfo != null)
+            {
+                var typeSet = servers.GetValueOrDefault(svrInfo.Name);
+                if (typeSet != null)
+                {
+                    var svrSet = typeSet.GetValueOrDefault(svrInfo.Zone);
+                    svrSet.RemoveServer(svrInfo.Id);
+                }
+            }
         }
 
         Dictionary<string, Dictionary<int, ServerSet>> servers = new Dictionary<string, Dictionary<int, ServerSet>>();
