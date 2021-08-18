@@ -52,9 +52,17 @@ namespace ProxyServer
             var body = data.Skip(offset).ToArray();
             SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone } };
             var headBits = toHead.ToByteArray();
-            var toData = new byte[body.Length + body.Length];
-            headBits.CopyTo(toData, 0);
-            body.CopyTo(toData, headBits.Length);
+            var packLength = body.Length + body.Length + 2 * sizeof(int);
+
+            var packLengthBits = BitConverter.GetBytes(packLength);
+            var headLengthBits = BitConverter.GetBytes(headBits.Length);
+            Array.Reverse(packLengthBits);
+            Array.Reverse(headLengthBits);
+            var toData = new byte[packLength];
+            packLengthBits.CopyTo(toData, 0);
+            headLengthBits.CopyTo(toData, sizeof(int));
+            headBits.CopyTo(toData, 2 * sizeof(int));
+            body.CopyTo(toData, 2 * sizeof(int) + headBits.Length);
             await svrSet.SendTo(head.Target, toData);
 
         }

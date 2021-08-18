@@ -69,8 +69,6 @@ namespace Frame
                     }
                     if (StartIndex >= PackLen)
                     {
-                        var HeadLenBits = buffer.Skip(4).Take(4).ToArray();
-                        Array.Reverse(HeadLenBits);
                         var data = buffer.Take(PackLen).ToArray();
                         dataHandler(session, data);
                         data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
@@ -86,7 +84,7 @@ namespace Frame
             
         }
     }
-    public class Session
+    public class Session : ISession
     {
         public TcpClient client;
         public ulong SessionId;
@@ -106,5 +104,10 @@ namespace Frame
             await stream.WriteAsync(data);
         }
 
+    }
+
+    public interface ISession
+    {
+        Task SendAsync(byte[] data);
     }
 }

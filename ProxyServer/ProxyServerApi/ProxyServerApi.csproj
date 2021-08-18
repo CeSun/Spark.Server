@@ -9,4 +9,8 @@
     <PackageReference Include="Google.Protobuf" Version="3.17.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Frame\Frame.csproj" />
+  </ItemGroup>
+
 </Project>
