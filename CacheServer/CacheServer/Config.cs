@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace CacheServer
 {
@@ -12,6 +13,8 @@ namespace CacheServer
         public MysqlConfig Mysql;
         public RedisConfig Redis;
         public CacheServerConf CacheServer;
+        [XmlArray("IpAndPoint"), XmlArrayItem("value")]
+        public string[] IpAndPoint;
     }
     public struct CacheServerConf
     {

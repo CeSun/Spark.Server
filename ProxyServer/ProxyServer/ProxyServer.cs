@@ -34,9 +34,14 @@ namespace ProxyServer
 
         async Task Regist()
         {
-            Dirapi.RegisterReq req= new Dirapi.RegisterReq { Info = new Dirapi.ServerInfo { Id = 1, Name = "ProxyServer", Zone = 0, Url = new Dirapi.IpAndPort { Ip = Config.Network.Host, Port = Config.Network.Port } } };
+           Dirapi.RegisterReq req= new Dirapi.RegisterReq { Info = new Dirapi.ServerInfo { Id = 1, Name = "ProxyServer", Zone = 0, Url = new Dirapi.IpAndPort { Ip = "127.0.0.1", Port = Config.Network.Port } } };
 
            var rsp = await dirServerModule.Send<Dirapi.RegisterReq, Dirapi.RegisterRsp>(Dirapi.EOpCode.RegisterReq, req);
+
+            if (rsp.Item1.Errcode != Dirapi.EErrno.Succ)
+            {
+                throw new Exception();
+            }
 
         }
         async Task Filter (Session session, SHead head, TaskAction next, int offset, byte[] data)
@@ -63,7 +68,7 @@ namespace ProxyServer
                 return;
 
             var body = data.Skip(offset).ToArray();
-            SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone } };
+            SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone }, Type = head.Type};
             var headBits = toHead.ToByteArray();
             var packLength = body.Length + body.Length + 2 * sizeof(int);
 

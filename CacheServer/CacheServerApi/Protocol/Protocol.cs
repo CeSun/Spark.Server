@@ -9,7 +9,7 @@ using pb = global::Google.Protobuf;
 using pbc = global::Google.Protobuf.Collections;
 using pbr = global::Google.Protobuf.Reflection;
 using scg = global::System.Collections.Generic;
-namespace CacheServerApi {
+namespace Cacheapi {
 
   /// <summary>Holder for reflection information generated from CacheServer/CacheServerApi/Protocol/protocol.proto</summary>
   public static partial class ProtocolReflection {
@@ -25,37 +25,37 @@ namespace CacheServerApi {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjJDYWNoZVNlcnZlci9DYWNoZVNlcnZlckFwaS9Qcm90b2NvbC9wcm90b2Nv",
-            "bC5wcm90bxIOQ2FjaGVTZXJ2ZXJBcGkiZQoESGVhZBImCgVtc2dpZBgBIAEo",
-            "DjIXLkNhY2hlU2VydmVyQXBpLkVPcENvZGUSDAoEc3luYxgCIAEoBBInCgdl",
-            "cnJjb2RlGAMgASgOMhYuQ2FjaGVTZXJ2ZXJBcGkuRUVycm5vIiYKCFF1ZXJ5",
-            "UmVxEgsKA2tleRgBIAEoCRINCgV0YWJsZRgCIAEoCSI2CghRdWVyeVJzcBIq",
-            "CgZyZWNvcmQYASABKAsyGi5DYWNoZVNlcnZlckFwaS5SZWNvcmRJbmZvIlEK",
-            "B1NhdmVSZXESCwoDa2V5GAEgASgJEg0KBXRhYmxlGAIgASgJEioKBnJlY29y",
-            "ZBgDIAEoCzIaLkNhY2hlU2VydmVyQXBpLlJlY29yZEluZm8iCQoHU2F2ZVJz",
-            "cCInCglEZWxldGVSZXESCwoDa2V5GAEgASgJEg0KBXRhYmxlGAIgASgJIgsK",
-            "CURlbGV0ZVJzcCJpCgpSZWNvcmRJbmZvEgsKA2tleRgBIAEoCRINCgV0YWJs",
-            "ZRgCIAEoCRIuCgVmaWVsZBgDIAMoCzIfLkNhY2hlU2VydmVyQXBpLlJlY29y",
-            "ZEZpZWxkSW5mbxIPCgd2ZXJzaW9uGAQgASgNIi4KD1JlY29yZEZpZWxkSW5m",
-            "bxINCgVmaWVsZBgBIAEoCRIMCgRkYXRhGAIgASgMKqgBCgdFT3BDb2RlEhMK",
-            "D0VPUENPREVfSU5WQUlMRBAAEhUKEUVPUENPREVfUVVFUllfUkVREAESFQoR",
-            "RU9QQ09ERV9RVUVSWV9SU1AQAhIUChBFT1BDT0RFX1NBVkVfUkVREAMSFAoQ",
-            "RU9QQ09ERV9TQVZFX1JTUBAEEhYKEkVPUENPREVfREVMRVRFX1JFURAFEhYK",
-            "EkVPUENPREVfREVMRVRFX1JTUBAGKoEBCgZFRXJybm8SDwoLRUVSUk5PX1NV",
-            "Q0MQABIPCgtFRVJSTk9fRkFJTBABEhgKFEVFUlJOT19WRVJTSU9OX0VSUk9S",
-            "EAISGQoVRUVSUk5PX1JFQ09SRV9FWElTVEVEEAMSIAocRUVSUk5PX1JFQ09S",
-            "RV9JU19OT1RfRVhJU1RFRBAEYgZwcm90bzM="));
+            "bC5wcm90bxIIY2FjaGVhcGkiWQoESGVhZBIgCgVtc2dpZBgBIAEoDjIRLmNh",
+            "Y2hlYXBpLkVPcENvZGUSDAoEc3luYxgCIAEoBBIhCgdlcnJjb2RlGAMgASgO",
+            "MhAuY2FjaGVhcGkuRUVycm5vIiYKCFF1ZXJ5UmVxEgsKA2tleRgBIAEoCRIN",
+            "CgV0YWJsZRgCIAEoCSIwCghRdWVyeVJzcBIkCgZyZWNvcmQYASABKAsyFC5j",
+            "YWNoZWFwaS5SZWNvcmRJbmZvIksKB1NhdmVSZXESCwoDa2V5GAEgASgJEg0K",
+            "BXRhYmxlGAIgASgJEiQKBnJlY29yZBgDIAEoCzIULmNhY2hlYXBpLlJlY29y",
+            "ZEluZm8iCQoHU2F2ZVJzcCInCglEZWxldGVSZXESCwoDa2V5GAEgASgJEg0K",
+            "BXRhYmxlGAIgASgJIgsKCURlbGV0ZVJzcCJjCgpSZWNvcmRJbmZvEgsKA2tl",
+            "eRgBIAEoCRINCgV0YWJsZRgCIAEoCRIoCgVmaWVsZBgDIAMoCzIZLmNhY2hl",
+            "YXBpLlJlY29yZEZpZWxkSW5mbxIPCgd2ZXJzaW9uGAQgASgNIi4KD1JlY29y",
+            "ZEZpZWxkSW5mbxINCgVmaWVsZBgBIAEoCRIMCgRkYXRhGAIgASgMKqgBCgdF",
+            "T3BDb2RlEhMKD0VPUENPREVfSU5WQUlMRBAAEhUKEUVPUENPREVfUVVFUllf",
+            "UkVREAESFQoRRU9QQ09ERV9RVUVSWV9SU1AQAhIUChBFT1BDT0RFX1NBVkVf",
+            "UkVREAMSFAoQRU9QQ09ERV9TQVZFX1JTUBAEEhYKEkVPUENPREVfREVMRVRF",
+            "X1JFURAFEhYKEkVPUENPREVfREVMRVRFX1JTUBAGKqIBCgZFRXJybm8SDwoL",
+            "RUVSUk5PX1NVQ0MQABIPCgtFRVJSTk9fRkFJTBABEhgKFEVFUlJOT19WRVJT",
+            "SU9OX0VSUk9SEAISGQoVRUVSUk5PX1JFQ09SRV9FWElTVEVEEAMSIAocRUVS",
+            "Uk5PX1JFQ09SRV9JU19OT1RfRVhJU1RFRBAEEh8KG0VFUlJOT19UQUJMRV9J",
+            "U19OT1RfRVhJU1RFRBAFYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::CacheServerApi.EOpCode), typeof(global::CacheServerApi.EErrno), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.Head), global::CacheServerApi.Head.Parser, new[]{ "Msgid", "Sync", "Errcode" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.QueryReq), global::CacheServerApi.QueryReq.Parser, new[]{ "Key", "Table" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.QueryRsp), global::CacheServerApi.QueryRsp.Parser, new[]{ "Record" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.SaveReq), global::CacheServerApi.SaveReq.Parser, new[]{ "Key", "Table", "Record" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.SaveRsp), global::CacheServerApi.SaveRsp.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.DeleteReq), global::CacheServerApi.DeleteReq.Parser, new[]{ "Key", "Table" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.DeleteRsp), global::CacheServerApi.DeleteRsp.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.RecordInfo), global::CacheServerApi.RecordInfo.Parser, new[]{ "Key", "Table", "Field", "Version" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::CacheServerApi.RecordFieldInfo), global::CacheServerApi.RecordFieldInfo.Parser, new[]{ "Field", "Data" }, null, null, null, null)
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Cacheapi.EOpCode), typeof(global::Cacheapi.EErrno), }, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.Head), global::Cacheapi.Head.Parser, new[]{ "Msgid", "Sync", "Errcode" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.QueryReq), global::Cacheapi.QueryReq.Parser, new[]{ "Key", "Table" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.QueryRsp), global::Cacheapi.QueryRsp.Parser, new[]{ "Record" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.SaveReq), global::Cacheapi.SaveReq.Parser, new[]{ "Key", "Table", "Record" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.SaveRsp), global::Cacheapi.SaveRsp.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.DeleteReq), global::Cacheapi.DeleteReq.Parser, new[]{ "Key", "Table" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.DeleteRsp), global::Cacheapi.DeleteRsp.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.RecordInfo), global::Cacheapi.RecordInfo.Parser, new[]{ "Key", "Table", "Field", "Version" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Cacheapi.RecordFieldInfo), global::Cacheapi.RecordFieldInfo.Parser, new[]{ "Field", "Data" }, null, null, null, null)
           }));
     }
     #endregion
@@ -96,6 +96,10 @@ namespace CacheServerApi {
     /// 数据不存在
     /// </summary>
     [pbr::OriginalName("EERRNO_RECORE_IS_NOT_EXISTED")] RecoreIsNotExisted = 4,
+    /// <summary>
+    /// 表不存在
+    /// </summary>
+    [pbr::OriginalName("EERRNO_TABLE_IS_NOT_EXISTED")] TableIsNotExisted = 5,
   }
 
   #endregion
@@ -115,7 +119,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[0]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[0]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -149,13 +153,13 @@ namespace CacheServerApi {
 
     /// <summary>Field number for the "msgid" field.</summary>
     public const int MsgidFieldNumber = 1;
-    private global::CacheServerApi.EOpCode msgid_ = global::CacheServerApi.EOpCode.Invaild;
+    private global::Cacheapi.EOpCode msgid_ = global::Cacheapi.EOpCode.Invaild;
     /// <summary>
     /// 消息ID
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::CacheServerApi.EOpCode Msgid {
+    public global::Cacheapi.EOpCode Msgid {
       get { return msgid_; }
       set {
         msgid_ = value;
@@ -179,13 +183,13 @@ namespace CacheServerApi {
 
     /// <summary>Field number for the "errcode" field.</summary>
     public const int ErrcodeFieldNumber = 3;
-    private global::CacheServerApi.EErrno errcode_ = global::CacheServerApi.EErrno.Succ;
+    private global::Cacheapi.EErrno errcode_ = global::Cacheapi.EErrno.Succ;
     /// <summary>
     /// 错误码(应答消息有效，请求消息和通知消息无效)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::CacheServerApi.EErrno Errcode {
+    public global::Cacheapi.EErrno Errcode {
       get { return errcode_; }
       set {
         errcode_ = value;
@@ -217,9 +221,9 @@ namespace CacheServerApi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Msgid != global::CacheServerApi.EOpCode.Invaild) hash ^= Msgid.GetHashCode();
+      if (Msgid != global::Cacheapi.EOpCode.Invaild) hash ^= Msgid.GetHashCode();
       if (Sync != 0UL) hash ^= Sync.GetHashCode();
-      if (Errcode != global::CacheServerApi.EErrno.Succ) hash ^= Errcode.GetHashCode();
+      if (Errcode != global::Cacheapi.EErrno.Succ) hash ^= Errcode.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -238,7 +242,7 @@ namespace CacheServerApi {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Msgid != global::CacheServerApi.EOpCode.Invaild) {
+      if (Msgid != global::Cacheapi.EOpCode.Invaild) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Msgid);
       }
@@ -246,7 +250,7 @@ namespace CacheServerApi {
         output.WriteRawTag(16);
         output.WriteUInt64(Sync);
       }
-      if (Errcode != global::CacheServerApi.EErrno.Succ) {
+      if (Errcode != global::Cacheapi.EErrno.Succ) {
         output.WriteRawTag(24);
         output.WriteEnum((int) Errcode);
       }
@@ -260,7 +264,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Msgid != global::CacheServerApi.EOpCode.Invaild) {
+      if (Msgid != global::Cacheapi.EOpCode.Invaild) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Msgid);
       }
@@ -268,7 +272,7 @@ namespace CacheServerApi {
         output.WriteRawTag(16);
         output.WriteUInt64(Sync);
       }
-      if (Errcode != global::CacheServerApi.EErrno.Succ) {
+      if (Errcode != global::Cacheapi.EErrno.Succ) {
         output.WriteRawTag(24);
         output.WriteEnum((int) Errcode);
       }
@@ -282,13 +286,13 @@ namespace CacheServerApi {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Msgid != global::CacheServerApi.EOpCode.Invaild) {
+      if (Msgid != global::Cacheapi.EOpCode.Invaild) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Msgid);
       }
       if (Sync != 0UL) {
         size += 1 + pb::CodedOutputStream.ComputeUInt64Size(Sync);
       }
-      if (Errcode != global::CacheServerApi.EErrno.Succ) {
+      if (Errcode != global::Cacheapi.EErrno.Succ) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Errcode);
       }
       if (_unknownFields != null) {
@@ -303,13 +307,13 @@ namespace CacheServerApi {
       if (other == null) {
         return;
       }
-      if (other.Msgid != global::CacheServerApi.EOpCode.Invaild) {
+      if (other.Msgid != global::Cacheapi.EOpCode.Invaild) {
         Msgid = other.Msgid;
       }
       if (other.Sync != 0UL) {
         Sync = other.Sync;
       }
-      if (other.Errcode != global::CacheServerApi.EErrno.Succ) {
+      if (other.Errcode != global::Cacheapi.EErrno.Succ) {
         Errcode = other.Errcode;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -328,7 +332,7 @@ namespace CacheServerApi {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 8: {
-            Msgid = (global::CacheServerApi.EOpCode) input.ReadEnum();
+            Msgid = (global::Cacheapi.EOpCode) input.ReadEnum();
             break;
           }
           case 16: {
@@ -336,7 +340,7 @@ namespace CacheServerApi {
             break;
           }
           case 24: {
-            Errcode = (global::CacheServerApi.EErrno) input.ReadEnum();
+            Errcode = (global::Cacheapi.EErrno) input.ReadEnum();
             break;
           }
         }
@@ -355,7 +359,7 @@ namespace CacheServerApi {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 8: {
-            Msgid = (global::CacheServerApi.EOpCode) input.ReadEnum();
+            Msgid = (global::Cacheapi.EOpCode) input.ReadEnum();
             break;
           }
           case 16: {
@@ -363,7 +367,7 @@ namespace CacheServerApi {
             break;
           }
           case 24: {
-            Errcode = (global::CacheServerApi.EErrno) input.ReadEnum();
+            Errcode = (global::Cacheapi.EErrno) input.ReadEnum();
             break;
           }
         }
@@ -387,7 +391,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[1]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[1]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -613,7 +617,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -645,10 +649,10 @@ namespace CacheServerApi {
 
     /// <summary>Field number for the "record" field.</summary>
     public const int RecordFieldNumber = 1;
-    private global::CacheServerApi.RecordInfo record_;
+    private global::Cacheapi.RecordInfo record_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::CacheServerApi.RecordInfo Record {
+    public global::Cacheapi.RecordInfo Record {
       get { return record_; }
       set {
         record_ = value;
@@ -742,7 +746,7 @@ namespace CacheServerApi {
       }
       if (other.record_ != null) {
         if (record_ == null) {
-          Record = new global::CacheServerApi.RecordInfo();
+          Record = new global::Cacheapi.RecordInfo();
         }
         Record.MergeFrom(other.Record);
       }
@@ -763,7 +767,7 @@ namespace CacheServerApi {
             break;
           case 10: {
             if (record_ == null) {
-              Record = new global::CacheServerApi.RecordInfo();
+              Record = new global::Cacheapi.RecordInfo();
             }
             input.ReadMessage(Record);
             break;
@@ -785,7 +789,7 @@ namespace CacheServerApi {
             break;
           case 10: {
             if (record_ == null) {
-              Record = new global::CacheServerApi.RecordInfo();
+              Record = new global::Cacheapi.RecordInfo();
             }
             input.ReadMessage(Record);
             break;
@@ -811,7 +815,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -869,10 +873,10 @@ namespace CacheServerApi {
 
     /// <summary>Field number for the "record" field.</summary>
     public const int RecordFieldNumber = 3;
-    private global::CacheServerApi.RecordInfo record_;
+    private global::Cacheapi.RecordInfo record_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::CacheServerApi.RecordInfo Record {
+    public global::Cacheapi.RecordInfo Record {
       get { return record_; }
       set {
         record_ = value;
@@ -998,7 +1002,7 @@ namespace CacheServerApi {
       }
       if (other.record_ != null) {
         if (record_ == null) {
-          Record = new global::CacheServerApi.RecordInfo();
+          Record = new global::Cacheapi.RecordInfo();
         }
         Record.MergeFrom(other.Record);
       }
@@ -1027,7 +1031,7 @@ namespace CacheServerApi {
           }
           case 26: {
             if (record_ == null) {
-              Record = new global::CacheServerApi.RecordInfo();
+              Record = new global::Cacheapi.RecordInfo();
             }
             input.ReadMessage(Record);
             break;
@@ -1057,7 +1061,7 @@ namespace CacheServerApi {
           }
           case 26: {
             if (record_ == null) {
-              Record = new global::CacheServerApi.RecordInfo();
+              Record = new global::Cacheapi.RecordInfo();
             }
             input.ReadMessage(Record);
             break;
@@ -1083,7 +1087,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1235,7 +1239,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1461,7 +1465,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1613,7 +1617,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1672,12 +1676,12 @@ namespace CacheServerApi {
 
     /// <summary>Field number for the "field" field.</summary>
     public const int FieldFieldNumber = 3;
-    private static readonly pb::FieldCodec<global::CacheServerApi.RecordFieldInfo> _repeated_field_codec
-        = pb::FieldCodec.ForMessage(26, global::CacheServerApi.RecordFieldInfo.Parser);
-    private readonly pbc::RepeatedField<global::CacheServerApi.RecordFieldInfo> field_ = new pbc::RepeatedField<global::CacheServerApi.RecordFieldInfo>();
+    private static readonly pb::FieldCodec<global::Cacheapi.RecordFieldInfo> _repeated_field_codec
+        = pb::FieldCodec.ForMessage(26, global::Cacheapi.RecordFieldInfo.Parser);
+    private readonly pbc::RepeatedField<global::Cacheapi.RecordFieldInfo> field_ = new pbc::RepeatedField<global::Cacheapi.RecordFieldInfo>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<global::CacheServerApi.RecordFieldInfo> Field {
+    public pbc::RepeatedField<global::Cacheapi.RecordFieldInfo> Field {
       get { return field_; }
     }
 
@@ -1902,7 +1906,7 @@ namespace CacheServerApi {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::CacheServerApi.ProtocolReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Cacheapi.ProtocolReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

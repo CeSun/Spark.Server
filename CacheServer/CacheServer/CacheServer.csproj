@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Frame\Frame.csproj" />
+    <ProjectReference Include="..\..\ProxyServer\ProxyServerApi\ProxyServerApi.csproj" />
     <ProjectReference Include="..\CacheServerApi\CacheServerApi.csproj" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

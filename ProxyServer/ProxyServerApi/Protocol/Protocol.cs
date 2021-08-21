@@ -25,24 +25,26 @@ namespace Proxyapi {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjJQcm94eVNlcnZlci9Qcm94eVNlcnZlckFwaS9Qcm90b2NvbC9wcm90b2Nv",
-            "bC5wcm90bxIIcHJveHlhcGkifwoFU0hlYWQSIAoFbXNnaWQYASABKA4yES5w",
-            "cm94eWFwaS5FT3BDb2RlEgwKBHN5bmMYAiABKAQSIQoHZXJyY29kZRgDIAEo",
-            "DjIQLnByb3h5YXBpLkVFcnJubxIjCgZUYXJnZXQYBCABKAsyEy5wcm94eWFw",
-            "aS5UYXJnZXRTdnIiWgoJVGFyZ2V0U3ZyEiUKBHR5cGUYASABKA4yFy5wcm94",
-            "eWFwaS5FVHJhbnNtaXRUeXBlEgwKBG5hbWUYAiABKAkSDAoEem9uZRgDIAEo",
-            "BRIKCgJpZBgEIAEoBSIzCglSZWdpc3RSZXESDAoEbmFtZRgBIAEoCRIMCgR6",
-            "b25lGAIgASgFEgoKAmlkGAMgASgFIgsKCVJlZ2lzdFJzcCIOCgxIZWFydEJl",
-            "YXRSZXEiDgoMSGVhcnRCZWF0UnNwKpwBCgdFT3BDb2RlEhMKD0VPUENPREVf",
-            "SU5WQUlMRBAAEhcKE0VPUENPREVfUkVHSVNURV9SRVEQARIXChNFT1BDT0RF",
-            "X1JFR0lTVEVfUlNQEAISGQoVRU9QQ09ERV9IRUFSVEJFQVRfUkVREAMSGQoV",
-            "RU9QQ09ERV9IRUFSVEJFQVRfUlNQEAQSFAoQRU9QQ09ERV9UUkFOU01JVBAF",
-            "KkAKBkVFcnJubxIPCgtFRVJSTk9fU1VDQxAAEg8KC0VFUlJOT19GQUlMEAES",
-            "FAoQRUVSUk5PX0RVUExJQ0FURRACKigKDUVUcmFuc21pdFR5cGUSDQoJQnJv",
-            "YWRjYXN0EAASCAoEUG9sbBABYgZwcm90bzM="));
+            "bC5wcm90bxIIcHJveHlhcGkiogEKBVNIZWFkEiAKBU1zZ2lkGAEgASgOMhEu",
+            "cHJveHlhcGkuRU9wQ29kZRIMCgRTeW5jGAIgASgEEiEKB0VycmNvZGUYAyAB",
+            "KA4yEC5wcm94eWFwaS5FRXJybm8SIwoGVGFyZ2V0GAQgASgLMhMucHJveHlh",
+            "cGkuVGFyZ2V0U3ZyEiEKBFR5cGUYBSABKA4yEy5wcm94eWFwaS5FUGFja1R5",
+            "cGUiWgoJVGFyZ2V0U3ZyEiUKBHR5cGUYASABKA4yFy5wcm94eWFwaS5FVHJh",
+            "bnNtaXRUeXBlEgwKBG5hbWUYAiABKAkSDAoEem9uZRgDIAEoBRIKCgJpZBgE",
+            "IAEoBSIzCglSZWdpc3RSZXESDAoETmFtZRgBIAEoCRIMCgRab25lGAIgASgF",
+            "EgoKAklkGAMgASgFIgsKCVJlZ2lzdFJzcCIOCgxIZWFydEJlYXRSZXEiDgoM",
+            "SGVhcnRCZWF0UnNwKpwBCgdFT3BDb2RlEhMKD0VPUENPREVfSU5WQUlMRBAA",
+            "EhcKE0VPUENPREVfUkVHSVNURV9SRVEQARIXChNFT1BDT0RFX1JFR0lTVEVf",
+            "UlNQEAISGQoVRU9QQ09ERV9IRUFSVEJFQVRfUkVREAMSGQoVRU9QQ09ERV9I",
+            "RUFSVEJFQVRfUlNQEAQSFAoQRU9QQ09ERV9UUkFOU01JVBAFKkAKBkVFcnJu",
+            "bxIPCgtFRVJSTk9fU1VDQxAAEg8KC0VFUlJOT19GQUlMEAESFAoQRUVSUk5P",
+            "X0RVUExJQ0FURRACKigKDUVUcmFuc21pdFR5cGUSDQoJQnJvYWRjYXN0EAAS",
+            "CAoEUG9sbBABKiYKCUVQYWNrVHlwZRILCgdSZXF1ZXN0EAASDAoIUmVzcG9u",
+            "c2UQAWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proxyapi.EOpCode), typeof(global::Proxyapi.EErrno), typeof(global::Proxyapi.ETransmitType), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Proxyapi.SHead), global::Proxyapi.SHead.Parser, new[]{ "Msgid", "Sync", "Errcode", "Target" }, null, null, null, null),
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proxyapi.EOpCode), typeof(global::Proxyapi.EErrno), typeof(global::Proxyapi.ETransmitType), typeof(global::Proxyapi.EPackType), }, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::Proxyapi.SHead), global::Proxyapi.SHead.Parser, new[]{ "Msgid", "Sync", "Errcode", "Target", "Type" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proxyapi.TargetSvr), global::Proxyapi.TargetSvr.Parser, new[]{ "Type", "Name", "Zone", "Id" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proxyapi.RegistReq), global::Proxyapi.RegistReq.Parser, new[]{ "Name", "Zone", "Id" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proxyapi.RegistRsp), global::Proxyapi.RegistRsp.Parser, null, null, null, null, null),
@@ -110,6 +112,11 @@ namespace Proxyapi {
     [pbr::OriginalName("Poll")] Poll = 1,
   }
 
+  public enum EPackType {
+    [pbr::OriginalName("Request")] Request = 0,
+    [pbr::OriginalName("Response")] Response = 1,
+  }
+
   #endregion
 
   #region Messages
@@ -151,6 +158,7 @@ namespace Proxyapi {
       sync_ = other.sync_;
       errcode_ = other.errcode_;
       target_ = other.target_ != null ? other.target_.Clone() : null;
+      type_ = other.type_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -160,7 +168,7 @@ namespace Proxyapi {
       return new SHead(this);
     }
 
-    /// <summary>Field number for the "msgid" field.</summary>
+    /// <summary>Field number for the "Msgid" field.</summary>
     public const int MsgidFieldNumber = 1;
     private global::Proxyapi.EOpCode msgid_ = global::Proxyapi.EOpCode.Invaild;
     /// <summary>
@@ -175,7 +183,7 @@ namespace Proxyapi {
       }
     }
 
-    /// <summary>Field number for the "sync" field.</summary>
+    /// <summary>Field number for the "Sync" field.</summary>
     public const int SyncFieldNumber = 2;
     private ulong sync_;
     /// <summary>
@@ -190,7 +198,7 @@ namespace Proxyapi {
       }
     }
 
-    /// <summary>Field number for the "errcode" field.</summary>
+    /// <summary>Field number for the "Errcode" field.</summary>
     public const int ErrcodeFieldNumber = 3;
     private global::Proxyapi.EErrno errcode_ = global::Proxyapi.EErrno.Succ;
     /// <summary>
@@ -220,6 +228,21 @@ namespace Proxyapi {
       }
     }
 
+    /// <summary>Field number for the "Type" field.</summary>
+    public const int TypeFieldNumber = 5;
+    private global::Proxyapi.EPackType type_ = global::Proxyapi.EPackType.Request;
+    /// <summary>
+    /// 消息类型，请求还是应答
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Proxyapi.EPackType Type {
+      get { return type_; }
+      set {
+        type_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -239,6 +262,7 @@ namespace Proxyapi {
       if (Sync != other.Sync) return false;
       if (Errcode != other.Errcode) return false;
       if (!object.Equals(Target, other.Target)) return false;
+      if (Type != other.Type) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -250,6 +274,7 @@ namespace Proxyapi {
       if (Sync != 0UL) hash ^= Sync.GetHashCode();
       if (Errcode != global::Proxyapi.EErrno.Succ) hash ^= Errcode.GetHashCode();
       if (target_ != null) hash ^= Target.GetHashCode();
+      if (Type != global::Proxyapi.EPackType.Request) hash ^= Type.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -284,6 +309,10 @@ namespace Proxyapi {
         output.WriteRawTag(34);
         output.WriteMessage(Target);
       }
+      if (Type != global::Proxyapi.EPackType.Request) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) Type);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -310,6 +339,10 @@ namespace Proxyapi {
         output.WriteRawTag(34);
         output.WriteMessage(Target);
       }
+      if (Type != global::Proxyapi.EPackType.Request) {
+        output.WriteRawTag(40);
+        output.WriteEnum((int) Type);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -331,6 +364,9 @@ namespace Proxyapi {
       }
       if (target_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Target);
+      }
+      if (Type != global::Proxyapi.EPackType.Request) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Type);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -358,6 +394,9 @@ namespace Proxyapi {
           Target = new global::Proxyapi.TargetSvr();
         }
         Target.MergeFrom(other.Target);
+      }
+      if (other.Type != global::Proxyapi.EPackType.Request) {
+        Type = other.Type;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -393,6 +432,10 @@ namespace Proxyapi {
             input.ReadMessage(Target);
             break;
           }
+          case 40: {
+            Type = (global::Proxyapi.EPackType) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -425,6 +468,10 @@ namespace Proxyapi {
               Target = new global::Proxyapi.TargetSvr();
             }
             input.ReadMessage(Target);
+            break;
+          }
+          case 40: {
+            Type = (global::Proxyapi.EPackType) input.ReadEnum();
             break;
           }
         }
@@ -780,7 +827,7 @@ namespace Proxyapi {
       return new RegistReq(this);
     }
 
-    /// <summary>Field number for the "name" field.</summary>
+    /// <summary>Field number for the "Name" field.</summary>
     public const int NameFieldNumber = 1;
     private string name_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -792,7 +839,7 @@ namespace Proxyapi {
       }
     }
 
-    /// <summary>Field number for the "zone" field.</summary>
+    /// <summary>Field number for the "Zone" field.</summary>
     public const int ZoneFieldNumber = 2;
     private int zone_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -804,7 +851,7 @@ namespace Proxyapi {
       }
     }
 
-    /// <summary>Field number for the "id" field.</summary>
+    /// <summary>Field number for the "Id" field.</summary>
     public const int IdFieldNumber = 3;
     private int id_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

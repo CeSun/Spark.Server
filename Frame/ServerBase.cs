@@ -29,7 +29,7 @@ namespace Frame
         /// 框架结束时调用
         /// </summary>
         protected abstract void OnFini();
-
+        
         protected TConfig Config { get; set; }
         public static void Start()
         {
@@ -72,6 +72,7 @@ namespace Frame
                 Config = xmlSerializer.Deserialize(streamReader) as TConfig;
                 streamReader.Close();
             }
+            Timer.Instance.Init();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
             TimeMngr.Instance.Init(Config.Time.Zone);
             OnInit();
@@ -79,6 +80,7 @@ namespace Frame
 
         protected void Update()
         {
+            Timer.Instance.Update();
             SyncContext.Update();
             Thread.Sleep(0);
             OnUpdate();
@@ -86,6 +88,7 @@ namespace Frame
 
         protected void Fini()
         {
+            Timer.Instance.Fini();
             OnFini();
         }
 

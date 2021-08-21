@@ -14,5 +14,7 @@
 	<GameServer>
 		
 	</GameServer>
-
+	<IpAndPoint type="array">
+		<value>127.0.0.1:2008</value>
+	</IpAndPoint>
 </Config>

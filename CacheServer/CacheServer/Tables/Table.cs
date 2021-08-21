@@ -4,8 +4,8 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Cacheapi;
 using CacheServer.Modules;
-using CacheServerApi;
 using Frame;
 using StackExchange.Redis;
 

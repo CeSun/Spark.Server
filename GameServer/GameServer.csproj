@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DataBase\DataBase.csproj" />
     <ProjectReference Include="..\frame\Frame.csproj" />
+    <ProjectReference Include="..\ProxyServer\ProxyServerApi\ProxyServerApi.csproj" />
   </ItemGroup>
 
 </Project>

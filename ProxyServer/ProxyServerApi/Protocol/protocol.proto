@@ -23,11 +23,16 @@ enum ETransmitType {
 	Poll = 1;		// 轮询
 }
 
+enum EPackType {
+	Request = 0;
+	Response = 1;
+}
 message SHead {
-    EOpCode msgid = 1;				// 消息ID
-	uint64 sync = 2;				// 透传信息
-	EErrno errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
+    EOpCode Msgid = 1;				// 消息ID
+	uint64 Sync = 2;				// 透传信息
+	EErrno Errcode = 3;				// 错误码(应答消息有效，请求消息和通知消息无效)
 	TargetSvr Target = 4;			// 如果消息id是EOPCODE_TRANSMIT，本字段有效，记录要发送到的服务器
+	EPackType Type = 5;				// 消息类型，请求还是应答
 }
 
 message TargetSvr {
@@ -38,9 +43,9 @@ message TargetSvr {
 }
 
 message RegistReq {
-	string name = 1;
-	int32 zone = 2;
-	int32 id = 3;
+	string Name = 1;
+	int32 Zone = 2;
+	int32 Id = 3;
 }
 
 message RegistRsp {

@@ -5,12 +5,16 @@ using DataBase;
 using GameServer.Module;
 using System;
 using System.Diagnostics;
+using ProxyServerApi;
+using System.Xml.Serialization;
 
 namespace GameServer
 {
     public class Config : BaseNetConfig
     {
         public MysqlConfig Mysql;
+        [XmlArray("IpAndPoint"), XmlArrayItem("value")]
+        public string[] IpAndPoint;
     }
     public class Server : ServerBaseWithNet<Server, Config>
     {
@@ -20,6 +24,7 @@ namespace GameServer
         public UinMngr UinMngr { get; private set; }
 
         protected override string ConfPath => "../GameServerConfig.xml";
+        ProxyModule proxyModule = new ProxyModule();
 
         protected override void OnInit() 
         {
@@ -29,7 +34,7 @@ namespace GameServer
             Database.Init(Config.Mysql);
             playerMngr.Init();
             UinMngr.Init(Zone);
-            TimeMngr.Instance.Init(8);
+            proxyModule.Init(Config.IpAndPoint);
         }
 
         protected override void OnUpdate()
@@ -38,7 +43,8 @@ namespace GameServer
             Database.Update();
             playerMngr?.Update();
             UinMngr?.Update();
-        
+            proxyModule?.Update();
+
         }
         protected override void OnFini()
         {
@@ -46,6 +52,7 @@ namespace GameServer
             Database.Fini();
             playerMngr?.Fini();
             UinMngr?.Fini();
+            proxyModule?.Fini();
         }
         protected override void OnHandlerData(Session session, byte[] data)
         {
