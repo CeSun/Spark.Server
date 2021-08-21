@@ -4,4 +4,7 @@
 		<Port>2009</Port>
 		<Host>0.0.0.0</Host>
 	</Network>
+		<IpAndPoint type="array">
+			<value>127.0.0.1:2008</value>
+		</IpAndPoint>
 </Config>

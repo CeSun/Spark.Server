@@ -6,21 +6,21 @@ using System.Text;
 using System.Threading.Tasks;
 using Dirapi;
 using Google.Protobuf;
+using System.IO;
+using System.Net;
 
 namespace DirServer
 {
     
-    class DirConfig: BaseNetConfig
+    public class Config : BaseNetConfig
     {
 
     }
-    class Server : ServerBaseWithNet<Server, DirConfig>
+    class Server : ServerBaseWithNet<Server, Config>
     {
         Dispatcher<EOpCode, SHead, Session> dispatcher = new Dispatcher<EOpCode, SHead, Session>(head => { return head.Msgid; });
 
-        Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>> servers = new Dictionary<string, Dictionary<int, Dictionary<int, ServerInfo>>>();
-        Dictionary<string, Dictionary<int, int>> versions = new Dictionary<string, Dictionary<int, int>>();
-        Dictionary<Session, ServerInfo> sessions = new Dictionary<Session, ServerInfo>();
+        Dictionary<string, ServerSet> servers = new Dictionary<string, ServerSet>();
 
         protected override string ConfPath => "../DirServerConfig.xml";
 
@@ -33,47 +33,65 @@ namespace DirServer
         {
              dispatcher.DispatcherRequest(session, data);
         }
-
         async Task RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
         {
-            try
+            var svrName = reqBody.Info.Name;
+            var server = servers.GetValueOrDefault(svrName);
+            if (server == null)
             {
-                sessions[session] = reqBody.Info;
-            }catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                server = new ServerSet();
+                servers.Add(svrName, server);
             }
-            var svrs = servers.GetValueOrDefault(reqBody.Info.Name);
-            if (svrs == null)
+            var ret = server.InsertServer(reqBody.Info.Zone, reqBody.Info.Id, new IPEndPoint(IPAddress.Parse( reqBody.Info.Url.Ip), reqBody.Info.Url.Port));
+            SHead rspHead = new SHead { Errcode = ret?EErrno.Succ:EErrno.Fail, Msgid = EOpCode.RegisterRsp, Sync = reqHead.Sync };
+
+            RegisterRsp rspBody = new RegisterRsp { };
+            if (ret == true)
+                session.SetProcess((svrName, reqBody.Info.Zone, reqBody.Info.Id));
+            await Send(session, rspHead, rspBody);
+
+        }
+
+        async Task GetHandler(Session session, SHead reqHead, GetReq reqBody)
+        {
+            var svr = reqBody.Name;
+            var zone = reqBody.Zone;
+            var server = servers.GetValueOrDefault(svr);
+            GetRsp rspBody = new GetRsp();
+            if (server != null)
             {
-                servers.Add(reqBody.Info.Name, new Dictionary<int, Dictionary<int, ServerInfo>>() { {reqBody.Info.Zone, new Dictionary<int, ServerInfo>() { { reqBody.Info.Id, reqBody.Info} } } });
-                versions.Add(reqBody.Info.Name, new Dictionary<int, int>() { { reqBody.Info.Zone, 1} });
-            }
-            else
-            {
-                var zones = svrs.GetValueOrDefault(reqBody.Info.Zone);
-                if (zones == null)
+                var svrs =  server.GetServers(zone);
+                rspBody.Version = svrs.Item2;
+                foreach(var item in svrs.Item1)
                 {
-                    svrs.Add(reqBody.Info.Zone, new Dictionary<int, ServerInfo>() { { reqBody.Info.Id, reqBody.Info } } );
-                    versions[reqBody.Info.Name].Add(reqBody.Info.Zone, 1);
-                }
-                else
-                {
-                    if (zones.ContainsKey(reqBody.Info.Id))
-                    {
-                        zones[reqBody.Info.Id] = reqBody.Info;
-                    }
-                    else
-                    {
-                        zones.Add(reqBody.Info.Id, reqBody.Info);
-                    }
-                    versions[reqBody.Info.Name][reqBody.Info.Zone] += 1;
+                    rspBody.Servres.Add(new ServerInfo {Name = svr, Zone = zone, Id = item.Item1, Url = new IpAndPort {Ip= item.Item2.Address.ToString(), Port = item.Item2.Port } });
                 }
             }
-            SHead rspHead = new SHead { Errcode = EErrno.Succ, Sync = reqHead.Sync, Msgid = EOpCode.RegisterRsp };
-            RegisterRsp registerRsp = new RegisterRsp { };
-            await Send(session, rspHead, registerRsp);
+            SHead rspHead = new SHead { Errcode = EErrno.Succ, Msgid = EOpCode.GetRsp, Sync = reqHead.Sync };
+            await Send(session, rspHead, rspBody);
+        }
+
+        async Task SyncHandler(Session session, SHead reqHead, SyncReq reqBody)
+        {
+            var svr = reqBody.Name;
+            var zone = reqBody.Zone; 
+            var server = servers.GetValueOrDefault(svr);
+            SyncRsp rspBody = new SyncRsp();
+            SHead rspHead = new SHead { Errcode = EErrno.NotNeedSync, Msgid = EOpCode.SyncRsp, Sync = reqHead.Sync };
+            if (server != null)
+            {
+                var svrs = server.GetServers(zone);
+                if (reqBody.Version != svrs.Item2)
+                {
+                    rspBody.Version = svrs.Item2;
+                    foreach (var item in svrs.Item1)
+                    {
+                        rspBody.Servres.Add(new ServerInfo { Name = svr, Zone = zone, Id = item.Item1, Url = new IpAndPort { Ip = item.Item2.Address.ToString(), Port = item.Item2.Port } });
+                    }
+                    rspHead.Errcode = EErrno.Succ;
+                }
+            }
+            await Send(session, rspHead, rspBody);
         }
         async Task Send<TRsp>(Session session, SHead head, TRsp rsp) where TRsp : IMessage
         {
@@ -95,6 +113,8 @@ namespace DirServer
         {
             base.OnInit();
             dispatcher.Bind<RegisterReq>(EOpCode.RegisterReq, RegisterServerHandler);
+            dispatcher.Bind<GetReq>(EOpCode.GetReq, GetHandler);
+            dispatcher.Bind<SyncReq>(EOpCode.SyncReq, SyncHandler);
         }
 
         protected override void OnUpdate()
@@ -109,6 +129,18 @@ namespace DirServer
 
         protected override void OnHandlerDisconnected(Session session)
         {
+            var info = session.GetProcess<(string, int, int)>();
+            if (info != default)
+            {
+                var server = servers.GetValueOrDefault(info.Item1);
+                if (server == null)
+                {
+                    server.DeleteServer(info.Item2, info.Item3);
+                }
+            }
+
+
+
         }
     }
 }

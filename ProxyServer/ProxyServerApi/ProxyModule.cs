@@ -1,4 +1,5 @@
-﻿using Frame;
+﻿using DirServerApi;
+using Frame;
 using Google.Protobuf;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,6 @@ namespace ProxyServerApi
 {
     public struct ProxyConfig 
     {
-         
     }
 
     public class ProxySession : ISession

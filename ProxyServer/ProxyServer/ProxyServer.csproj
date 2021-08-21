@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DirServer\DirServerApi\DirServerApi.csproj" />
     <ProjectReference Include="..\..\Frame\Frame.csproj" />
     <ProjectReference Include="..\ProxyServerApi\ProxyServerApi.csproj" />
   </ItemGroup>

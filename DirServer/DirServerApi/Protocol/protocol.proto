@@ -8,11 +8,14 @@ enum EOpCode {
 	EOPCODE_REGISTER_RSP = 2;			// 注册服务应答
 	EOPCODE_GET_REQ = 3;				// 获取服务列表请求
 	EOPCODE_GET_RSP = 4;				// 获取服务列表应答
+	EOPCODE_SYNC_REQ = 5;				// 同步服务器列表请求
+	EOPCODE_SYNC_RSP = 6;				// 同步服务器列表应答
 }
 
 enum EErrno {
 	EERRNO_SUCC = 0;					// 成功
 	EERRNO_FAIL = 1;					// 失败
+	EERRNO_NOT_NEED_SYNC = 2;			// 不需要同步
 }
 
 message SHead {
@@ -38,4 +41,24 @@ message ServerInfo {
 message IpAndPort {
 	string ip = 1;
 	int32 port = 2;
+}
+
+message GetReq {
+	string name = 1;
+	int32 zone = 2;
+}
+
+message GetRsp {
+	repeated  ServerInfo servres = 1;
+	int32 version = 2;
+}
+message SyncReq {
+	string name = 1;
+	int32 zone = 2;
+	int32 version = 3;
+}
+
+message SyncRsp {
+	repeated ServerInfo servres = 1;
+	int32 version = 2;
 }
