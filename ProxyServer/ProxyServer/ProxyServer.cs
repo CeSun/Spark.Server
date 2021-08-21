@@ -27,6 +27,7 @@ namespace ProxyServer
             base.OnInit();
             dispatcher.Bind<HeartBeatReq>(EOpCode.HeartbeatReq, HeartBeatReqAsync);
             dispatcher.Bind<RegistReq>(EOpCode.RegisteReq, RegistReqAsync);
+            dispatcher.Bind<RegistReq>(EOpCode.Transmit, async (session, head, body) => { });
             dispatcher.Filter = Filter;
             dirServerModule.Init(Config.IpAndPoint);
             _ = Regist();
@@ -49,6 +50,7 @@ namespace ProxyServer
             if (head.Msgid != EOpCode.Transmit)
             {
                 await next();
+                return;
             }
             var svrs = servers.GetValueOrDefault(head.Target.Name);
             if (svrs == default)
@@ -70,7 +72,7 @@ namespace ProxyServer
             var body = data.Skip(offset).ToArray();
             SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone }, Type = head.Type};
             var headBits = toHead.ToByteArray();
-            var packLength = body.Length + body.Length + 2 * sizeof(int);
+            var packLength = headBits.Length + body.Length + 2 * sizeof(int);
 
             var packLengthBits = BitConverter.GetBytes(packLength);
             var headLengthBits = BitConverter.GetBytes(headBits.Length);
@@ -101,7 +103,7 @@ namespace ProxyServer
             var ret = ServerSet.InsertServer(session, reqBody.Id);
             if (ret)
                 session.SetProcess(reqBody);
-            SHead rspHead = new SHead{Msgid = EOpCode.RegisteRsp, Sync = head.Sync, Errcode = ret?EErrno.Succ:EErrno.Duplicate};
+            SHead rspHead = new SHead{Msgid = EOpCode.RegisteRsp, Sync = head.Sync, Errcode = ret?EErrno.Succ:EErrno.Duplicate, Type = EPackType.Response};
             RegistRsp rspBody = new RegistRsp();
             var data = ProtoUtil.Pack(rspHead, rspBody);
             await session.SendAsync(data);
@@ -109,7 +111,7 @@ namespace ProxyServer
 
         async Task HeartBeatReqAsync(Session session, SHead head, HeartBeatReq reqBody)
         {
-            SHead rspHead = new SHead { Msgid = EOpCode.HeartbeatRsp, Sync = head.Sync,Errcode = EErrno.Succ};
+            SHead rspHead = new SHead { Msgid = EOpCode.HeartbeatRsp, Sync = head.Sync,Errcode = EErrno.Succ, Type = EPackType.Response };
             HeartBeatRsp rspBody = new HeartBeatRsp();
             var data = ProtoUtil.Pack(rspHead, rspBody);
             await session.SendAsync(data);

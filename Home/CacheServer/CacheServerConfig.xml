@@ -10,6 +10,9 @@
 		<Password></Password>
 		<Database>1</Database>
 	</Redis>
+	<IpAndPoint type="array">
+		<value>127.0.0.1:2008</value>
+	</IpAndPoint>
 	<Mysql>
 		<Host>localhost</Host>
 		<Port>3306</Port>

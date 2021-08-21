@@ -3,10 +3,11 @@ using Google.Protobuf;
 using System;
 using System.Threading.Tasks;
 using Frame;
-using DataBase.Tables;
-using DataBase;
 using System.Security.Principal;
 using System.Diagnostics;
+using CacheServerApi;
+using CacheServerApi.Tables;
+using ProxyServerApi.Tables;
 
 namespace GameServer.Player
 {
@@ -19,12 +20,12 @@ namespace GameServer.Player
         DateTime LatestTime;
 
         // 数据库数据的pb
-        public DBPlayer DBData 
+        public PBPlayer DBData 
         {
             get
             {
                 if (tPlayer != null)
-                    return tPlayer.Value;
+                    return tPlayer.Base;
                 else
                     return null;
             }
@@ -33,7 +34,7 @@ namespace GameServer.Player
         // 数据库数据的orm, 对外修改等使用上面的
         private TPlayer tPlayer;
 
-        public DBAccount DBAccount { get; private set; }
+        public PBAccount DBAccount { get; private set; }
 
         public void Disconnected()
         {
@@ -130,15 +131,15 @@ namespace GameServer.Player
             SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
             LoginRsp rspBody = new LoginRsp() {LoginResult = ELoginResult.Success };
             fsm.PostEvent(EEvent.Login);
-            var retval = await TAccount.QueryAync(((DataBase.AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
-            if (retval.Error == DataBase.DBError.Success)
+            var retval = await TAccount.QueryAync(((AuthType)loginReq.LoginType, loginReq.TestAccount, Server.Instance.Zone));
+            if (retval.Error == DBError.Success)
             {
-                var playerPair = await TPlayer.QueryAync((retval.Row.Value.Zone, retval.Row.Value.Uin));
-                if (playerPair.Error == DataBase.DBError.Success)
+                var playerPair = await TPlayer.QueryAync((retval.Row.Base.Zone, retval.Row.Base.Uin));
+                if (playerPair.Error == DBError.Success)
                 {
                     tPlayer = playerPair.Row;
-                    tPlayer.Value.LastLoginTime = DateTime.Now.Millisecond;
-                    tPlayer.Value.LoginServerId = Server.Instance.InstanceId;
+                    tPlayer.Base.LastLoginTime = DateTime.Now.Millisecond;
+                    tPlayer.Base.LoginServerId = Server.Instance.InstanceId;
                     var ret = await tPlayer.SaveAync();
                     if (ret == DBError.Success)
                     {
@@ -149,14 +150,14 @@ namespace GameServer.Player
                     }
                     else
                     {
-                        DBAccount = retval.Row.Value;
+                        DBAccount = retval.Row.Base;
                         fsm.PostEvent(EEvent.Logout);
                         rspHead.Errcode = EErrno.Error;
                     }
                 }
                 else
                 {
-                    DBAccount = retval.Row.Value;
+                    DBAccount = retval.Row.Base;
                     fsm.PostEvent(EEvent.Create);
                     rspBody.LoginResult = ELoginResult.NoPlayer;
                 }
@@ -165,14 +166,14 @@ namespace GameServer.Player
             {
                 var uin = await Server.Instance.UinMngr.GetUinAsync();
                 var account = TAccount.New();
-                account.Value.Uin = uin;
-                account.Value.Zone = Server.Instance.Zone;
-                account.Value.Type = (DataBase.AuthType)loginReq.LoginType;
-                account.Value.Account = loginReq.TestAccount;
+                account.Base.Uin = uin;
+                account.Base.Zone = Server.Instance.Zone;
+                account.Base.Type = (AuthType)loginReq.LoginType;
+                account.Base.Account = loginReq.TestAccount;
                 var ret = await account.SaveAync();
                 if (ret == DBError.Success)
                 {
-                    DBAccount = account.Value;
+                    DBAccount = account.Base;
                     fsm.PostEvent(EEvent.Create);
                     rspBody.LoginResult = ELoginResult.NoPlayer;
                 } else
@@ -188,7 +189,7 @@ namespace GameServer.Player
         {
             SHead rspHead = new SHead { Msgid = EOpCode.TestRsp, Errcode = EErrno.Succ };
             TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
-            var retval = await TAccount.QueryAync((DataBase.AuthType.Test, "112", Server.Instance.Zone));
+            var retval = await TAccount.QueryAync((AuthType.Test, "112", Server.Instance.Zone));
             await SendToClientAsync(rspHead, rspBody);
         }
         async Task HelloHandler( SHead reqHead, TestReq reqBody)
@@ -205,18 +206,18 @@ namespace GameServer.Player
             if (fsm.CurrentState == EState.Creating)
             {
                 var nkName = TNickname.New();
-                nkName.Value.Nickname = reqBody.NickName;
-                nkName.Value.Uin = DBAccount.Uin;
-                nkName.Value.Zone = Server.Instance.Zone;
+                nkName.Base.Nickname = reqBody.NickName;
+                nkName.Base.Uin = DBAccount.Uin;
+                nkName.Base.Zone = Server.Instance.Zone;
                 var ret = await nkName.SaveAync();
                 if (ret == DBError.Success)
                 {
                     tPlayer = TPlayer.New();
-                    tPlayer.Value.Uin = DBAccount.Uin;
-                    tPlayer.Value.Zone = Server.Instance.Zone;
-                    tPlayer.Value.LastLoginTime = DateTime.Now.Millisecond;
-                    tPlayer.Value.LoginServerId = Server.Instance.InstanceId;
-                    tPlayer.Value.Nickname = reqBody.NickName;
+                    tPlayer.Base.Uin = DBAccount.Uin;
+                    tPlayer.Base.Zone = Server.Instance.Zone;
+                    tPlayer.Base.LastLoginTime = DateTime.Now.Millisecond;
+                    tPlayer.Base.LoginServerId = Server.Instance.InstanceId;
+                    tPlayer.Base.Nickname = reqBody.NickName;
 
                     rspBody.PlayerInfo = new PlayerInfo();
                     fillPlayerInfo(rspBody.PlayerInfo);

@@ -39,11 +39,11 @@ namespace Cacheapi {
             "T3BDb2RlEhMKD0VPUENPREVfSU5WQUlMRBAAEhUKEUVPUENPREVfUVVFUllf",
             "UkVREAESFQoRRU9QQ09ERV9RVUVSWV9SU1AQAhIUChBFT1BDT0RFX1NBVkVf",
             "UkVREAMSFAoQRU9QQ09ERV9TQVZFX1JTUBAEEhYKEkVPUENPREVfREVMRVRF",
-            "X1JFURAFEhYKEkVPUENPREVfREVMRVRFX1JTUBAGKqIBCgZFRXJybm8SDwoL",
+            "X1JFURAFEhYKEkVPUENPREVfREVMRVRFX1JTUBAGKrcBCgZFRXJybm8SDwoL",
             "RUVSUk5PX1NVQ0MQABIPCgtFRVJSTk9fRkFJTBABEhgKFEVFUlJOT19WRVJT",
             "SU9OX0VSUk9SEAISGQoVRUVSUk5PX1JFQ09SRV9FWElTVEVEEAMSIAocRUVS",
             "Uk5PX1JFQ09SRV9JU19OT1RfRVhJU1RFRBAEEh8KG0VFUlJOT19UQUJMRV9J",
-            "U19OT1RfRVhJU1RFRBAFYgZwcm90bzM="));
+            "U19OT1RfRVhJU1RFRBAFEhMKD0VFUlJOT19USU1FX09VVBAGYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Cacheapi.EOpCode), typeof(global::Cacheapi.EErrno), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -100,6 +100,10 @@ namespace Cacheapi {
     /// 表不存在
     /// </summary>
     [pbr::OriginalName("EERRNO_TABLE_IS_NOT_EXISTED")] TableIsNotExisted = 5,
+    /// <summary>
+    /// 表不存在
+    /// </summary>
+    [pbr::OriginalName("EERRNO_TIME_OUT")] TimeOut = 6,
   }
 
   #endregion

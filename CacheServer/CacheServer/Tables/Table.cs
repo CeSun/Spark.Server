@@ -155,7 +155,7 @@ namespace CacheServer.Tables
                 }
                 else
                 {
-                    if (!Fields.ContainsKey(entry.Name))
+                    if (Fields.FirstOrDefault(RES => RES.Value == entry.Name).Value == default)
                         continue;
                     var recordField = new RecordFieldInfo();
                     recordField.Field = entry.Name;
@@ -332,7 +332,7 @@ namespace CacheServer.Tables
         {
             var redis = Redis.Instance.Database;
             if (redis == null) return (null, EErrno.Fail);
-            var saveLua = @"if redis.call('SISMEMBER', 'DeleteDirtyKey', KEY[1]) == 0  then
+            var saveLua = @"if redis.call('SISMEMBER', 'DeleteDirtyKey', KEYS[1]) == 0  then
                                 return nil    
                             end
                             if redis.call('EXISTS', KEYS[1]) == 0 then 
@@ -349,27 +349,34 @@ namespace CacheServer.Tables
                 keys[i + 1] = entrys[i].Name.ToString();
                 args[i] = entrys[i].Value;
             }
-
-            var result = await redis.ScriptEvaluateAsync(saveLua, keys, args);
-            if (result.IsNull)
-                return (null, EErrno.RecoreIsNotExisted);
-            HashEntry[] resEntrys = new HashEntry[((RedisResult[])result).Length / 2];
-            int j = 1;
-            (RedisValue key, RedisValue value) pari = default;
-            foreach (var en in (RedisResult[])result)
+            try
             {
-                if (j % 2 == 1)
+                var result = await redis.ScriptEvaluateAsync(saveLua, keys, args);
+                if (result.IsNull)
+                    return (null, EErrno.RecoreIsNotExisted);
+                HashEntry[] resEntrys = new HashEntry[((RedisResult[])result).Length / 2];
+                int j = 1;
+                (RedisValue key, RedisValue value) pari = default;
+                foreach (var en in (RedisResult[])result)
                 {
-                    pari.key = ((RedisValue)en);
+                    if (j % 2 == 1)
+                    {
+                        pari.key = ((RedisValue)en);
+                    }
+                    else
+                    {
+                        pari.value = ((RedisValue)en);
+                        resEntrys[j / 2 - 1] = new HashEntry(pari.key, pari.value);
+                    }
+                    j++;
                 }
-                else
-                {
-                    pari.value = ((RedisValue)en);
-                    resEntrys[j / 2 - 1] = new HashEntry(pari.key, pari.value);
-                }
-                j++;
+                return (resEntrys, EErrno.Succ);
+            } catch (Exception ex)
+            {
+
             }
-            return (resEntrys, EErrno.Succ);
+            return (null, EErrno.Fail);
+
 
         }
         private async Task<EErrno> InsertRedisAsync(string key, HashEntry[] entrys)

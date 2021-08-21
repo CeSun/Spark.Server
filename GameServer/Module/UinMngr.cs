@@ -1,4 +1,5 @@
-﻿using DataBase.Tables;
+﻿using CacheServerApi.Tables;
+using ProxyServerApi.Tables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,20 +28,34 @@ namespace GameServer.Module
         private State state;
         private async Task updateMngrAsync()
         {
-            var exception = new Exception("error");
-            var ret = await TUin.QueryAync(zone);
-            if (ret.Error == DataBase.DBError.IsNotExisted)
+            try
             {
-                var uin = TUin.New();
-                uin.Value.Zone = zone;
-                uin.Value.Nums = 0;
-                var ret2 = await uin.SaveAync();
-                if (ret2 == DataBase.DBError.IsExisted)
+                await Task.Delay(5000);
+                var exception = new Exception("error");
+                var ret = await TUin.QueryAync(zone);
+                if (ret.Error == DBError.IsNotExisted)
                 {
-                    Random random = new Random(DateTime.Now.Second);
-                    await Task.Delay((int)(random.NextDouble() * 1000));
-                    ret = await TUin.QueryAync(Server.Instance.Zone);
-                    if (ret.Error != DataBase.DBError.Success)
+                    var uin = TUin.New();
+                    uin.Base.Zone = zone;
+                    uin.Base.Nums = 0;
+                    var ret2 = await uin.SaveAync();
+                    if (ret2 == DBError.IsExisted)
+                    {
+                        Random random = new Random(DateTime.Now.Second);
+                        await Task.Delay((int)(random.NextDouble() * 1000));
+                        ret = await TUin.QueryAync(Server.Instance.Zone);
+                        if (ret.Error != DBError.Success)
+                        {
+                            state = State.Loaded;
+                            foreach (var tcs in tasks)
+                            {
+                                tcs.SetException(exception);
+                            }
+                            tasks.Clear();
+                            throw exception;
+                        }
+                    }
+                    else if (ret.Error != DBError.Success)
                     {
                         state = State.Loaded;
                         foreach (var tcs in tasks)
@@ -50,8 +65,20 @@ namespace GameServer.Module
                         tasks.Clear();
                         throw exception;
                     }
+                    else if (ret.Error != DBError.Success)
+                    {
+                        throw exception;
+                    }
                 }
-                else if (ret.Error != DataBase.DBError.Success)
+                else if (ret.Error != DBError.Success)
+                {
+                    throw exception;
+                }
+                this.StartNum = ret.Row.Base.Nums;
+                ret.Row.Base.Nums += (ulong)AddNums;
+                this.EndNum = ret.Row.Base.Nums;
+                var ret3 = await ret.Row.SaveAync();
+                if (ret3 != DBError.Success)
                 {
                     state = State.Loaded;
                     foreach (var tcs in tasks)
@@ -61,35 +88,18 @@ namespace GameServer.Module
                     tasks.Clear();
                     throw exception;
                 }
-                else if (ret.Error != DataBase.DBError.Success)
-                {
-                    throw exception;
-                }
-            }
-            else if (ret.Error != DataBase.DBError.Success)
-            {
-                throw exception;
-            }
-            this.StartNum = ret.Row.Value.Nums;
-            ret.Row.Value.Nums += (ulong)AddNums;
-            this.EndNum = ret.Row.Value.Nums;
-            var ret3 = await ret.Row.SaveAync();
-            if (ret3 != DataBase.DBError.Success)
-            {
                 state = State.Loaded;
                 foreach (var tcs in tasks)
                 {
-                    tcs.SetException(exception);
+                    tcs.SetResult();
                 }
                 tasks.Clear();
-                throw exception;
-            }
-            state = State.Loaded;
-            foreach (var tcs in tasks)
+            } catch (Exception ex)
             {
-                tcs.SetResult();
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
-            tasks.Clear();
+            
         }
         List<TaskCompletionSource> tasks = new List<TaskCompletionSource>();
         private Task UpdateAsync()

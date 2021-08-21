@@ -1,18 +1,17 @@
 ﻿using Frame;
 using GameServer.Player;
 using System.Threading.Tasks;
-using DataBase;
 using GameServer.Module;
 using System;
 using System.Diagnostics;
 using ProxyServerApi;
 using System.Xml.Serialization;
+using CacheServerApi;
 
 namespace GameServer
 {
     public class Config : BaseNetConfig
     {
-        public MysqlConfig Mysql;
         [XmlArray("IpAndPoint"), XmlArrayItem("value")]
         public string[] IpAndPoint;
     }
@@ -24,35 +23,38 @@ namespace GameServer
         public UinMngr UinMngr { get; private set; }
 
         protected override string ConfPath => "../GameServerConfig.xml";
-        ProxyModule proxyModule = new ProxyModule();
 
         protected override void OnInit() 
         {
             base.OnInit();
             UinMngr = new UinMngr();
-            Config.Mysql.PoolSize = 10;
-            Database.Init(Config.Mysql);
+            // Config.Mysql.PoolSize = 10;
+            // Database.Init(Config.Mysql);
             playerMngr.Init();
+            ProxyModule.Instance.Init(Config.IpAndPoint, new ServerInfo {id=1, name="GameServer", zone = 1 });
+            CacheServerModule.Instance.Init(ProxyModule.Instance);
+
             UinMngr.Init(Zone);
-            proxyModule.Init(Config.IpAndPoint);
         }
 
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            Database.Update();
+            //  Database.Update();
             playerMngr?.Update();
             UinMngr?.Update();
-            proxyModule?.Update();
+            ProxyModule.Instance?.Update();
+            CacheServerModule.Instance.Update();
 
         }
         protected override void OnFini()
         {
             base.OnFini();
-            Database.Fini();
+            // Database.Fini();
             playerMngr?.Fini();
             UinMngr?.Fini();
-            proxyModule?.Fini();
+            ProxyModule.Instance?.Fini();
+            CacheServerModule.Instance.Fini();
         }
         protected override void OnHandlerData(Session session, byte[] data)
         {

@@ -38,8 +38,18 @@ namespace Frame
         {
             while (true)
             {
-                var client = await tcpListener.AcceptTcpClientAsync();
-                _ = ProcessAsync(client);
+                    try
+                    {
+
+                        var client = await tcpListener.AcceptTcpClientAsync();
+
+                        _ = ProcessAsync(client);
+                    } catch (Exception ex)
+                    {
+
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                    }
             }
         }
         public void Update()
@@ -48,34 +58,40 @@ namespace Frame
         }
         private async Task ProcessAsync(TcpClient tcpClient)
         {
+
             Session session = new Session { client = tcpClient, SessionId = ++iditer, latestRec = TimeMngr.Instance.RealTimestamp };
             connectHandler(session);
-            var buffer = new byte[1024 * 1024];
-            var StartIndex = 0;
-            var stream = tcpClient.GetStream();
-            int len = 0;
-            while((len = await stream.ReadAsync(buffer, StartIndex, buffer.Length - StartIndex)) != 0)
+            try
             {
-                StartIndex = StartIndex + len;
-
-                if (StartIndex >= 4)
+                var buffer = new byte[1024 * 1024];
+                var StartIndex = 0;
+                var stream = tcpClient.GetStream();
+                int len = 0;
+                while((len = await stream.ReadAsync(buffer, StartIndex, buffer.Length - StartIndex)) != 0)
                 {
-                    var PackLenBits = buffer.Take(4).ToArray();
-                    Array.Reverse(PackLenBits);
-                    var PackLen = BitConverter.ToInt32(PackLenBits, 0);
-                    if (PackLen >= 1024 * 1024)
+                    StartIndex = StartIndex + len;
+
+                    if (StartIndex >= 4)
                     {
-                        break;
+                        var PackLenBits = buffer.Take(4).ToArray();
+                        Array.Reverse(PackLenBits);
+                        var PackLen = BitConverter.ToInt32(PackLenBits, 0);
+                        if (PackLen >= 1024 * 1024)
+                        {
+                            break;
+                        }
+                        if (StartIndex >= PackLen)
+                        {
+                            var data = buffer.Take(PackLen).ToArray();
+                            dataHandler(session, data);
+                            data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
+                            Array.Copy(data, buffer, data.Length);
+                            StartIndex = StartIndex - PackLen;
+                        }
                     }
-                    if (StartIndex >= PackLen)
-                    {
-                        var data = buffer.Take(PackLen).ToArray();
-                        dataHandler(session, data);
-                        data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
-                        Array.Copy(data, buffer, data.Length);
-                        StartIndex = StartIndex - PackLen;
                     }
-                }
+            } catch (Exception ex)
+            {
             }
             disconnectHandler(session);
         }

@@ -22,6 +22,13 @@ namespace ProxyServerApi
             await ProxyModule.Instance.SendToAsync(Target, Proxyapi.EPackType.Response,data);
         }
     }
+
+    public struct ServerInfo {
+        public int id;
+        public string name;
+        public int zone;
+    }
+
     public class ProxyModule : Singleton<ProxyModule>
     {
         Dictionary<string, ClientHandlerData> funs = new Dictionary<string, ClientHandlerData>();
@@ -29,18 +36,18 @@ namespace ProxyServerApi
         DirServerModule dirServerModule = new DirServerModule();
         Dictionary<Proxyapi.TargetSvr, ProxySession> sessions = new Dictionary<Proxyapi.TargetSvr, ProxySession>();
         public HandleData DataHandler { get; set; }
-        public void Init(string[] dirlist)
+        public void Init(string[] dirlist, ServerInfo serverInfo)
         {
            
             dirServerModule.Init(dirlist);
-            _ = GetProxyListAsync();
+            _ = GetProxyListAsync(serverInfo);
         }
         public void Update()
         {
             dirServerModule.Update();
         }
 
-        private async Task GetProxyListAsync()
+        private async Task GetProxyListAsync(ServerInfo serverInfo)
         {
             await Task.Delay(1000);
             var req = new Dirapi.GetReq { Name = "ProxyServer", Zone = 0 };
@@ -52,12 +59,16 @@ namespace ProxyServerApi
             {
                 foreach(var svr in rsp.Item2.Servres)
                 {
-                    var tcpClient = new TcpClient();
-                    await tcpClient.ConnectAsync(IPAddress.Parse(svr.Url.Ip), svr.Url.Port);
-                    tcpClients.Add(tcpClient);
-                    NetworkStream stream = tcpClient.GetStream();
-                    // 心跳
-                    Timer.Instance.SetInterval(1000 * 30, () => {
+                        var tcpClient = new TcpClient();
+                        await tcpClient.ConnectAsync(IPAddress.Parse(svr.Url.Ip), svr.Url.Port);
+                        tcpClients.Add(tcpClient);
+                        NetworkStream stream = tcpClient.GetStream();
+                        Proxyapi.SHead head = new Proxyapi.SHead() {Msgid = Proxyapi.EOpCode.RegisteReq, Target = new Proxyapi.TargetSvr { Id = serverInfo.id, Name = serverInfo.name, Zone = serverInfo.zone , Type = Proxyapi.ETransmitType.Broadcast} };
+                        Proxyapi.RegistReq registReq = new Proxyapi.RegistReq() {Id =  serverInfo.id, Name = serverInfo.name, Zone = serverInfo.zone};
+                        var data = ProtoUtil.Pack(head, registReq);
+                        _ = stream.WriteAsync(data);
+                        // 心跳
+                        Timer.Instance.SetInterval(1000 * 30, () => {
                         TaskAction fun = async () =>
                         {
                             if (stream != null)
@@ -112,8 +123,11 @@ namespace ProxyServerApi
             var stream = client.GetStream();
             Proxyapi.SHead head = new Proxyapi.SHead {Msgid = Proxyapi.EOpCode.Transmit, Target = targetSvr , Type = type};
             var headBits = head.ToByteArray();
+
             var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
+            Array.Reverse(packlenbits);
             var headlenbits = BitConverter.GetBytes(headBits.Length);
+            Array.Reverse(headlenbits);
             byte[] SendBuffer = new byte[headBits.Length + data.Length + 2 * sizeof(int)];
             packlenbits.CopyTo(SendBuffer, 0);
             headlenbits.CopyTo(SendBuffer, sizeof(int));
@@ -177,8 +191,12 @@ namespace ProxyServerApi
 
             } else
             {
-                var fun = funs.GetValueOrDefault(head.Target.Name);
-                fun?.Invoke(bodydata);
+                if (head.Target != null)
+                {
+
+                    var fun = funs.GetValueOrDefault(head.Target.Name);
+                    fun?.Invoke(bodydata);
+                }
             }
             
         }

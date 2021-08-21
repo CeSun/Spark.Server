@@ -19,6 +19,7 @@ enum EErrno {
 	EERRNO_RECORE_EXISTED = 3;			// 数据已存在
 	EERRNO_RECORE_IS_NOT_EXISTED = 4;   // 数据不存在
 	EERRNO_TABLE_IS_NOT_EXISTED = 5;	// 表不存在
+	EERRNO_TIME_OUT = 6;	// 表不存在
 }
 
 message Head {

@@ -20,7 +20,6 @@ namespace CacheServer
         protected override string ConfPath => "../CacheServerConfig.xml";
         protected Dictionary<string, Table> tables = new Dictionary<string, Table>();
         Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession> dispatcher = new Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession>(head => head.Msgid);
-        ProxyModule proxyModule = new ProxyModule();
         protected override void OnInit()
         {
             tables["DBUin"] = new TBUin();
@@ -34,12 +33,11 @@ namespace CacheServer
                 Config.CacheServer.SaveInterval = 1000 * 15 * 1;
             }
             Timer.Instance.SetInterval(Config.CacheServer.SaveInterval, () => { _ = SaveDbAsync(); });
-            proxyModule.Init(Config.IpAndPoint);
-            proxyModule.DataHandler = DataHandler;
-            _ = TestAsync();
+            ProxyModule.Instance.Init(Config.IpAndPoint , new ServerInfo { id = 1, name = "CacheServer", zone = 0 });
+            ProxyModule.Instance.DataHandler = DataHandler;
             dispatcher.Bind<QueryReq>(EOpCode.QueryReq, HandlerQuery);
-            dispatcher.Bind<SaveReq>(EOpCode.QueryReq, HandlerSave);
-            dispatcher.Bind<DeleteReq>(EOpCode.QueryReq, HandlerDelete);
+            dispatcher.Bind<SaveReq>(EOpCode.SaveReq, HandlerSave);
+            dispatcher.Bind<DeleteReq>(EOpCode.DeleteReq, HandlerDelete);
         }
 
         public async Task HandlerQuery(ISession session, Head reqHead, QueryReq reqBody)
@@ -53,15 +51,23 @@ namespace CacheServer
             }
             else
             {
-                var infoAndErr =  await table.QueryAsync(reqBody.Key);
-                if (infoAndErr.Item2 != EErrno.Succ)
+                try
                 {
-                    rspHead.Errcode = infoAndErr.Item2;
-                }
-                else
+
+                    var infoAndErr = await table.QueryAsync(reqBody.Key);
+                    if (infoAndErr.Item2 != EErrno.Succ)
+                    {
+                        rspHead.Errcode = infoAndErr.Item2;
+                    }
+                    else
+                    {
+                        rspBody.Record = infoAndErr.Item1;
+                    }
+                } catch (Exception ex)
                 {
-                    rspBody.Record = infoAndErr.Item1;
+
                 }
+                
             }
             var data = ProtoUtil.Pack(rspHead, rspBody);
             await session.SendAsync(data);
@@ -207,7 +213,7 @@ namespace CacheServer
 
         protected override void OnUpdate()
         {
-            proxyModule.Update();
+            ProxyModule.Instance.Update();
             Mysql.Instance.Update();
         }
         protected override void OnFini()
