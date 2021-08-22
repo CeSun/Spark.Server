@@ -42,7 +42,7 @@ namespace Frame
                     {
 
                         var client = await tcpListener.AcceptTcpClientAsync();
-
+                        
                         _ = ProcessAsync(client);
                     } catch (Exception ex)
                     {
@@ -92,6 +92,8 @@ namespace Frame
                     }
             } catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
             disconnectHandler(session);
         }
@@ -108,6 +110,8 @@ namespace Frame
         public long latestRec;
         private object process;
         public TProcess GetProcess<TProcess>(){
+            if (this.process == null)
+                return default;
             return (TProcess)this.process;
         }
         public void SetProcess<TProcess>(TProcess value)

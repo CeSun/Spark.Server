@@ -20,7 +20,7 @@ namespace ClientTest
         {
              List<Task> tasks = new List<Task>();
             await Task.Delay(3000);
-            int num = 100;
+            int num = 5000;
             clients =  new TcpClient[num];
             for (int i = 0; i < num; i++)
             {
@@ -31,7 +31,7 @@ namespace ClientTest
             for (int i= 0; i < num; i++)
             {
                 // tasks.Add(TestDirServer());
-                tasks.Add(fun3(String.Format("asdasdasd{0}ss{0}", i), i));
+                tasks.Add(fun3(String.Format("asduug{0}ss{0}", i), i));
             }
             foreach (var task in tasks)
             {

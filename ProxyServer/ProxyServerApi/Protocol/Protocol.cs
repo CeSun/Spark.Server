@@ -38,9 +38,9 @@ namespace Proxyapi {
             "UlNQEAISGQoVRU9QQ09ERV9IRUFSVEJFQVRfUkVREAMSGQoVRU9QQ09ERV9I",
             "RUFSVEJFQVRfUlNQEAQSFAoQRU9QQ09ERV9UUkFOU01JVBAFKkAKBkVFcnJu",
             "bxIPCgtFRVJSTk9fU1VDQxAAEg8KC0VFUlJOT19GQUlMEAESFAoQRUVSUk5P",
-            "X0RVUExJQ0FURRACKigKDUVUcmFuc21pdFR5cGUSDQoJQnJvYWRjYXN0EAAS",
-            "CAoEUG9sbBABKiYKCUVQYWNrVHlwZRILCgdSZXF1ZXN0EAASDAoIUmVzcG9u",
-            "c2UQAWIGcHJvdG8z"));
+            "X0RVUExJQ0FURRACKjcKDUVUcmFuc21pdFR5cGUSDQoJQnJvYWRjYXN0EAAS",
+            "CAoEUG9sbBABEg0KCURpcmVjdGlvbhACKiYKCUVQYWNrVHlwZRILCgdSZXF1",
+            "ZXN0EAASDAoIUmVzcG9uc2UQAWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proxyapi.EOpCode), typeof(global::Proxyapi.EErrno), typeof(global::Proxyapi.ETransmitType), typeof(global::Proxyapi.EPackType), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -110,6 +110,10 @@ namespace Proxyapi {
     /// ÂÖÑ¯
     /// </summary>
     [pbr::OriginalName("Poll")] Poll = 1,
+    /// <summary>
+    /// Ö¸¶¨
+    /// </summary>
+    [pbr::OriginalName("Direction")] Direction = 2,
   }
 
   public enum EPackType {

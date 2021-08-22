@@ -21,6 +21,7 @@ enum EErrno {
 enum ETransmitType {
 	Broadcast = 0;	// ¹ã²¥
 	Poll = 1;		// ÂÖÑ¯
+	Direction = 2;		// Ö¸¶¨
 }
 
 enum EPackType {

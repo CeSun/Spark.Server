@@ -47,6 +47,10 @@ namespace ProxyServer
         }
         async Task Filter (Session session, SHead head, TaskAction next, int offset, byte[] data)
         {
+            if (head.Sync == 99)
+            {
+
+            }
             if (head.Msgid != EOpCode.Transmit)
             {
                 await next();
@@ -83,7 +87,15 @@ namespace ProxyServer
             headLengthBits.CopyTo(toData, sizeof(int));
             headBits.CopyTo(toData, 2 * sizeof(int));
             body.CopyTo(toData, 2 * sizeof(int) + headBits.Length);
-            await svrSet.SendTo(head.Target, toData);
+            try
+            {
+
+                await svrSet.SendTo(head.Target, toData);
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
 
         }
         async Task RegistReqAsync (Session session, SHead head, RegistReq reqBody)

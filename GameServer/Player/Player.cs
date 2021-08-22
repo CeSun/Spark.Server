@@ -152,6 +152,7 @@ namespace GameServer.Player
                     {
                         DBAccount = retval.Row.Base;
                         fsm.PostEvent(EEvent.Logout);
+                        Console.WriteLine("QueryPlayer " + playerPair.Error);
                         rspHead.Errcode = EErrno.Error;
                     }
                 }
@@ -165,21 +166,32 @@ namespace GameServer.Player
             else
             {
                 var uin = await Server.Instance.UinMngr.GetUinAsync();
-                var account = TAccount.New();
-                account.Base.Uin = uin;
-                account.Base.Zone = Server.Instance.Zone;
-                account.Base.Type = (AuthType)loginReq.LoginType;
-                account.Base.Account = loginReq.TestAccount;
-                var ret = await account.SaveAync();
-                if (ret == DBError.Success)
+                if (uin == 0)
                 {
-                    DBAccount = account.Base;
-                    fsm.PostEvent(EEvent.Create);
-                    rspBody.LoginResult = ELoginResult.NoPlayer;
-                } else
-                {
+                    Console.WriteLine("uin error" + uin);
                     fsm.PostEvent(EEvent.Logout);
                     rspHead.Errcode = EErrno.Error;
+                }
+                else
+                {
+                    var account = TAccount.New();
+                    account.Base.Uin = uin;
+                    account.Base.Zone = Server.Instance.Zone;
+                    account.Base.Type = (AuthType)loginReq.LoginType;
+                    account.Base.Account = loginReq.TestAccount;
+                    var ret = await account.SaveAync();
+                    if (ret == DBError.Success)
+                    {
+                        DBAccount = account.Base;
+                        fsm.PostEvent(EEvent.Create);
+                        rspBody.LoginResult = ELoginResult.NoPlayer;
+                    }
+                    else
+                    {
+                        Console.WriteLine("account.SaveAync: " + ret);
+                        fsm.PostEvent(EEvent.Logout);
+                        rspHead.Errcode = EErrno.Error;
+                    }
                 }
             }
             await SendToClientAsync(rspHead, rspBody);

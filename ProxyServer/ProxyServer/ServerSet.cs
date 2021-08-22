@@ -14,13 +14,15 @@ namespace ProxyServer
             switch (target.Type )
             {
                 case Proxyapi.ETransmitType.Broadcast:
-                    foreach (var item in servers)
                     {
-                        // 非阻塞发送 
-                        _ = item.Value.SendAsync(data);
+                        foreach (var item in servers)
+                        {
+                            // 非阻塞发送 
+                            _ = item.Value.SendAsync(data);
+                        }
                     }
                     break;
-                case Proxyapi.ETransmitType.Poll:
+                case Proxyapi.ETransmitType.Poll: 
                     {
                         if (servers.Count == 0)
                             return;
@@ -30,6 +32,13 @@ namespace ProxyServer
                         }
                         var item = servers.Skip(index).FirstOrDefault();
                         await item.Value.SendAsync(data);
+                    }
+                    break;
+                case Proxyapi.ETransmitType.Direction:
+                    {
+                        var item = servers.GetValueOrDefault(target.Id);
+                        if (item != null)
+                            await item.SendAsync(data);
                     }
                     break;
 

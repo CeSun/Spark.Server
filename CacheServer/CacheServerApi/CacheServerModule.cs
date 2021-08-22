@@ -28,14 +28,21 @@ namespace CacheServerApi
 
         public Task<(Cacheapi.Head, Cacheapi.QueryRsp)> QueryAsync(string table, string key)
         {
+            
             TaskCompletionSource<(Cacheapi.Head, Cacheapi.QueryRsp)> tcs = new TaskCompletionSource<(Cacheapi.Head, Cacheapi.QueryRsp)>();
             var sync = ++SyncIter;
             tcss.Add(sync, tcs);
             Cacheapi.Head head = new Cacheapi.Head() { Msgid = Cacheapi.EOpCode.QueryReq, Sync = sync };
             Cacheapi.QueryReq queryReq = new Cacheapi.QueryReq() { Key = key, Table = table };
             var data = ProtoUtil.Pack(head, queryReq);
-            _ = proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data);
-            Timer.Instance.SetTimeOut(5000, () => {
+            if (table == "DBUin")
+{
+                Proxyapi.SHead h = new Proxyapi.SHead { Msgid = Proxyapi.EOpCode.Transmit, Target = new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Type = Proxyapi.EPackType.Request };
+                h.Sync = 99;
+                _ = proxyModule.SendToAsync(h, data);
+            }
+            else _ = proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data);
+            Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != null)
                 {
@@ -55,7 +62,7 @@ namespace CacheServerApi
             SaveReq saveReq = new SaveReq() { Key = key, Table = table, Record = recordInfo };
             var data = ProtoUtil.Pack(head, saveReq);
             _ = proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data);
-            Timer.Instance.SetTimeOut(5000, () => {
+            Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != null)
                 {
@@ -77,7 +84,7 @@ namespace CacheServerApi
             DeleteReq deleteReq = new DeleteReq() { Key = key, Table = table};
             var data = ProtoUtil.Pack(head, deleteReq);
             _ = proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data);
-            Timer.Instance.SetTimeOut(5000, () => {
+            Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != null)
                 {

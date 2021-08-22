@@ -1,6 +1,7 @@
 ﻿using DirServerApi;
 using Frame;
 using Google.Protobuf;
+using Proxyapi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,7 +79,9 @@ namespace ProxyServerApi
                                 var headBits = head.ToByteArray();
                                 var bodyBits = req.ToByteArray();
                                 var packlenbits = BitConverter.GetBytes(headBits.Length + bodyBits.Length + 2 * sizeof(int));
+                                Array.Reverse(packlenbits);
                                 var headlenbits = BitConverter.GetBytes(headBits.Length);
+                                Array.Reverse(headlenbits);
                                 byte[] SendBuffer = new byte[headBits.Length + bodyBits.Length + 2 * sizeof(int)];
                                 packlenbits.CopyTo(SendBuffer, 0);
                                 headlenbits.CopyTo(SendBuffer, sizeof(int));
@@ -122,6 +125,30 @@ namespace ProxyServerApi
             }
             var stream = client.GetStream();
             Proxyapi.SHead head = new Proxyapi.SHead {Msgid = Proxyapi.EOpCode.Transmit, Target = targetSvr , Type = type};
+            var headBits = head.ToByteArray();
+
+            var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
+            Array.Reverse(packlenbits);
+            var headlenbits = BitConverter.GetBytes(headBits.Length);
+            Array.Reverse(headlenbits);
+            byte[] SendBuffer = new byte[headBits.Length + data.Length + 2 * sizeof(int)];
+            packlenbits.CopyTo(SendBuffer, 0);
+            headlenbits.CopyTo(SendBuffer, sizeof(int));
+            headBits.CopyTo(SendBuffer, 2 * sizeof(int));
+            data.CopyTo(SendBuffer, 2 * sizeof(int) + headBits.Length);
+            await stream.WriteAsync(SendBuffer);
+
+
+        }
+
+        public async Task SendToAsync(SHead head, byte[] data)
+        {
+            var client = tcpClients.FirstOrDefault();
+            if (client == null)
+            {
+                return;
+            }
+            var stream = client.GetStream();
             var headBits = head.ToByteArray();
 
             var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
@@ -184,6 +211,7 @@ namespace ProxyServerApi
                 var session = sessions.GetValueOrDefault(head.Target);
                 if (session == null)
                 {
+                    head.Target.Type = Proxyapi.ETransmitType.Direction;
                     session = new ProxySession { Target = head.Target };
                     sessions[head.Target] = session;
                 }
