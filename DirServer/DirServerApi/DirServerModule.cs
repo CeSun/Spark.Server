@@ -5,10 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using static System.Collections.Specialized.BitVector32;
 
 namespace DirServerApi
 {
@@ -72,31 +74,31 @@ namespace DirServerApi
         private async Task Revice(TcpClient client)
         {
             var buffer = new byte[1024 * 1024];
-            var stream = client.GetStream();
             var StartIndex = 0;
+            var stream = client.GetStream();
             int len = 0;
-            while ((len = await stream.ReadAsync(buffer, StartIndex, buffer.Length - StartIndex)) != 0)
+            int nextReadLen = 4;
+            bool isReadHead = true;
+            while ((len = await stream.ReadAsync(buffer, StartIndex, nextReadLen)) != 0)
             {
-                StartIndex = StartIndex + len;
-
-                if (StartIndex >= 4)
+                if (isReadHead)
                 {
                     var PackLenBits = buffer.Take(4).ToArray();
                     Array.Reverse(PackLenBits);
-                    var PackLen = BitConverter.ToInt32(PackLenBits, 0);
-                    if (PackLen >= 1024 * 1024 * 2)
-                    {
-                        break;
-                    }
-                    if (StartIndex >= PackLen)
-                    {
-                        var data = buffer.Take(PackLen).ToArray();
-                        dataHandler(data);
-                        data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
-                        Array.Copy(data, buffer, data.Length);
-                        StartIndex = StartIndex - PackLen;
-                    }
+                    nextReadLen = BitConverter.ToInt32(PackLenBits, 0) - 4;
+                    StartIndex = 4;
+                    isReadHead = false;
                 }
+                else
+                {
+                    var data = buffer.Take(nextReadLen + 4).ToArray();
+                    dataHandler(data);
+                    nextReadLen = 4;
+                    StartIndex = 0;
+                    isReadHead = true;
+                }
+
+
             }
 
             sockets.Remove(client);

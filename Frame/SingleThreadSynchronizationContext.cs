@@ -15,7 +15,6 @@ namespace Frame
     /// </summary>
     public class SingleThreadSynchronizationContext : SynchronizationContext
     {
-        int mainThreadId;
         enum Source
         {
             Task,
@@ -23,7 +22,6 @@ namespace Frame
         }
         public SingleThreadSynchronizationContext()
         {
-            mainThreadId = Thread.CurrentThread.ManagedThreadId;
         }
         BlockingCollection<(SendOrPostCallback d, object state, Source)> bufferBlock = new BlockingCollection<(SendOrPostCallback d, object state, Source)>();
         public override void Post(SendOrPostCallback d, object state)
@@ -38,7 +36,7 @@ namespace Frame
         {
             (SendOrPostCallback d, object state, Source) data = default;
             int i = 0;
-            for (i = 0; i < 10 ; i++)
+            for (i = 0; i < 20 ; i++)
             {
                 if (!bufferBlock.TryTake(out data))
                     break;

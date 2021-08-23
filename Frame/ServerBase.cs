@@ -36,19 +36,21 @@ namespace Frame
             try
             {
                 Instance.Init();
-                ulong frameNo = 0;
+                // ulong frameNo = 0;
                 var start = DateTime.Now;
                 while (true)
                 {
                     TimeMngr.Instance.Update();
-                    frameNo++;
+                    // frameNo++;
                     Instance.Update();
+                    /*
                     if ((DateTime.Now - start).TotalMilliseconds >= 1000)
                     {
-                        Console.WriteLine(frameNo);
+                        // Console.WriteLine(frameNo);
                         start = DateTime.Now;
                         frameNo = 0;
                     }
+                    */
                 }
             }
             catch (Exception ex){
@@ -71,19 +73,19 @@ namespace Frame
                 Config = xmlSerializer.Deserialize(streamReader) as TConfig;
                 streamReader.Close();
             }
-            Timer.Instance.Init();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
             CoroutineUtil.Instance.Init();
             TimeMngr.Instance.Init(Config.Time.Zone);
+            Timer.Instance.Init();
             OnInit();
         }
 
         protected void Update()
         {
-            Timer.Instance.Update();
             SyncContext.Update();
             Thread.Sleep(0);
             OnUpdate();
+            Timer.Instance.Update();
         }
 
         protected void Fini()

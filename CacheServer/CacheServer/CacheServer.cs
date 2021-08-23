@@ -42,10 +42,6 @@ namespace CacheServer
 
         public async Task HandlerQuery(ISession session, Head reqHead, QueryReq reqBody)
         {
-            if (reqBody.Table == "DBUin")
-            {
-
-            }
             Head rspHead = new Head() { Msgid = EOpCode.QueryRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync};
             QueryRsp rspBody = new QueryRsp();
             var table = tables.GetValueOrDefault(reqBody.Table);
@@ -78,10 +74,6 @@ namespace CacheServer
 
         public async Task HandlerSave(ISession session, Head reqHead, SaveReq reqBody)
         {
-            if (reqBody.Table == "DBAccount")
-            {
-
-            }
             Head rspHead = new Head() { Msgid = EOpCode.SaveRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync};
             SaveRsp rspBody = new SaveRsp();
             var table = tables.GetValueOrDefault(reqBody.Table);

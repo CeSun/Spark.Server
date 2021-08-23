@@ -10,17 +10,18 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace ProxyServerApi
 {
     
     public class ProxySession : ISession
     {
-
+        internal ulong sync = 0;
         internal Proxyapi.TargetSvr Target;
         public async Task SendAsync(byte[] data)
         {
-            await ProxyModule.Instance.SendToAsync(Target, Proxyapi.EPackType.Response,data);
+            await ProxyModule.Instance.SendToAsync(Target, Proxyapi.EPackType.Response,data, 0);
         }
     }
 
@@ -36,7 +37,6 @@ namespace ProxyServerApi
         Dictionary<string, ClientHandlerData> funs = new Dictionary<string, ClientHandlerData>();
         List<TcpClient> tcpClients = new List<TcpClient>();
         DirServerModule dirServerModule = new DirServerModule();
-        Dictionary<Proxyapi.TargetSvr, ProxySession> sessions = new Dictionary<Proxyapi.TargetSvr, ProxySession>();
         public HandleData DataHandler { get; set; }
         public void Init(string[] dirlist, ServerInfo serverInfo)
         {
@@ -117,9 +117,9 @@ namespace ProxyServerApi
             funs[svrName] = func;
         }
 
-        public async Task SendToAsync(Proxyapi.TargetSvr targetSvr,Proxyapi.EPackType type, byte[] data)
+        public async Task SendToAsync(Proxyapi.TargetSvr targetSvr,Proxyapi.EPackType type, byte[] data, ulong sync)
         {
-            var sync = ++SyncIter;
+            // var sync = ++SyncIter;
             var client = tcpClients.FirstOrDefault();
             if (client == null)
             {
@@ -128,7 +128,6 @@ namespace ProxyServerApi
             var stream = client.GetStream();
             Proxyapi.SHead head = new Proxyapi.SHead {Msgid = Proxyapi.EOpCode.Transmit, Target = targetSvr , Type = type, Sync = sync};
             var headBits = head.ToByteArray();
-
             var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
             Array.Reverse(packlenbits);
             var headlenbits = BitConverter.GetBytes(headBits.Length);
@@ -146,32 +145,47 @@ namespace ProxyServerApi
 
         private async Task RecvieAsync(TcpClient tcpClient)
         {
-            var buffer = new byte[1024 * 1024 * 2];
+            var buffer = new byte[1024 * 1024];
             var stream = tcpClient.GetStream();
-            var StartIndex = 0;
+            var start = 0;
             int len = 0;
-            while ((len = await stream.ReadAsync(buffer, StartIndex, buffer.Length - StartIndex)) != 0)
+            int packLen = 0;
+            while ((len = await stream.ReadAsync(buffer, start, buffer.Length - start)) != 0)
             {
-                StartIndex = StartIndex + len;
-
-                if (StartIndex >= 4)
+                var bitsCount = start + len;
+                if (bitsCount > 4)
                 {
-                    var PackLenBits = buffer.Take(4).ToArray();
-                    Array.Reverse(PackLenBits);
-                    var PackLen = BitConverter.ToInt32(PackLenBits, 0);
-                    if (PackLen >= 1024 * 1024 * 2)
+                    if (packLen == 0)
                     {
-                        break;
+                        var packLenBits = buffer.Take(4).ToArray();
+                        Array.Reverse(packLenBits);
+                        packLen = BitConverter.ToInt32(packLenBits);
                     }
-                    if (StartIndex >= PackLen)
+                    var offset = 0;
+                    var count = bitsCount;
+                    while (count >= packLen)
                     {
-                        var data = buffer.Take(PackLen).ToArray();
-                        dispatcher(data);
-                        data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
-                        Array.Copy(data, buffer, data.Length);
-                        StartIndex = StartIndex - PackLen;
+                        var data = buffer.Skip(offset).Take(packLen).ToArray();
+                        dispatcher( data);
+                        offset += packLen;
+                        count -= packLen;
+                        packLen = 0;
+                        if (count >= 4)
+                        {
+                            var packLenBits = buffer.Skip(offset).Take(4).ToArray();
+                            Array.Reverse(packLenBits);
+                            packLen = BitConverter.ToInt32(packLenBits);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
+                    var halfpack = buffer.Skip(offset).Take(bitsCount - offset).ToArray();
+                    halfpack.CopyTo(buffer, 0);
+                    start = halfpack.Length;
                 }
+
             }
         }
 
@@ -187,15 +201,9 @@ namespace ProxyServerApi
             var bodydata = data.Skip(2 * sizeof(int) + headlen).ToArray();
             if (head.Type == Proxyapi.EPackType.Request)
             {
-                var session = sessions.GetValueOrDefault(head.Target);
-                if (session == null)
-                {
-                    head.Target.Type = Proxyapi.ETransmitType.Direction;
-                    session = new ProxySession { Target = head.Target };
-                    sessions[head.Target] = session;
-                }
+                head.Target.Type = Proxyapi.ETransmitType.Direction;
+                var session = new ProxySession { Target = head.Target, sync = head.Sync };
                 DataHandler?.Invoke(session, bodydata);
-
             } else
             {
                 if (head.Target != null)

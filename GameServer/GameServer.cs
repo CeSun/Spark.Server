@@ -55,7 +55,7 @@ namespace GameServer
         protected override void OnHandlerData(Session session, byte[] data)
         {
             var player = session.GetProcess<Player.Player>();
-            player.processData(data);
+            player?.processData(data);
         }
 
         protected override void OnHandlerConnected(Session session)

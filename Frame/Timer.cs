@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using TreeLib;
 
 namespace Frame
 {
     public class Timer: Singleton<Timer>
     {
-        struct RunableAction
+        class RunableAction
         {
             public long Interval;
             public Action Action;
             public bool IsLoop;
+            public long StartTime;
+            public Stopwatch sw;
         }
-
-        private RedBlackTreeMap<long, Stack<RunableAction>> onceTimer = new RedBlackTreeMap<long, Stack<RunableAction>>();
+        SortedDictionary<long, List<RunableAction>> onceTimer = new SortedDictionary<long, List<RunableAction>>();
 
         public void Init()
         {
@@ -43,16 +46,16 @@ namespace Frame
         private void AddFun(long time, Action fun, bool IsLoop)
         {
             var nextTime = TimeMngr.Instance.Timestamp + time;
-            RunableAction action = new RunableAction { Action = fun, Interval = time, IsLoop = IsLoop };
-            Stack<RunableAction> statck;
+            RunableAction action = new RunableAction { Action = fun, Interval = time, IsLoop = IsLoop, StartTime = TimeMngr.Instance.Timestamp,sw = Stopwatch.StartNew() };
+            List<RunableAction> statck;
             if (onceTimer.TryGetValue(nextTime, out statck))
             {
-                statck.Push(action);
+                statck.Add(action);
             }
             else
             {
-                statck = new Stack<RunableAction>();
-                statck.Push(action);
+                statck = new List<RunableAction>();
+                statck.Add(action);
                 onceTimer.Add(nextTime, statck);
             }
         }
@@ -60,29 +63,41 @@ namespace Frame
         public void Update()
         {
             var now = TimeMngr.Instance.Timestamp;
-            long key;
-            Stack<RunableAction> stack;
-            var isFound = onceTimer.Least(out key, out stack);
-            if (isFound && key < now)
+            if (onceTimer.Count == 0)
+                return;
+            var pair = onceTimer.FirstOrDefault();
+            if (pair.Key <= now)
             {
-                while (isFound && key < now)
+                onceTimer.Remove(pair.Key);
+                foreach (var item2 in pair.Value)
                 {
-                    onceTimer.Remove(key);
-                    isFound = onceTimer.Least(out key, out stack);
-                }
-            }
-            if (isFound && now == key)
-            {
-                foreach (var action in stack)
-                {
-                    action.Action();
-                    if (action.IsLoop == true)
+                    var item = item2;
+                    try
                     {
-                        var nextTime = action.Interval;
-                        AddFun(nextTime, action.Action, true);
+                        item.Action();
+                        item.sw.Stop();
+                        Console.WriteLine($"timer: start:{item.StartTime}, interval: {item.Interval}, now: {now}, detal:{now - item.StartTime}, sw: {item.sw.Elapsed.TotalMilliseconds}");
+                       
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
+                    }
+                    if (item.IsLoop == true)
+                    {
+                        var time = now + item.Interval;
+                        var stack = onceTimer.GetValueOrDefault(time);
+                        item.StartTime = now; 
+                        item.sw.Restart();
+                        if (stack == null)
+                        {
+                            stack = new List<RunableAction>();
+                            onceTimer[time] = stack;
+                        }
+                        stack.Add(item);
                     }
                 }
-                onceTimer.Remove(key);
             }
         }
 

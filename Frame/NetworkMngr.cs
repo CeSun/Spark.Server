@@ -40,15 +40,13 @@ namespace Frame
             {
                     try
                     {
-
                         var client = await tcpListener.AcceptTcpClientAsync();
-
-                    CoroutineUtil.Instance.New(async () => await ProcessAsync(client));
-                    } catch (Exception ex)
+                        CoroutineUtil.Instance.New(async () => await ProcessAsync(client));
+                    } 
+                catch (Exception ex)
                     {
-
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(ex.StackTrace);
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
                     }
             }
         }
@@ -64,37 +62,50 @@ namespace Frame
             try
             {
                 var buffer = new byte[1024 * 1024];
-                var StartIndex = 0;
                 var stream = tcpClient.GetStream();
+                var start = 0;
                 int len = 0;
-                while((len = await stream.ReadAsync(buffer, StartIndex, buffer.Length - StartIndex)) != 0)
+                int packLen = 0;
+                while ((len = await stream.ReadAsync(buffer, start, buffer.Length - start)) != 0)
                 {
-                    StartIndex = StartIndex + len;
-
-                    if (StartIndex >= 4)
+                    var bitsCount = start + len;
+                    if (bitsCount > 4)
                     {
-                        var PackLenBits = buffer.Take(4).ToArray();
-                        Array.Reverse(PackLenBits);
-                        var PackLen = BitConverter.ToInt32(PackLenBits, 0);
-                        if (PackLen >= 1024 * 1024)
+                        if (packLen == 0)
                         {
-                            break;
+                            var packLenBits = buffer.Take(4).ToArray();
+                            Array.Reverse(packLenBits);
+                            packLen = BitConverter.ToInt32(packLenBits);
                         }
-                        if (StartIndex >= PackLen)
+                        var offset = 0;
+                        var count = bitsCount;
+                        while (count >= packLen)
                         {
-                            var data = buffer.Take(PackLen).ToArray();
-                            session.latestRec = TimeMngr.Instance.RealTimestamp;
+                            var data = buffer.Skip(offset).Take(packLen).ToArray();
                             dataHandler(session, data);
-                            data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
-                            Array.Copy(data, buffer, data.Length);
-                            StartIndex = StartIndex - PackLen;
+                            offset += packLen;
+                            count -= packLen;
+                            packLen = 0;
+                            if (count >= 4)
+                            {
+                                var packLenBits = buffer.Skip(offset).Take(4).ToArray();
+                                Array.Reverse(packLenBits);
+                                packLen = BitConverter.ToInt32(packLenBits);
+                            }else
+                            {
+                                break;
+                            }
                         }
+                        var halfpack = buffer.Skip(offset).Take(bitsCount - offset).ToArray();
+                        halfpack.CopyTo(buffer, 0);
+                        start = halfpack.Length;
                     }
-                    }
+                   
+                }
             } catch (Exception ex)
             {
-                // Console.WriteLine(ex.Message);
-                // Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
             CoroutineUtil.Instance.New(async () => disconnectHandler(session));
         }

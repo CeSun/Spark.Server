@@ -47,10 +47,6 @@ namespace ProxyServer
         }
         async Task Filter (Session session, SHead head, TaskAction next, int offset, byte[] data)
         {
-            if (head.Sync == 99)
-            {
-
-            }
             if (head.Msgid != EOpCode.Transmit)
             {
                 await next();
@@ -74,10 +70,9 @@ namespace ProxyServer
                 return;
 
             var body = data.Skip(offset).ToArray();
-            SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone }, Type = head.Type};
+            SHead toHead = new SHead { Msgid = EOpCode.Transmit, Target = new TargetSvr { Id = svrInfo.Id, Name = svrInfo.Name, Zone = svrInfo.Zone }, Type = head.Type, Sync = head.Sync};
             var headBits = toHead.ToByteArray();
             var packLength = headBits.Length + body.Length + 2 * sizeof(int);
-
             var packLengthBits = BitConverter.GetBytes(packLength);
             var headLengthBits = BitConverter.GetBytes(headBits.Length);
             Array.Reverse(packLengthBits);
