@@ -14,24 +14,40 @@ namespace Frame
         {
             context = SynchronizationContext.Current as SingleThreadSynchronizationContext;
         }
-
-
-        public void Run(TaskAction action)
+        public void New(Action action)
         {
-            context.PostStart(res => {
-                TaskAction f = async () =>
+            SendOrPostCallback f = obj =>
+            {
+                try
                 {
-                    try
-                    {
-                        await action();
-                    } catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        Console.WriteLine(ex.StackTrace);
-                    }
-                };
-                f();
-            }, null);
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            };
+            //f(null);
+            context.PostStart(f, null);
+        }
+
+        public void New(TaskAction action)
+        {
+            SendOrPostCallback f = async obj =>
+            {
+                try
+                {
+                    await action();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            };
+            //f(null);
+            context.PostStart(f, null);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CacheServerApi.Tables;
+using Frame;
 using ProxyServerApi.Tables;
 using System;
 using System.Collections.Generic;
@@ -14,18 +15,11 @@ namespace GameServer.Module
         public void Init(int zone)
         {
             this.zone = zone;
-            state = State.Loading;
-            _ = UpdateAsync();
+            CoroutineUtil.Instance.New(UpdateAsync);
         }
         private ulong AddNums = 100;
         private ulong StartNum = 0;
         private ulong EndNum = 0;
-        enum State
-        {
-            Loaded,
-            Loading
-        }
-        private State state;
         private async Task updateMngrAsync()
         {
             var ret = await TUin.QueryAync(zone);
@@ -61,7 +55,7 @@ namespace GameServer.Module
             {
                 try
                 {
-                    _ =  GetUinAsync();
+                    CoroutineUtil.Instance.New(async () =>  await GetUinAsync()) ;
                 } catch (Exception ex)
                 {
 

@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DynamicXML" Version="1.1.0" />
     <PackageReference Include="Google.Protobuf" Version="3.17.3" />
     <PackageReference Include="TreeLib" Version="1.1.1" />
   </ItemGroup>

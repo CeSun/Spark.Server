@@ -32,7 +32,7 @@ namespace Frame
             this.disconnectHandler = disconnectHandler;
             tcpListener = new TcpListener(ListenIpEndPoint);
             tcpListener.Start();
-            _ = StartAsync();
+            CoroutineUtil.Instance.New(StartAsync);
         }
         private async Task StartAsync()
         {
@@ -42,8 +42,8 @@ namespace Frame
                     {
 
                         var client = await tcpListener.AcceptTcpClientAsync();
-                        
-                        _ = ProcessAsync(client);
+
+                    CoroutineUtil.Instance.New(async () => await ProcessAsync(client));
                     } catch (Exception ex)
                     {
 
@@ -60,7 +60,7 @@ namespace Frame
         {
 
             Session session = new Session { client = tcpClient, SessionId = ++iditer, latestRec = TimeMngr.Instance.RealTimestamp };
-            connectHandler(session);
+            CoroutineUtil.Instance.New(() => connectHandler(session));
             try
             {
                 var buffer = new byte[1024 * 1024];
@@ -83,6 +83,7 @@ namespace Frame
                         if (StartIndex >= PackLen)
                         {
                             var data = buffer.Take(PackLen).ToArray();
+                            session.latestRec = TimeMngr.Instance.RealTimestamp;
                             dataHandler(session, data);
                             data = buffer.Skip(PackLen).Take(StartIndex - PackLen).ToArray();
                             Array.Copy(data, buffer, data.Length);
@@ -92,10 +93,10 @@ namespace Frame
                     }
             } catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                // Console.WriteLine(ex.Message);
+                // Console.WriteLine(ex.StackTrace);
             }
-            disconnectHandler(session);
+            CoroutineUtil.Instance.New(async () => disconnectHandler(session));
         }
         public void Fini()
         {
@@ -106,7 +107,6 @@ namespace Frame
     {
         public TcpClient client;
         public ulong SessionId;
-        internal byte[] otherData;
         public long latestRec;
         private object process;
         public TProcess GetProcess<TProcess>(){

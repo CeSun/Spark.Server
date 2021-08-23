@@ -47,6 +47,8 @@ namespace ProxyServerApi.Tables
         }
         protected virtual void SetData(RecordInfo recordInfo)
         {
+            if (recordInfo == null)
+                return;
             var parser = new MessageParser<TPB>(() => new TPB());
             Version = recordInfo.Version;
             if (recordInfo.Field.Count > 0)
@@ -106,7 +108,7 @@ namespace ProxyServerApi.Tables
                     return DBError.UnKnowError;
             }
         }
-        public static async Task<(TSub? Row, DBError Error)> QueryAync(TKey key)
+        public static async Task<(TSub Row, DBError Error)> QueryAync(TKey key)
         {
             var row = new TSub();
             var strKey = row.GetKey(key);
@@ -115,8 +117,12 @@ namespace ProxyServerApi.Tables
             switch (rsp.Item1.Errcode)
             {
                 case Cacheapi.EErrno.Succ:
-                    row.SetData(rsp.Item2.Record);
-                    error = DBError.Success;
+                    if (rsp.Item2.Record != null)
+                    {
+                        row.SetData(rsp.Item2.Record);
+                        error = DBError.Success;
+                    }
+                    else error = DBError.IsNotExisted;
                     break;
                 case Cacheapi.EErrno.RecoreExisted:
                     error = DBError.IsExisted;

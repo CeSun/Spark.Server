@@ -25,12 +25,12 @@ namespace DirServerApi
             {
                 var tcpClient = new TcpClient();
                 tcpClient.Connect(IPEndPoint.Parse(cfg));
-                _ = Revice(tcpClient);
+                CoroutineUtil.Instance.New(async () => await Revice(tcpClient));
                 sockets.Add(tcpClient);
             }
-            dispatcher.Bind<RegisterRsp>(EOpCode.RegisterRsp, handler);
-            dispatcher.Bind<SyncRsp>(EOpCode.SyncRsp, handler);
-            dispatcher.Bind<GetRsp>(EOpCode.GetRsp, handler);
+            dispatcher.Bind<RegisterRsp>(EOpCode.RegisterRsp, Handler);
+            dispatcher.Bind<SyncRsp>(EOpCode.SyncRsp, Handler);
+            dispatcher.Bind<GetRsp>(EOpCode.GetRsp, Handler);
         }
 
         public Task<(SHead, TRsp)> Send<TReq, TRsp>(EOpCode code, TReq req) where TReq: IMessage where TRsp: IMessage
@@ -45,9 +45,9 @@ namespace DirServerApi
             {
                 var data = ProtoUtil.Pack(head, req);
                 var stream = sockets.FirstOrDefault().GetStream();
-                _ = stream.WriteAsync(data);
+                CoroutineUtil.Instance.New(async () => await stream.WriteAsync(data));
             }
-            Timer.Instance.SetTimeOut(3000, () => {
+            Frame.Timer.Instance.SetTimeOut(3000, () => {
                 if (tcss.ContainsKey(sync))
                 {
                     tcss.Remove(sync);
@@ -57,7 +57,7 @@ namespace DirServerApi
             return tcs.Task;
         }
         
-        private async Task handler<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
+        private async Task Handler<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
             var obj = tcss.GetValueOrDefault(head.Sync);
             if (obj == null)

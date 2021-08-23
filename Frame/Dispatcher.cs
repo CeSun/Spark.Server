@@ -88,7 +88,7 @@ namespace Frame
             var fun = Functions.GetValueOrDefault(id);
             if (fun != null)
             {
-               _ = requestHandler(session, head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
+                CoroutineUtil.Instance.New(async () => await requestHandler(session, head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data));
             }
         }
 

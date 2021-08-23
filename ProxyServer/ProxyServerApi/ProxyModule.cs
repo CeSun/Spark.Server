@@ -32,6 +32,7 @@ namespace ProxyServerApi
 
     public class ProxyModule : Singleton<ProxyModule>
     {
+        ulong SyncIter = 0;
         Dictionary<string, ClientHandlerData> funs = new Dictionary<string, ClientHandlerData>();
         List<TcpClient> tcpClients = new List<TcpClient>();
         DirServerModule dirServerModule = new DirServerModule();
@@ -41,7 +42,7 @@ namespace ProxyServerApi
         {
            
             dirServerModule.Init(dirlist);
-            _ = GetProxyListAsync(serverInfo);
+            CoroutineUtil.Instance.New(async () => await GetProxyListAsync(serverInfo));
         }
         public void Update()
         {
@@ -67,9 +68,9 @@ namespace ProxyServerApi
                         Proxyapi.SHead head = new Proxyapi.SHead() {Msgid = Proxyapi.EOpCode.RegisteReq, Target = new Proxyapi.TargetSvr { Id = serverInfo.id, Name = serverInfo.name, Zone = serverInfo.zone , Type = Proxyapi.ETransmitType.Broadcast} };
                         Proxyapi.RegistReq registReq = new Proxyapi.RegistReq() {Id =  serverInfo.id, Name = serverInfo.name, Zone = serverInfo.zone};
                         var data = ProtoUtil.Pack(head, registReq);
-                        _ = stream.WriteAsync(data);
+                        CoroutineUtil.Instance.New(async () => await stream.WriteAsync(data));
                         // 心跳
-                        Timer.Instance.SetInterval(1000 * 30, () => {
+                        Frame.Timer.Instance.SetInterval(1000 * 30, () => {
                         TaskAction fun = async () =>
                         {
                             if (stream != null)
@@ -90,9 +91,9 @@ namespace ProxyServerApi
                                 await stream.WriteAsync(SendBuffer);
                             }
                         };
-                        _ = fun();
+                         CoroutineUtil.Instance.New(fun);
                     });
-                    _ = RecvieAsync(tcpClient);
+                        CoroutineUtil.Instance.New(async () => await RecvieAsync(tcpClient));
 
                 }
             }
@@ -118,13 +119,14 @@ namespace ProxyServerApi
 
         public async Task SendToAsync(Proxyapi.TargetSvr targetSvr,Proxyapi.EPackType type, byte[] data)
         {
+            var sync = ++SyncIter;
             var client = tcpClients.FirstOrDefault();
             if (client == null)
             {
                 return;
             }
             var stream = client.GetStream();
-            Proxyapi.SHead head = new Proxyapi.SHead {Msgid = Proxyapi.EOpCode.Transmit, Target = targetSvr , Type = type};
+            Proxyapi.SHead head = new Proxyapi.SHead {Msgid = Proxyapi.EOpCode.Transmit, Target = targetSvr , Type = type, Sync = sync};
             var headBits = head.ToByteArray();
 
             var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
@@ -141,29 +143,6 @@ namespace ProxyServerApi
 
         }
 
-        public async Task SendToAsync(SHead head, byte[] data)
-        {
-            var client = tcpClients.FirstOrDefault();
-            if (client == null)
-            {
-                return;
-            }
-            var stream = client.GetStream();
-            var headBits = head.ToByteArray();
-
-            var packlenbits = BitConverter.GetBytes(headBits.Length + data.Length + 2 * sizeof(int));
-            Array.Reverse(packlenbits);
-            var headlenbits = BitConverter.GetBytes(headBits.Length);
-            Array.Reverse(headlenbits);
-            byte[] SendBuffer = new byte[headBits.Length + data.Length + 2 * sizeof(int)];
-            packlenbits.CopyTo(SendBuffer, 0);
-            headlenbits.CopyTo(SendBuffer, sizeof(int));
-            headBits.CopyTo(SendBuffer, 2 * sizeof(int));
-            data.CopyTo(SendBuffer, 2 * sizeof(int) + headBits.Length);
-            await stream.WriteAsync(SendBuffer);
-
-
-        }
 
         private async Task RecvieAsync(TcpClient tcpClient)
         {

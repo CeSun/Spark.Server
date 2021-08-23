@@ -28,8 +28,6 @@ namespace GameServer
         {
             base.OnInit();
             UinMngr = new UinMngr();
-            // Config.Mysql.PoolSize = 10;
-            // Database.Init(Config.Mysql);
             playerMngr.Init();
             ProxyModule.Instance.Init(Config.IpAndPoint, new ServerInfo {id=1, name="GameServer", zone = 1 });
             CacheServerModule.Instance.Init(ProxyModule.Instance);
@@ -40,7 +38,6 @@ namespace GameServer
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            //  Database.Update();
             playerMngr?.Update();
             UinMngr?.Update();
             ProxyModule.Instance?.Update();
@@ -50,7 +47,6 @@ namespace GameServer
         protected override void OnFini()
         {
             base.OnFini();
-            // Database.Fini();
             playerMngr?.Fini();
             UinMngr?.Fini();
             ProxyModule.Instance?.Fini();

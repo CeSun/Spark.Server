@@ -1,5 +1,4 @@
-﻿using DynamicXML;
-using System;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -74,6 +73,7 @@ namespace Frame
             }
             Timer.Instance.Init();
             SynchronizationContext.SetSynchronizationContext(SyncContext);
+            CoroutineUtil.Instance.Init();
             TimeMngr.Instance.Init(Config.Time.Zone);
             OnInit();
         }

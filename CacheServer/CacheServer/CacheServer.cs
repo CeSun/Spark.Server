@@ -32,7 +32,7 @@ namespace CacheServer
             {
                 Config.CacheServer.SaveInterval = 1000 * 15 * 1;
             }
-            Timer.Instance.SetInterval(Config.CacheServer.SaveInterval, () => { _ = SaveDbAsync(); });
+            Frame.Timer.Instance.SetInterval(Config.CacheServer.SaveInterval, () => CoroutineUtil.Instance.New(SaveDbAsync));
             ProxyModule.Instance.Init(Config.IpAndPoint , new ServerInfo { id = 1, name = "CacheServer", zone = 0 });
             ProxyModule.Instance.DataHandler = DataHandler;
             dispatcher.Bind<QueryReq>(EOpCode.QueryReq, HandlerQuery);

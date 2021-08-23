@@ -30,7 +30,7 @@ namespace ProxyServer
             dispatcher.Bind<RegistReq>(EOpCode.Transmit, async (session, head, body) => { });
             dispatcher.Filter = Filter;
             dirServerModule.Init(Config.IpAndPoint);
-            _ = Regist();
+            CoroutineUtil.Instance.New(Regist);
         }
 
         async Task Regist()
