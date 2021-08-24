@@ -38,16 +38,16 @@ namespace Frame
         {
             while (true)
             {
-                    try
-                    {
+                try
+                {
                         var client = await tcpListener.AcceptTcpClientAsync();
                         CoroutineUtil.Instance.New(async () => await ProcessAsync(client));
-                    } 
+                } 
                 catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        Console.WriteLine(ex.StackTrace);
-                    }
+                {
+                        // Console.WriteLine(ex.Message);
+                        // Console.WriteLine(ex.StackTrace);
+                }
             }
         }
         public void Update()
@@ -104,8 +104,8 @@ namespace Frame
                 }
             } catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                // Console.WriteLine(ex.Message);
+                // Console.WriteLine(ex.StackTrace);
             }
             CoroutineUtil.Instance.New(async () => disconnectHandler(session));
         }

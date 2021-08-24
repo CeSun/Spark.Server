@@ -36,19 +36,18 @@ namespace CacheServerApi
             QueryReq queryReq = new QueryReq() { Key = key, Table = table };
             var data = ProtoUtil.Pack(head, queryReq);
             CoroutineUtil.Instance.New(async () => await proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data, sync));
-            Frame.Timer.Instance.SetTimeOut(4000, () => {
+            /*Frame.Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != default)
                 {
                     tcss.Remove(head.Sync);
                     var tcs = (TaskCompletionSource<(Head, QueryRsp)>)obj.Item1;
                     obj.Item2.Stop();
-                    Console.WriteLine("Timeout, spend time:" + obj.Item2.Elapsed.Milliseconds);
-
+                    Console.WriteLine("Timeout, spend time:" + obj.Item2.ElapsedMilliseconds);
                     head.Msgid = EOpCode.QueryRsp; head.Errcode = EErrno.TimeOut;
                     tcs.SetResult((head, new QueryRsp { }));
                 }
-            });
+            });*/
             return tcs.Task;
         }
         public Task<(Head, SaveRsp)> SaveAsync(string table, string key, RecordInfo recordInfo)
@@ -60,7 +59,7 @@ namespace CacheServerApi
             SaveReq saveReq = new SaveReq() { Key = key, Table = table, Record = recordInfo };
             var data = ProtoUtil.Pack(head, saveReq);
             CoroutineUtil.Instance.New(async () => await proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data, sync));
-            Frame.Timer.Instance.SetTimeOut(4000, () => {
+            /*Frame.Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != default)
                 {
@@ -70,7 +69,7 @@ namespace CacheServerApi
                     Console.WriteLine("Timeout, spend time:" + obj.Item2.Elapsed.Milliseconds);
                     tcs.SetResult((head, new SaveRsp { }));
                 }
-            });
+            });*/
             return tcs.Task;
         }
 
@@ -83,7 +82,7 @@ namespace CacheServerApi
             DeleteReq deleteReq = new DeleteReq() { Key = key, Table = table};
             var data = ProtoUtil.Pack(head, deleteReq);
             CoroutineUtil.Instance.New(async () => await proxyModule.SendToAsync(new Proxyapi.TargetSvr { Id = 1, Name = "CacheServer", Type = Proxyapi.ETransmitType.Poll, Zone = 0 }, Proxyapi.EPackType.Request, data, sync));
-            Frame.Timer.Instance.SetTimeOut(4000, () => {
+             /*Frame.Timer.Instance.SetTimeOut(10000, () => {
                 var obj = tcss.GetValueOrDefault(head.Sync);
                 if (obj != default)
                 {
@@ -93,7 +92,7 @@ namespace CacheServerApi
                     Console.WriteLine("Timeout, spend time:" + obj.Item2.Elapsed.Milliseconds);
                     tcs.SetResult((head, new DeleteRsp { }));
                 }
-            });
+            });*/
             return tcs.Task;
         }
 

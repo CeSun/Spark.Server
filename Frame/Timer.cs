@@ -76,7 +76,7 @@ namespace Frame
                     {
                         item.Action();
                         item.sw.Stop();
-                        Console.WriteLine($"timer: start:{item.StartTime}, interval: {item.Interval}, now: {now}, detal:{now - item.StartTime}, sw: {item.sw.Elapsed.TotalMilliseconds}");
+                        // Console.WriteLine($"timer: start:{item.StartTime}, interval: {item.Interval}, now: {now}, detal:{now - item.StartTime}, sw: {item.sw.Elapsed.TotalMilliseconds}");
                        
                     }
                     catch (Exception ex)

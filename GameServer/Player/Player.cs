@@ -152,7 +152,6 @@ namespace GameServer.Player
                     {
                         DBAccount = retval.Row.Base;
                         fsm.PostEvent(EEvent.Logout);
-                        Console.WriteLine("QueryPlayer " + playerPair.Error);
                         rspHead.Errcode = EErrno.Error;
                     }
                 }
@@ -168,7 +167,6 @@ namespace GameServer.Player
                 var uin = await Server.Instance.UinMngr.GetUinAsync();
                 if (uin == 0)
                 {
-                    Console.WriteLine("uin error" + uin);
                     fsm.PostEvent(EEvent.Logout);
                     rspHead.Errcode = EErrno.Error;
                 }
@@ -188,7 +186,6 @@ namespace GameServer.Player
                     }
                     else
                     {
-                        Console.WriteLine("account.SaveAync: " + ret);
                         fsm.PostEvent(EEvent.Logout);
                         rspHead.Errcode = EErrno.Error;
                     }
