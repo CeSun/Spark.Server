@@ -25,7 +25,7 @@ namespace Frame
         /// <param name="session">session</param>
         /// <param name="data">二进制数据</param>
         /// <returns>无，可以await</returns>
-        protected abstract void OnHandlerData(Session session, byte[] data);
+        protected abstract Task OnHandlerData(Session session, byte[] data);
         protected abstract void OnHandlerConnected(Session session);
         protected abstract void OnHandlerDisconnected(Session session);
 

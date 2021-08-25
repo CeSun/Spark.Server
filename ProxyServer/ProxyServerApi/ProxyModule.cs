@@ -71,28 +71,27 @@ namespace ProxyServerApi
                         CoroutineUtil.Instance.New(async () => await stream.WriteAsync(data));
                         // 心跳
                         Frame.Timer.Instance.SetInterval(1000 * 30, () => {
-                        TaskAction fun = async () =>
-                        {
-                            if (stream != null)
-                            {
-                                Proxyapi.SHead head = new Proxyapi.SHead { Msgid = Proxyapi.EOpCode.HeartbeatReq };
-                                Proxyapi.HeartBeatReq req = new Proxyapi.HeartBeatReq();
-                                var headBits = head.ToByteArray();
-                                var bodyBits = req.ToByteArray();
-                                var packlenbits = BitConverter.GetBytes(headBits.Length + bodyBits.Length + 2 * sizeof(int));
-                                Array.Reverse(packlenbits);
-                                var headlenbits = BitConverter.GetBytes(headBits.Length);
-                                Array.Reverse(headlenbits);
-                                byte[] SendBuffer = new byte[headBits.Length + bodyBits.Length + 2 * sizeof(int)];
-                                packlenbits.CopyTo(SendBuffer, 0);
-                                headlenbits.CopyTo(SendBuffer, sizeof(int));
-                                headBits.CopyTo(SendBuffer, 2 * sizeof(int));
-                                bodyBits.CopyTo(SendBuffer, 2 * sizeof(int) + headBits.Length);
-                                await stream.WriteAsync(SendBuffer);
-                            }
-                        };
-                         CoroutineUtil.Instance.New(fun);
-                    });
+                             CoroutineUtil.Instance.New(async () =>
+                             {
+                                 if (stream != null)
+                                 {
+                                     Proxyapi.SHead head = new Proxyapi.SHead { Msgid = Proxyapi.EOpCode.HeartbeatReq };
+                                     Proxyapi.HeartBeatReq req = new Proxyapi.HeartBeatReq();
+                                     var headBits = head.ToByteArray();
+                                     var bodyBits = req.ToByteArray();
+                                     var packlenbits = BitConverter.GetBytes(headBits.Length + bodyBits.Length + 2 * sizeof(int));
+                                     Array.Reverse(packlenbits);
+                                     var headlenbits = BitConverter.GetBytes(headBits.Length);
+                                     Array.Reverse(headlenbits);
+                                     byte[] SendBuffer = new byte[headBits.Length + bodyBits.Length + 2 * sizeof(int)];
+                                     packlenbits.CopyTo(SendBuffer, 0);
+                                     headlenbits.CopyTo(SendBuffer, sizeof(int));
+                                     headBits.CopyTo(SendBuffer, 2 * sizeof(int));
+                                     bodyBits.CopyTo(SendBuffer, 2 * sizeof(int) + headBits.Length);
+                                     await stream.WriteAsync(SendBuffer);
+                                 }
+                             });
+                        });
                         CoroutineUtil.Instance.New(async () => await RecvieAsync(tcpClient));
 
                 }

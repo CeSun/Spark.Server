@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
-    public delegate void DataHandler(Session session, byte[] data);
+    public delegate Task DataHandler(Session session, byte[] data);
     public delegate void ConnectHandler(Session session);
 
     /// <summary>
@@ -32,7 +32,7 @@ namespace Frame
             this.disconnectHandler = disconnectHandler;
             tcpListener = new TcpListener(ListenIpEndPoint);
             tcpListener.Start();
-            CoroutineUtil.Instance.New(StartAsync);
+            CoroutineUtil.Instance.New(() => _ = StartAsync());
         }
         private async Task StartAsync()
         {
@@ -82,7 +82,7 @@ namespace Frame
                         while (count >= packLen)
                         {
                             var data = buffer.Skip(offset).Take(packLen).ToArray();
-                            dataHandler(session, data);
+                            CoroutineUtil.Instance.New(() => _ = dataHandler(session, data));
                             offset += packLen;
                             count -= packLen;
                             packLen = 0;

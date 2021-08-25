@@ -17,7 +17,11 @@ namespace DirServerApi
     public class DirServerModule
     {
         List<TcpClient> sockets = new List<TcpClient>();
-        DispatcherLite<EOpCode, SHead> dispatcher = new DispatcherLite<EOpCode, SHead>(head => head.Msgid);
+        DispatcherLite<EOpCode, SHead, EErrno> dispatcher = new DispatcherLite<EOpCode, SHead, EErrno>(
+         new DispatcherLite<EOpCode, SHead, EErrno>.Config
+         {
+             FunGetMsgId = head => head.Msgid
+         });
         ulong SyncIter = 0;
 
         Dictionary<ulong, object> tcss = new Dictionary<ulong, object>();
@@ -30,9 +34,9 @@ namespace DirServerApi
                 CoroutineUtil.Instance.New(async () => await Revice(tcpClient));
                 sockets.Add(tcpClient);
             }
-            dispatcher.Bind<RegisterRsp>(EOpCode.RegisterRsp, Handler);
-            dispatcher.Bind<SyncRsp>(EOpCode.SyncRsp, Handler);
-            dispatcher.Bind<GetRsp>(EOpCode.GetRsp, Handler);
+            dispatcher.Bind<RegisterRsp, RegisterRsp>(EOpCode.RegisterRsp, EOpCode.RegisterRsp, Handler);
+            dispatcher.Bind<SyncRsp, SyncRsp>(EOpCode.SyncRsp, EOpCode.SyncRsp, Handler);
+            dispatcher.Bind<GetRsp, GetRsp>(EOpCode.GetRsp, EOpCode.GetRsp, Handler);
         }
 
         public Task<(SHead, TRsp)> Send<TReq, TRsp>(EOpCode code, TReq req) where TReq: IMessage where TRsp: IMessage
@@ -59,14 +63,15 @@ namespace DirServerApi
             return tcs.Task;
         }
         
-        private async Task Handler<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
+        private async Task<(SHead, TRsp)> Handler<TRsp>(SHead head, TRsp rsp) where TRsp : IMessage
         {
             var obj = tcss.GetValueOrDefault(head.Sync);
             if (obj == null)
-                return;
+                return default;
             tcss.Remove(head.Sync);
             var tcs = obj as TaskCompletionSource<(SHead, TRsp)>;
             tcs.SetResult((head, rsp));
+            return default;
         }
 
 

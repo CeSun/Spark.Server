@@ -8,6 +8,7 @@ using ProxyServerApi;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -19,7 +20,19 @@ namespace CacheServer
     {
         protected override string ConfPath => "../CacheServerConfig.xml";
         protected Dictionary<string, Table> tables = new Dictionary<string, Table>();
-        Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession> dispatcher = new Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession>(head => head.Msgid);
+        Dispatcher<EOpCode, Head, ISession, EErrno> dispatcher = new Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession, EErrno>(
+            new Dispatcher<EOpCode, Head, ISession, EErrno>.Config
+            {
+                FunGetMsgId = head => head.Msgid,
+                FunInitHead = (ref Head rspHead, Head ReqHead, EOpCode msgId, EErrno err) =>
+                {
+                    rspHead.Errcode = err;
+                    rspHead.Msgid = msgId;
+                    rspHead.Sync = ReqHead.Sync;
+                },
+                ExceptionErrCode = EErrno.Fail
+            }
+        );
         protected override void OnInit()
         {
             tables["DBUin"] = new TBUin();
@@ -35,12 +48,12 @@ namespace CacheServer
             Frame.Timer.Instance.SetInterval(Config.CacheServer.SaveInterval, () => CoroutineUtil.Instance.New(SaveDbAsync));
             ProxyModule.Instance.Init(Config.IpAndPoint , new ServerInfo { id = 1, name = "CacheServer", zone = 0 });
             ProxyModule.Instance.DataHandler = DataHandler;
-            dispatcher.Bind<QueryReq>(EOpCode.QueryReq, HandlerQuery);
-            dispatcher.Bind<SaveReq>(EOpCode.SaveReq, HandlerSave);
-            dispatcher.Bind<DeleteReq>(EOpCode.DeleteReq, HandlerDelete);
+            dispatcher.Bind<QueryReq, QueryRsp>(EOpCode.QueryReq, EOpCode.QueryRsp, HandlerQuery);
+            dispatcher.Bind<SaveReq, SaveRsp>(EOpCode.SaveReq, EOpCode.SaveRsp, HandlerSave);
+            dispatcher.Bind<DeleteReq, DeleteRsp>(EOpCode.DeleteReq, EOpCode.DeleteRsp, HandlerDelete);
         }
 
-        public async Task HandlerQuery(ISession session, Head reqHead, QueryReq reqBody)
+        public async Task<(Head, QueryRsp)> HandlerQuery(ISession session, Head reqHead, QueryReq reqBody)
         {
             Head rspHead = new Head() { Msgid = EOpCode.QueryRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync};
             QueryRsp rspBody = new QueryRsp();
@@ -52,9 +65,9 @@ namespace CacheServer
             else
             {
                 try
-                {
-                    var infoAndErr = await table.QueryAsync(reqBody.Key);
-                    if (infoAndErr.Item2 != EErrno.Succ)
+                    {
+                        var infoAndErr = await table.QueryAsync(reqBody.Key);
+                        if (infoAndErr.Item2 != EErrno.Succ)
                     {
                         rspHead.Errcode = infoAndErr.Item2;
                     }
@@ -68,51 +81,49 @@ namespace CacheServer
                 }
                 
             }
-            var data = ProtoUtil.Pack(rspHead, rspBody);
-            await session.SendAsync(data);
-        }
+            return (rspHead, rspBody);
+}
 
-        public async Task HandlerSave(ISession session, Head reqHead, SaveReq reqBody)
+        public async Task<(Head, SaveRsp)> HandlerSave(ISession session, Head reqHead, SaveReq reqBody)
         {
-            Head rspHead = new Head() { Msgid = EOpCode.SaveRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync};
-            SaveRsp rspBody = new SaveRsp();
-            var table = tables.GetValueOrDefault(reqBody.Table);
-            if (table == null)
-            {
-                rspHead.Errcode = EErrno.TableIsNotExisted;
-            }
-            else
-            {
-                if (reqBody.Record.Version == 0)
+                Head rspHead = new Head() { Msgid = EOpCode.SaveRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync};
+                SaveRsp rspBody = new SaveRsp();
+                var table = tables.GetValueOrDefault(reqBody.Table);
+                if (table == null)
                 {
-                    var err = await table.InsertAsync(reqBody.Key,reqBody.Record);
-                    rspHead.Errcode = err;
-                } else
-                {
-                    var err = await table.UpdateAsync(reqBody.Key, reqBody.Record);
-                    rspHead.Errcode = err;
+                    rspHead.Errcode = EErrno.TableIsNotExisted;
                 }
-            }
-            var data = ProtoUtil.Pack(rspHead, rspBody);
-            await session.SendAsync(data);
+                else
+                {
+                    if (reqBody.Record.Version == 0)
+                    {
+                        var err = await table.InsertAsync(reqBody.Key,reqBody.Record);
+                        rspHead.Errcode = err;
+                    } else
+                    {
+                        var err = await table.UpdateAsync(reqBody.Key, reqBody.Record);
+                        rspHead.Errcode = err;
+                    }
+                }
+                return (rspHead, rspBody);
         }
 
-        public async Task HandlerDelete(ISession session, Head reqHead, DeleteReq reqBody)
+        public async Task<(Head, DeleteRsp)> HandlerDelete(ISession session, Head reqHead, DeleteReq reqBody)
         {
-            Head rspHead = new Head() { Msgid = EOpCode.DeleteRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync };
-            DeleteRsp rspBody = new DeleteRsp();
-            var table = tables.GetValueOrDefault(reqBody.Table);
-            if (table == null)
-            {
-                rspHead.Errcode = EErrno.TableIsNotExisted;
-            }
-            else
-            {
-                var error = await table.DeleteAsync(reqBody.Key);
-                rspHead.Errcode = error;
-            }
-            var data = ProtoUtil.Pack(rspHead, rspBody);
-            await session.SendAsync(data);
+                Head rspHead = new Head() { Msgid = EOpCode.DeleteRsp, Errcode = EErrno.Succ, Sync = reqHead.Sync };
+                DeleteRsp rspBody = new DeleteRsp();
+                var table = tables.GetValueOrDefault(reqBody.Table);
+                if (table == null)
+                {
+                    rspHead.Errcode = EErrno.TableIsNotExisted;
+                }
+                else
+                {
+                    var error = await table.DeleteAsync(reqBody.Key);
+                    rspHead.Errcode = error;
+                }
+
+                return (rspHead, rspBody);
         }
         private async Task TestAsync()
         {
@@ -205,9 +216,24 @@ namespace CacheServer
             }
             Console.WriteLine("save success!");
         }
+
         protected void DataHandler(ISession session, byte[] data)
         {
-            dispatcher.DispatcherRequest(session, data);
+            CoroutineUtil.Instance.New(async () => {
+                try
+                {
+                    var rsp = await dispatcher.DispatcherRequest(session, data);
+                    if (rsp == default)
+                        return;
+                    var data2 = ProtoUtil.Pack(rsp.head, rsp.body);
+                    await session.SendAsync(data2);
+                } catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+                
+            });
         }
 
         protected override void OnUpdate()

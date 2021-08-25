@@ -18,7 +18,19 @@ namespace DirServer
     }
     class Server : ServerBaseWithNet<Server, Config>
     {
-        Dispatcher<EOpCode, SHead, Session> dispatcher = new Dispatcher<EOpCode, SHead, Session>(head => { return head.Msgid; });
+        Dispatcher<EOpCode, SHead, Session, EErrno> dispatcher = new Dispatcher<EOpCode, SHead, Session, EErrno>(
+            new Dispatcher<EOpCode, SHead, Session, EErrno>.Config
+            {
+                FunGetMsgId = head => head.Msgid,
+                FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) =>
+                {
+                    rspHead.Errcode = err;
+                    rspHead.Msgid = msgId;
+                    rspHead.Sync = ReqHead.Sync;
+                },
+                ExceptionErrCode = EErrno.Fail
+            }
+            );
 
         Dictionary<string, ServerSet> servers = new Dictionary<string, ServerSet>();
 
@@ -29,11 +41,13 @@ namespace DirServer
             base.OnFini();
         }
 
-        protected override void OnHandlerData(Session session, byte[] data)
+        protected override async Task OnHandlerData(Session session, byte[] data)
         {
-             dispatcher.DispatcherRequest(session, data);
+             var rsp = await dispatcher.DispatcherRequest(session, data);
+            if (rsp != default)
+                await Send(session, rsp.head, rsp.body);
         }
-        async Task RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
+        async Task<(SHead, RegisterRsp)> RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
         {
             var svrName = reqBody.Info.Name;
             var server = servers.GetValueOrDefault(svrName);
@@ -44,15 +58,14 @@ namespace DirServer
             }
             var ret = server.InsertServer(reqBody.Info.Zone, reqBody.Info.Id, new IPEndPoint(IPAddress.Parse( reqBody.Info.Url.Ip), reqBody.Info.Url.Port));
             SHead rspHead = new SHead { Errcode = ret?EErrno.Succ:EErrno.Fail, Msgid = EOpCode.RegisterRsp, Sync = reqHead.Sync };
-
             RegisterRsp rspBody = new RegisterRsp { };
             if (ret == true)
                 session.SetProcess((svrName, reqBody.Info.Zone, reqBody.Info.Id));
-            await Send(session, rspHead, rspBody);
+            return (rspHead, rspBody); 
 
         }
 
-        async Task GetHandler(Session session, SHead reqHead, GetReq reqBody)
+        async Task<(SHead, GetRsp)> GetHandler(Session session, SHead reqHead, GetReq reqBody)
         {
             var svr = reqBody.Name;
             var zone = reqBody.Zone;
@@ -68,10 +81,10 @@ namespace DirServer
                 }
             }
             SHead rspHead = new SHead { Errcode = EErrno.Succ, Msgid = EOpCode.GetRsp, Sync = reqHead.Sync };
-            await Send(session, rspHead, rspBody);
+            return (rspHead, rspBody);
         }
 
-        async Task SyncHandler(Session session, SHead reqHead, SyncReq reqBody)
+        async Task<(SHead, SyncRsp)> SyncHandler(Session session, SHead reqHead, SyncReq reqBody)
         {
             var svr = reqBody.Name;
             var zone = reqBody.Zone; 
@@ -91,7 +104,7 @@ namespace DirServer
                     rspHead.Errcode = EErrno.Succ;
                 }
             }
-            await Send(session, rspHead, rspBody);
+            return (rspHead, rspBody);
         }
         async Task Send<TRsp>(Session session, SHead head, TRsp rsp) where TRsp : IMessage
         {
@@ -112,9 +125,9 @@ namespace DirServer
         protected override void OnInit()
         {
             base.OnInit();
-            dispatcher.Bind<RegisterReq>(EOpCode.RegisterReq, RegisterServerHandler);
-            dispatcher.Bind<GetReq>(EOpCode.GetReq, GetHandler);
-            dispatcher.Bind<SyncReq>(EOpCode.SyncReq, SyncHandler);
+            dispatcher.Bind<RegisterReq, RegisterRsp>(EOpCode.RegisterReq, EOpCode.RegisterRsp, RegisterServerHandler);
+            dispatcher.Bind<GetReq, GetRsp>(EOpCode.GetReq, EOpCode.GetRsp, GetHandler);
+            dispatcher.Bind<SyncReq, SyncRsp>(EOpCode.SyncReq, EOpCode.SyncRsp, SyncHandler);
         }
 
         protected override void OnUpdate()

@@ -36,7 +36,7 @@ namespace Frame
         {
             (SendOrPostCallback d, object state, Source) data = default;
             int i = 0;
-            for (i = 0; i < 20 ; i++)
+            for (i = 0; i < 10 ; i++)
             {
                 if (!bufferBlock.TryTake(out data))
                     break;

@@ -15,6 +15,7 @@ namespace CacheServer.Tables
     {
         protected abstract Dictionary<string, string> Fields { get; }
         protected abstract string TableName { get; }
+        public ulong iter = 0;
         public async Task<(RecordInfo, EErrno)> QueryAsync(string key)
         {
             EErrno errno;
@@ -186,10 +187,10 @@ namespace CacheServer.Tables
             List<HashEntry> entrys = new List<HashEntry>();
             using (var mysql = await Mysql.Instance.BorrowAsync())
             {
-                if (mysql == null) return (null, EErrno.Fail);
                 var cmd = mysql.Connector.CreateCommand();
                 cmd.CommandText = string.Format("select * from {0} where c_key=@key", TableName);
                 cmd.Parameters.AddWithValue("key", key);
+
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     if (await reader.ReadAsync())
@@ -211,6 +212,7 @@ namespace CacheServer.Tables
                     }
 
                 }
+
             }
 
         }

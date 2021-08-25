@@ -52,10 +52,10 @@ namespace GameServer
             ProxyModule.Instance?.Fini();
             CacheServerModule.Instance.Fini();
         }
-        protected override void OnHandlerData(Session session, byte[] data)
+        protected override async Task OnHandlerData(Session session, byte[] data)
         {
             var player = session.GetProcess<Player.Player>();
-            player?.processData(data);
+            await player?.processData(data);
         }
 
         protected override void OnHandlerConnected(Session session)

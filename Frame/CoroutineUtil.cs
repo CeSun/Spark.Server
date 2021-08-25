@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Frame
 {
+    public delegate Task CoroutineAction();
     public class CoroutineUtil: Singleton<CoroutineUtil>
     {
         SingleThreadSynchronizationContext context;
@@ -32,7 +33,7 @@ namespace Frame
             context.PostStart(f, null);
         }
 
-        public void New(TaskAction action)
+        public void New(CoroutineAction action)
         {
             SendOrPostCallback f = async obj =>
             {
@@ -46,8 +47,8 @@ namespace Frame
                     Console.WriteLine(ex.StackTrace);
                 }
             };
-            //f(null);
-            context.PostStart(f, null);
+            f(null);
+            // context.PostStart(f, null);
         }
     }
 }

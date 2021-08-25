@@ -14,7 +14,17 @@ namespace GameServer.Player
     public class Player
     {
         public Frame.Session Session { get; private set; }
-        DispatcherLite<EOpCode, SHead> dispatcher = new DispatcherLite<EOpCode, SHead>(head => { return head.Msgid; });
+        DispatcherLite<EOpCode, SHead, EErrno> dispatcher = new DispatcherLite<EOpCode, SHead, EErrno>(
+        new DispatcherLite<EOpCode, SHead, EErrno>.Config
+        {
+            FunGetMsgId = head => head.Msgid,
+            FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) => {
+                rspHead.Msgid = msgId;
+                rspHead.Errcode = err;
+            },
+            ExceptionErrCode = EErrno.Error
+        }
+        );
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
@@ -41,9 +51,13 @@ namespace GameServer.Player
             fsm.PostEvent(EEvent.Logout);
         }
 
-        public void processData(byte[] data)
+        public async Task processData(byte[] data)
         {
-            dispatcher.DispatcherRequest(data);
+            var rsp = await dispatcher.DispatcherRequest(data);
+            if (rsp != default)
+            {
+                await SendToClientAsync(rsp.head, rsp.body);
+            }
         }
 
         public Player(Frame.Session session)
@@ -54,12 +68,12 @@ namespace GameServer.Player
         public void Init()
         {
             LatestTime = DateTime.Now;
-            dispatcher.Bind<TestReq>(EOpCode.TestReq, HelloHandler);
-            dispatcher.Bind<LoginReq>(EOpCode.LoginReq, LoginAsync);
-            dispatcher.Bind<CreateRoleReq>(EOpCode.CreateroleReq, CreateRoleAsync);
-            dispatcher.Bind<LogoutReq>(EOpCode.LogoutReq, Logout);
+            dispatcher.Bind<TestReq, TestRsp>(EOpCode.TestReq, EOpCode.TestRsp, HelloHandler);
+            dispatcher.Bind<LoginReq, LoginRsp>(EOpCode.LoginReq, EOpCode.LoginRsp, LoginAsync);
+            dispatcher.Bind<CreateRoleReq, CreateRoleRsp>(EOpCode.CreateroleReq,EOpCode.CreateroleRsp, CreateRoleAsync);
+            dispatcher.Bind<LogoutReq, LogoutRsp>(EOpCode.LogoutReq, EOpCode.LogoutRsp, Logout);
             // 给个null函数没关系，这个协议会被filter拦截
-            dispatcher.Bind<HeartBeatReq>(EOpCode.HeartbeatReq, null);
+            dispatcher.Bind<HeartBeatReq, HeartBeatRsp>(EOpCode.HeartbeatReq, EOpCode.HeartbeatRsp, null);
             dispatcher.Filter = filterAsync;
             InitFSM();
 
@@ -85,11 +99,11 @@ namespace GameServer.Player
             fsm.Start(EState.Init);
 
         }
-        async Task Logout(SHead head, LogoutReq reqBody)
+        async Task<(SHead, LogoutRsp)> Logout(SHead head, LogoutReq reqBody)
         {
             // 登出
             fsm.PostEvent(EEvent.Logout);
-            await SendToClientAsync(new SHead {Msgid=EOpCode.LogoutRsp, Errcode = EErrno.Succ }, new LogoutRsp { });
+            return (new SHead {Msgid=EOpCode.LogoutRsp, Errcode = EErrno.Succ }, new LogoutRsp { });
         }
         void OnLogOut()
         {
@@ -101,32 +115,33 @@ namespace GameServer.Player
             }
         }
 
-        async Task filterAsync(SHead reqHead,  TaskAction next)
+        async  Task<(SHead, IMessage)> filterAsync(SHead reqHead,  TaskAction<SHead> next)
         {
             LatestTime = DateTime.Now;
             if (LatestSeq == 0 && reqHead.Msgid != EOpCode.LoginReq)
             {
                 fsm.PostEvent(EEvent.Logout);
+                return default;
             }
             else if (reqHead.Msgid == EOpCode.HeartbeatReq)
             {
                 SHead head = new SHead();
                 head.Msgid = EOpCode.HeartbeatRsp;
                 HeartBeatRsp heartBeatRsp = new HeartBeatRsp();
-                await SendToClientAsync(head, heartBeatRsp);
+                return (head, heartBeatRsp);
             }
             else if (reqHead.Reqseq != LatestSeq)
             {
                 fsm.PostEvent(EEvent.Logout);
+                return default;
             }
             else if(reqHead.Reqseq == LatestSeq)
             {
-                await next();
-                if (tPlayer != null)
-                    await tPlayer.SaveAync();
+                return await next();
             }
+            return default;
         }
-        async Task LoginAsync(SHead reqHead, LoginReq loginReq)
+        async Task<(SHead, LoginRsp)> LoginAsync(SHead reqHead, LoginReq loginReq)
         {
             SHead rspHead = new SHead { Msgid = EOpCode.LoginRsp, Errcode = EErrno.Succ };
             LoginRsp rspBody = new LoginRsp() {LoginResult = ELoginResult.Success };
@@ -191,24 +206,24 @@ namespace GameServer.Player
                     }
                 }
             }
-            await SendToClientAsync(rspHead, rspBody);
+            return (rspHead, rspBody);
         }
 
-        async Task LoginFake(SHead reqHead, LoginReq reqBody)
+        async Task<(SHead, IMessage)> LoginFake(SHead reqHead, LoginReq reqBody)
         {
             SHead rspHead = new SHead { Msgid = EOpCode.TestRsp, Errcode = EErrno.Succ };
             TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
             var retval = await TAccount.QueryAync((AuthType.Test, "112", Server.Instance.Zone));
-            await SendToClientAsync(rspHead, rspBody);
+            return (rspHead, rspBody);
         }
-        async Task HelloHandler( SHead reqHead, TestReq reqBody)
+        async Task<(SHead, TestRsp)> HelloHandler( SHead reqHead, TestReq reqBody)
         {
             SHead rspHead = new SHead {Msgid= EOpCode.TestRsp, Errcode = EErrno.Succ };
             TestRsp rspBody = new TestRsp { Id = 1, Name = "Test" };
-            await SendToClientAsync(rspHead, rspBody);
+            return (rspHead, rspBody);
         }
 
-        async Task CreateRoleAsync(SHead reqHead, CreateRoleReq reqBody)
+        async Task<(SHead, CreateRoleRsp)> CreateRoleAsync(SHead reqHead, CreateRoleReq reqBody)
         {
             SHead rspHead = new SHead { Msgid = EOpCode.CreateroleRsp, Errcode = EErrno.Succ };
             CreateRoleRsp rspBody = new CreateRoleRsp { };
@@ -248,7 +263,7 @@ namespace GameServer.Player
             {
                 rspHead.Errcode = EErrno.Error;
             }
-            await SendToClientAsync(rspHead, rspBody);
+            return (rspHead, rspBody);
         }
 
         void fillPlayerInfo (PlayerInfo playerInfo)
