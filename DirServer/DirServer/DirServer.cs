@@ -18,19 +18,7 @@ namespace DirServer
     }
     class Server : ServerBaseWithNet<Server, Config>
     {
-        Dispatcher<EOpCode, SHead, Session, EErrno> dispatcher = new Dispatcher<EOpCode, SHead, Session, EErrno>(
-            new Dispatcher<EOpCode, SHead, Session, EErrno>.Config
-            {
-                FunGetMsgId = head => head.Msgid,
-                FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) =>
-                {
-                    rspHead.Errcode = err;
-                    rspHead.Msgid = msgId;
-                    rspHead.Sync = ReqHead.Sync;
-                },
-                ExceptionErrCode = EErrno.Fail
-            }
-            );
+        Dispatcher<EOpCode, SHead, Session, EErrno> dispatcher;
 
         Dictionary<string, ServerSet> servers = new Dictionary<string, ServerSet>();
 
@@ -43,9 +31,7 @@ namespace DirServer
 
         protected override async Task OnHandlerData(Session session, byte[] data)
         {
-             var rsp = await dispatcher.DispatcherRequest(session, data);
-            if (rsp != default)
-                await Send(session, rsp.head, rsp.body);
+             await dispatcher.DispatcherRequest(session, data);
         }
         async Task<(SHead, RegisterRsp)> RegisterServerHandler(Session session, SHead reqHead, RegisterReq reqBody)
         {
@@ -125,6 +111,20 @@ namespace DirServer
         protected override void OnInit()
         {
             base.OnInit();
+            dispatcher = new Dispatcher<EOpCode, SHead, Session, EErrno>(
+            new Dispatcher<EOpCode, SHead, Session, EErrno>.Config
+            {
+                FunGetMsgId = head => head.Msgid,
+                FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) =>
+                {
+                    rspHead.Errcode = err;
+                    rspHead.Msgid = msgId;
+                    rspHead.Sync = ReqHead.Sync;
+                },
+                ExceptionErrCode = EErrno.Fail,
+                FunSendToClient = Send
+            }
+            );;
             dispatcher.Bind<RegisterReq, RegisterRsp>(EOpCode.RegisterReq, EOpCode.RegisterRsp, RegisterServerHandler);
             dispatcher.Bind<GetReq, GetRsp>(EOpCode.GetReq, EOpCode.GetRsp, GetHandler);
             dispatcher.Bind<SyncReq, SyncRsp>(EOpCode.SyncReq, EOpCode.SyncRsp, SyncHandler);

@@ -20,19 +20,7 @@ namespace CacheServer
     {
         protected override string ConfPath => "../CacheServerConfig.xml";
         protected Dictionary<string, Table> tables = new Dictionary<string, Table>();
-        Dispatcher<EOpCode, Head, ISession, EErrno> dispatcher = new Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession, EErrno>(
-            new Dispatcher<EOpCode, Head, ISession, EErrno>.Config
-            {
-                FunGetMsgId = head => head.Msgid,
-                FunInitHead = (ref Head rspHead, Head ReqHead, EOpCode msgId, EErrno err) =>
-                {
-                    rspHead.Errcode = err;
-                    rspHead.Msgid = msgId;
-                    rspHead.Sync = ReqHead.Sync;
-                },
-                ExceptionErrCode = EErrno.Fail
-            }
-        );
+        Dispatcher<EOpCode, Head, ISession, EErrno> dispatcher;
         protected override void OnInit()
         {
             tables["DBUin"] = new TBUin();
@@ -48,6 +36,22 @@ namespace CacheServer
             Frame.Timer.Instance.SetInterval(Config.CacheServer.SaveInterval, () => CoroutineUtil.Instance.New(SaveDbAsync));
             ProxyModule.Instance.Init(Config.IpAndPoint , new ServerInfo { id = 1, name = "CacheServer", zone = 0 });
             ProxyModule.Instance.DataHandler = DataHandler;
+            dispatcher = new Dispatcher<Cacheapi.EOpCode, Cacheapi.Head, ISession, EErrno>(
+            new Dispatcher<EOpCode, Head, ISession, EErrno>.Config
+            {
+                FunGetMsgId = head => head.Msgid,
+                FunInitHead = (ref Head rspHead, Head ReqHead, EOpCode msgId, EErrno err) =>
+                {
+                    rspHead.Errcode = err;
+                    rspHead.Msgid = msgId;
+                    rspHead.Sync = ReqHead.Sync;
+                },
+                ExceptionErrCode = EErrno.Fail,
+                FunSendToClient = async (Session, head, body) =>
+                {
+                    await Session.SendAsync(ProtoUtil.Pack(head, body));
+                }
+            });
             dispatcher.Bind<QueryReq, QueryRsp>(EOpCode.QueryReq, EOpCode.QueryRsp, HandlerQuery);
             dispatcher.Bind<SaveReq, SaveRsp>(EOpCode.SaveReq, EOpCode.SaveRsp, HandlerSave);
             dispatcher.Bind<DeleteReq, DeleteRsp>(EOpCode.DeleteReq, EOpCode.DeleteRsp, HandlerDelete);
@@ -220,19 +224,7 @@ namespace CacheServer
         protected void DataHandler(ISession session, byte[] data)
         {
             CoroutineUtil.Instance.New(async () => {
-                try
-                {
-                    var rsp = await dispatcher.DispatcherRequest(session, data);
-                    if (rsp == default)
-                        return;
-                    var data2 = ProtoUtil.Pack(rsp.head, rsp.body);
-                    await session.SendAsync(data2);
-                } catch(Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    Console.WriteLine(e.StackTrace);
-                }
-                
+                await dispatcher.DispatcherRequest(session, data);
             });
         }
 

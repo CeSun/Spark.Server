@@ -20,7 +20,7 @@ namespace ClientTest
         {
              List<Task> tasks = new List<Task>();
             await Task.Delay(3000);
-            int num = 5000;
+            int num = 10;
             clients =  new TcpClient[num];
             for (int i = 0; i < num; i++)
             {

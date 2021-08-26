@@ -27,5 +27,10 @@ namespace Frame
             bodyBits.CopyTo(data, 2 * sizeof(int) + headBits.Length);
             return data;
         }
+
+        public static (THead, TRsp) UnPack<THead, TRsp>(byte[] data)
+        {
+            return default;
+        }
     }
 }

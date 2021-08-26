@@ -20,14 +20,17 @@ namespace Frame
     public class Dispatcher <TMsgId, THead, TTransparent, TErr> where THead : IMessage<THead>, new()
     {
         public delegate TMsgId GetMsgIdFunc(THead head);
+        public delegate Task SendToClient(TTransparent trans, THead head, IMessage body);
         public delegate void InitHeadFunc(ref THead rspHead, THead ReqHead, TMsgId msgId, TErr err);
-         public class Config 
+         public class Config
         {
             public GetMsgIdFunc FunGetMsgId;
 
             public InitHeadFunc FunInitHead;
 
             public TErr ExceptionErrCode;
+
+            public SendToClient FunSendToClient;
 
         }
         Config config;
@@ -73,25 +76,28 @@ namespace Frame
         public void Bind<TReq, TRsp>(TMsgId ReqMessageId, TMsgId RspMessageId, ProcessFunWithSession<TReq, TRsp> func) where TReq : IMessage<TReq>, new() where TRsp : IMessage<TRsp>, new()
         {
             Functions.Add(ReqMessageId, async (session, offset, head, data) => {
+                (THead head, TRsp body) rsp = default;
                 try
                 {
                     MessageParser<TReq> parser = new MessageParser<TReq>(() => new TReq());
-                    var rsp = parser.ParseFrom(data, offset, data.Length - offset);
-                    if (rsp == null)
-                        return default;
-                    return await func(session, head, rsp);
+                    var reqbody = parser.ParseFrom(data, offset, data.Length - offset);
+                    if (reqbody == null)
+                        rsp = default;
+                    rsp = await func(session, head, reqbody);
                 } catch (ResponseException<TErr> e)
                 {
                     Console.WriteLine();
                     var rspHead = new THead() {};
                     config.FunInitHead(ref rspHead, head, RspMessageId, e.errorcode);
-                    return (rspHead, new TRsp());
+                    rsp = (rspHead, new TRsp());
                 }catch
                 {
                     var rspHead = new THead() { };
                     config.FunInitHead(ref rspHead, head, RspMessageId, config.ExceptionErrCode);
-                    return (rspHead, new TRsp());
+                    rsp =  (rspHead, new TRsp());
                 }
+                return rsp;
+                
             });
         }
 
@@ -100,7 +106,7 @@ namespace Frame
         /// </summary>
         /// <param name="data">数据二进制</param>
         /// <returns></returns>
-        public async Task<(THead head, IMessage body)> DispatcherRequest(TTransparent session, byte[] data)
+        public async Task DispatcherRequest(TTransparent session, byte[] data)
         {
             var headBits = data.Skip(sizeof(int)).Take(sizeof(int)).ToArray();
             Array.Reverse(headBits);
@@ -109,20 +115,24 @@ namespace Frame
             if (head == null)
             {
                 Console.WriteLine("head parse failed" );
-                return default;
+                return;
             }
             var id = config.FunGetMsgId(head);
             var fun = Functions.GetValueOrDefault(id);
             if (fun == null)
             {
                 Console.WriteLine($"msg id is not found: {id}");
-                return default;
+                return;
             }
-            return await requestHandler(session, head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
+            var rsp = await requestHandler(session, head, async () => await fun(session, sizeof(int) * 2 + headLength, head, data), sizeof(int) * 2 + headLength, data);
+            if (rsp != (null, null))
+            {
+                await config.FunSendToClient(session, rsp.Item1, rsp.Item2);
+            }
         }
 
 
-        delegate Task<(THead head, IMessage body)> ProcessFun(TTransparent session, int offset, THead head, byte[] body);
+        delegate Task<(THead, IMessage)> ProcessFun(TTransparent session, int offset, THead head, byte[] body);
        
         Dictionary<TMsgId, ProcessFun> Functions = new Dictionary<TMsgId, ProcessFun>();
     }
@@ -132,22 +142,25 @@ namespace Frame
         Dispatcher<TMsgId, THead, byte, TErr> sub;
         public delegate Task<(THead, TRsp)> ProcessFun<TReq, TRsp>(THead head, TReq body) where TRsp : IMessage<TRsp> where TReq : IMessage<TReq>;
 
-        public class Config: Dispatcher<TMsgId, THead, byte, TErr>.Config
+        public delegate Task SendToClient(THead head, IMessage body);
+        public class Config : Dispatcher<TMsgId, THead, byte, TErr>.Config
         {
-
+            public new SendToClient FunSendToClient;
         }
-
-        Config config;
         public DispatcherLite(Config config) 
         {
-            sub = new Dispatcher<TMsgId, THead, byte, TErr>(config);
-            this.config = config;
+            Dispatcher<TMsgId, THead, byte, TErr>.Config conf = config;
+            conf.FunSendToClient = async (session, head, body) =>
+            {
+                await config.FunSendToClient(head, body);
+            };
+            sub = new Dispatcher<TMsgId, THead, byte, TErr>(conf);
         }
 
         public delegate Task<(THead, IMessage)> RequestHandler(THead head, TaskAction<THead> next);
-        public async Task<(THead head, IMessage body)> DispatcherRequest(byte[] data)
+        public async Task DispatcherRequest(byte[] data)
         {
-            return await sub.DispatcherRequest(default, data);
+            await sub.DispatcherRequest(default, data);
         }
         public void Bind<TReq, TRsp>(TMsgId MessageId, TMsgId RspMessageId, ProcessFun<TReq, TRsp> func) where TReq : IMessage<TReq>, new() where TRsp : IMessage<TRsp>, new()
         {

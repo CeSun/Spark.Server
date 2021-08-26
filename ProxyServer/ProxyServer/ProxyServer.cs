@@ -19,28 +19,35 @@ namespace ProxyServer
     {
         protected override string ConfPath => "../ProxyServerConfig.xml";
 
-        Dispatcher<EOpCode, SHead, Session, EErrno> dispatcher = new Dispatcher<EOpCode, SHead, Session, EErrno>(new Dispatcher<EOpCode, SHead, Session, EErrno>.Config
-        {
-            FunGetMsgId = head => head.Msgid,
-            FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) =>
-            {
-                rspHead.Errcode = err;
-                rspHead.Msgid = msgId;
-                rspHead.Sync = ReqHead.Sync;
-            },
-            ExceptionErrCode = EErrno.Fail
-        });
+        Dispatcher<EOpCode, SHead, Session, EErrno> dispatcher;
 
         DirServerModule dirServerModule = new DirServerModule();
         protected override void OnInit()
         {
             base.OnInit();
+            dispatcher = new Dispatcher<EOpCode, SHead, Session, EErrno>(new Dispatcher<EOpCode, SHead, Session, EErrno>.Config
+            {
+                FunGetMsgId = head => head.Msgid,
+                FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) =>
+                {
+                    rspHead.Errcode = err;
+                    rspHead.Msgid = msgId;
+                    rspHead.Sync = ReqHead.Sync;
+                },
+                ExceptionErrCode = EErrno.Fail,
+                FunSendToClient = async (session, head, body) =>
+                {
+                    await session.SendAsync(ProtoUtil.Pack(head, body));
+                }
+            });
             dispatcher.Bind<HeartBeatReq, HeartBeatRsp>(EOpCode.HeartbeatReq, EOpCode.HeartbeatRsp, HeartBeatReqAsync);
             dispatcher.Bind<RegistReq, RegistRsp>(EOpCode.RegisteReq, EOpCode.RegisteRsp, RegistReqAsync);
             dispatcher.Bind<RegistReq, RegistRsp>(EOpCode.Transmit, EOpCode.Transmit, async (session, head, body) => default);
             dispatcher.Filter = Filter;
             dirServerModule.Init(Config.IpAndPoint);
             CoroutineUtil.Instance.New(Regist);
+           
+
         }
 
         async Task Regist()
@@ -137,9 +144,7 @@ namespace ProxyServer
 
         protected override async Task OnHandlerData(Session session, byte[] data)
         {
-            var rsp = await dispatcher.DispatcherRequest(session, data);
-            if (rsp != default)
-             await session.SendAsync(ProtoUtil.Pack(rsp.head, rsp.body));
+            await dispatcher.DispatcherRequest(session, data);
         }
 
         protected override void OnHandlerDisconnected(Session session)

@@ -14,17 +14,7 @@ namespace GameServer.Player
     public class Player
     {
         public Frame.Session Session { get; private set; }
-        DispatcherLite<EOpCode, SHead, EErrno> dispatcher = new DispatcherLite<EOpCode, SHead, EErrno>(
-        new DispatcherLite<EOpCode, SHead, EErrno>.Config
-        {
-            FunGetMsgId = head => head.Msgid,
-            FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) => {
-                rspHead.Msgid = msgId;
-                rspHead.Errcode = err;
-            },
-            ExceptionErrCode = EErrno.Error
-        }
-        );
+        DispatcherLite<EOpCode, SHead, EErrno> dispatcher;
         FSM<EEvent, EState> fsm = new FSM<EEvent, EState>();    
         uint LatestSeq = 0;
         DateTime LatestTime;
@@ -53,16 +43,24 @@ namespace GameServer.Player
 
         public async Task processData(byte[] data)
         {
-            var rsp = await dispatcher.DispatcherRequest(data);
-            if (rsp != default)
-            {
-                await SendToClientAsync(rsp.head, rsp.body);
-            }
+          await dispatcher.DispatcherRequest(data);
+          
         }
 
-        public Player(Frame.Session session)
+        public Player(Session session)
         {
             Session = session;
+            dispatcher = new DispatcherLite<EOpCode, SHead, EErrno>(
+                new DispatcherLite<EOpCode, SHead, EErrno>.Config
+                {
+                    FunGetMsgId = head => head.Msgid,
+                    FunInitHead = (ref SHead rspHead, SHead ReqHead, EOpCode msgId, EErrno err) => {
+                        rspHead.Msgid = msgId;
+                        rspHead.Errcode = err;
+                    },
+                    ExceptionErrCode = EErrno.Error,
+                    FunSendToClient = SendToClientAsync,
+                } );
         }
 
         public void Init()
@@ -115,7 +113,7 @@ namespace GameServer.Player
             }
         }
 
-        async  Task<(SHead, IMessage)> filterAsync(SHead reqHead,  TaskAction<SHead> next)
+        async Task<(SHead, IMessage)> filterAsync(SHead reqHead,  TaskAction<SHead> next)
         {
             LatestTime = DateTime.Now;
             if (LatestSeq == 0 && reqHead.Msgid != EOpCode.LoginReq)
@@ -130,16 +128,7 @@ namespace GameServer.Player
                 HeartBeatRsp heartBeatRsp = new HeartBeatRsp();
                 return (head, heartBeatRsp);
             }
-            else if (reqHead.Reqseq != LatestSeq)
-            {
-                fsm.PostEvent(EEvent.Logout);
-                return default;
-            }
-            else if(reqHead.Reqseq == LatestSeq)
-            {
-                return await next();
-            }
-            return default;
+            return await next();
         }
         async Task<(SHead, LoginRsp)> LoginAsync(SHead reqHead, LoginReq loginReq)
         {

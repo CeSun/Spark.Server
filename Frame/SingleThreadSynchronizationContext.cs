@@ -38,7 +38,7 @@ namespace Frame
             int i = 0;
             for (i = 0; i < 10 ; i++)
             {
-                if (!bufferBlock.TryTake(out data))
+                if (!bufferBlock.TryTake(out data, 1))
                     break;
                 data.d(data.state);
             }
