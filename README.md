@@ -42,7 +42,7 @@
    
    规划功能： 读写分离，raft选举leader
    
-5. **CacheServer** (进行中，替代Database)
+5. **CacheServer**
 
    数据库缓存服务，所有服务的数据库操作均走此服务。使用redis + mysql。
    
