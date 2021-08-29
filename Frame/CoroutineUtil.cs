@@ -17,6 +17,8 @@ namespace Frame
         }
         public void New(Action action)
         {
+            if (action == null)
+                return;
             SendOrPostCallback f = obj =>
             {
                 try
@@ -35,6 +37,8 @@ namespace Frame
 
         public void New(CoroutineAction action)
         {
+            if (action == null)
+                return;
             SendOrPostCallback f = async obj =>
             {
                 try
@@ -47,8 +51,7 @@ namespace Frame
                     Console.WriteLine(ex.StackTrace);
                 }
             };
-            f(null);
-            // context.PostStart(f, null);
+            context.PostStart(f, null);
         }
     }
 }

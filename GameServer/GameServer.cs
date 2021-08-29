@@ -55,7 +55,8 @@ namespace GameServer
         protected override async Task OnHandlerData(Session session, byte[] data)
         {
             var player = session.GetProcess<Player.Player>();
-            await player?.processData(data);
+            if (player != null)
+                await player?.processData(data);
         }
 
         protected override void OnHandlerConnected(Session session)
