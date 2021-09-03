@@ -1,75 +1,31 @@
 ﻿using Frame;
-using GameServer.Player;
-using System.Threading.Tasks;
-using GameServer.Module;
 using System;
-using System.Diagnostics;
-using ProxyServerApi;
-using System.Xml.Serialization;
-using CacheServerApi;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace GameServer
 {
-    public class Config : BaseNetConfig
+
+    public class GameServer : ServerWithNet
     {
-        [XmlArray("IpAndPoint"), XmlArrayItem("value")]
-        public string[] IpAndPoint;
-    }
-    public class Server : ServerBaseWithNet<Server, Config>
-    {
-        public PlayerMngr playerMngr = new PlayerMngr();
-        public int Zone { get { return 1; } }
-        public int InstanceId { get { return 1; } }
-        public UinMngr UinMngr { get; private set; }
-
-        protected override string ConfPath => "../GameServerConfig.xml";
-
-        protected override void OnInit() 
+        enum ET
         {
-            base.OnInit();
-            UinMngr = new UinMngr();
-            playerMngr.Init();
-            ProxyModule.Instance.Init(Config.IpAndPoint, new ServerInfo {id=1, name="GameServer", zone = 1 });
-            CacheServerModule.Instance.Init(ProxyModule.Instance);
+            ABC
+        }
+        protected override async Task ConnectHandler(ISession session)
+        {
+        }
+        
+        protected override async Task DataHandler(ISession session, byte[] data)
+        {
 
-            UinMngr.Init(Zone);
         }
 
-        protected override void OnUpdate()
+        protected override async Task DisconnectHandler(ISession session)
         {
-            base.OnUpdate();
-            playerMngr?.Update();
-            UinMngr?.Update();
-            ProxyModule.Instance?.Update();
-            CacheServerModule.Instance.Update();
 
-        }
-        protected override void OnFini()
-        {
-            base.OnFini();
-            playerMngr?.Fini();
-            UinMngr?.Fini();
-            ProxyModule.Instance?.Fini();
-            CacheServerModule.Instance.Fini();
-        }
-        protected override async Task OnHandlerData(Session session, byte[] data)
-        {
-            var player = session.GetProcess<Player.Player>();
-            if (player != null)
-                await player?.processData(data);
-        }
-
-        protected override void OnHandlerConnected(Session session)
-        {
-            var player = new Player.Player(session);
-            playerMngr.AddPlayer(session.SessionId, player);
-            session.SetProcess(player);
-            player.Init();
-        }
-
-        protected override void OnHandlerDisconnected(Session session)
-        {
-            playerMngr.Remove(session.SessionId);
         }
     }
 }

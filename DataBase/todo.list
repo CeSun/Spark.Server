@@ -1,5 +1,0 @@
-TODO LIST:
-
-暂时数据库使用mysql，没有使用缓存
-以后应该对于每个GameServer写一个mysql的缓存
-
