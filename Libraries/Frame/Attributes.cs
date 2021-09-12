@@ -5,13 +5,28 @@ using System.Text;
 namespace Frame
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class DispacherAttribute: Attribute
+    public class ControllerAttribute: Attribute
     {
-        Enum msgId;
-        public DispacherAttribute(ValueType MsgId)
+        int msgId;
+        public ControllerAttribute(int MsgId)
         {
+            this.msgId = MsgId;
         }
 
     }
 
+    [AttributeUsage(AttributeTargets.Class)]
+    public class DispatcherAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class FilterAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class DispatchMethodAttribute : Attribute
+    {
+    }
 }
