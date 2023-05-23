@@ -14,7 +14,7 @@ namespace Frame
         public void Init()
         {
             ThreadId = Thread.CurrentThread.ManagedThreadId;
-            SynchronizationContext.SetSynchronizationContext(this);
+            SetSynchronizationContext(this);
         }
         public override void Post(SendOrPostCallback d, object? state)
         {
