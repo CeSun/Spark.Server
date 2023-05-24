@@ -13,6 +13,7 @@ public class ServerNetDriver : NetDriver
     HostAndPort HostAndPort = new HostAndPort();
     public void Init(HostAndPort config)
     {
+        HostAndPort = config;
         ServerMain();
     }
 
@@ -22,14 +23,50 @@ public class ServerNetDriver : NetDriver
         listener.Start();
         while (IsExit == false)
         {
-            var client = listener.AcceptTcpClient();
+            var client = await listener.AcceptTcpClientAsync();
             ProcessClient(client);
         }
+        listener.Stop();
     }
 
     public async void ProcessClient(TcpClient client)
     {
-        client.GetStream();
+        var session = new ServerNetSession() { TcpClient = client };
+        try
+        {
+            ConnectedAction?.Invoke(session);
+            await Task.Yield();
+            var stream = client.GetStream();
+            Memory<byte> buffer = new Memory<byte>();
+            while (IsExit == false)
+            {
+                await stream.ReadAsync(buffer);
+                ProcessData(buffer, session);
+            }
+        } 
+        catch (IOException exception)
+        {
+            DisconnectedAction?.Invoke(session);
+            Console.WriteLine(exception.ToString());
+        }
+        catch (ObjectDisposedException exception)
+        {
+            DisconnectedAction?.Invoke(session);
+            // todo: Debug
+            Console.WriteLine(exception.ToString());
+        }
     }
 
+
 }
+
+internal class ServerNetSession : Session {
+
+    internal required TcpClient TcpClient;
+
+    public override async void SendAsync(byte[] buffer)
+    {
+        await TcpClient.GetStream().WriteAsync(buffer, 0, buffer.Length);
+    }
+}
+

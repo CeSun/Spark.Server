@@ -18,11 +18,46 @@ public abstract class NetDriver
     {
         IsExit = true;
     }
+    protected void ProcessData(Memory<byte> buffer, Session session)
+    {
+        var bufferSpan = session.ReceiveBuffer.AsSpan(session.Length);
+        buffer.Span.CopyTo(bufferSpan);
+        session.Length += buffer.Length;
+
+        if (session.Length > sizeof(int) )
+        {
+            var PackLen = BitConverter.ToInt32(session.ReceiveBuffer);
+            var BufferLen = session.Length;
+            while(BufferLen >= PackLen)
+            {
+                var pack = session.ReceiveBuffer.AsSpan(session.Length - BufferLen, PackLen);
+                InternalReceiveData(session, pack);
+                BufferLen = BufferLen - PackLen;
+            }
+            Array.Copy(session.ReceiveBuffer, session.Length - BufferLen, session.ReceiveBuffer, 0, BufferLen);
+            session.Length = buffer.Length;
+        }
+    }
+
+    protected virtual void InternalReceiveData(Session session, Span<byte> buffer)
+    {
+        ReceiveAction?.Invoke(session, buffer);
+    }
 }
 
 
 public class Session
 {
-    public required TcpClient Client;
+    public Session()
+    {
+        ReceiveBuffer = new byte[1024];
+        Length = 0;
+    }
+    public byte[] ReceiveBuffer { get; private set; }
+    
+    internal int Length { get; set; }
+    public virtual void SendAsync(byte[] buffer)
+    {
 
+    }
 }
