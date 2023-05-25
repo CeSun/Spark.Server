@@ -18,12 +18,8 @@ public abstract class NetDriver
     {
         IsExit = true;
     }
-    protected void ProcessData(Memory<byte> buffer, Session session)
+    protected void ProcessData(Session session)
     {
-        var bufferSpan = session.ReceiveBuffer.AsSpan(session.Length);
-        buffer.Span.CopyTo(bufferSpan);
-        session.Length += buffer.Length;
-
         if (session.Length > sizeof(int) )
         {
             var PackLen = BitConverter.ToInt32(session.ReceiveBuffer);
@@ -35,7 +31,7 @@ public abstract class NetDriver
                 BufferLen = BufferLen - PackLen;
             }
             Array.Copy(session.ReceiveBuffer, session.Length - BufferLen, session.ReceiveBuffer, 0, BufferLen);
-            session.Length = buffer.Length;
+            session.Length = BufferLen;
         }
     }
 

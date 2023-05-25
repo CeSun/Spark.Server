@@ -40,8 +40,9 @@ public class ServerNetDriver : NetDriver
             Memory<byte> buffer = new Memory<byte>();
             while (IsExit == false)
             {
-                await stream.ReadAsync(buffer);
-                ProcessData(buffer, session);
+                var len = await stream.ReadAsync(session.ReceiveBuffer, session.Length, session.ReceiveBuffer.Length - session.Length);
+                session.Length += len;
+                ProcessData(session);
             }
         } 
         catch (IOException exception)
