@@ -2,10 +2,10 @@
 
 namespace Frame
 {
-    public class Application
+    public abstract class Application
     {
         private SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
-        public required ConfigBase Config;
+        internal ConfigBase? Config;
         NetDriver? NetDriver;
         public T GetConfig<T>() where T : ConfigBase
         {
@@ -17,13 +17,19 @@ namespace Frame
         public void Start()
         {
             SyncContext.Init();
-            if (Config.ServerMode == ServerMode.Server)
+            if (GetConfig<ConfigBase>().ServerMode == ServerMode.Server)
             {
-                var ServerDriver = new ServerNetDriver();
-                ServerDriver.Init(Config.HostAndPort);
+                var ServerDriver = new ServerNetDriver()
+                {
+                    ConnectedAction = OnClientConnected,
+                    DisconnectedAction = OnClientDisconnected,
+                    ReceiveAction = OnClientReceiveData
+                };
+                ServerDriver.Init(GetConfig<ConfigBase>().HostAndPort);
                 NetDriver = ServerDriver;
             }
         }
+
         public void Update()
         {
             SyncContext.Update();
@@ -42,5 +48,9 @@ namespace Frame
             }
             Stop();
         }
+
+        protected abstract void OnClientConnected(Session session);
+        protected abstract void OnClientDisconnected(Session session);
+        protected abstract void OnClientReceiveData(Session session, Span<byte> data);
     }
 }

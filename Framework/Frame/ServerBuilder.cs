@@ -44,9 +44,9 @@ namespace Frame
         {
             Options = options;
         }
-        public Application Build()
+        public T Build<T>() where T : Application, new()
         {
-            return new Application()
+            return new T()
             {
                 Config = LoadConfigFun()
             };
