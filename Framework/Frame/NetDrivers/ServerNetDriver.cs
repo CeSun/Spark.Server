@@ -37,7 +37,6 @@ public class ServerNetDriver : NetDriver
             ConnectedAction?.Invoke(session);
             await Task.Yield();
             var stream = client.GetStream();
-            Memory<byte> buffer = new Memory<byte>();
             while (IsExit == false)
             {
                 var len = await stream.ReadAsync(session.ReceiveBuffer, session.Length, session.ReceiveBuffer.Length - session.Length);

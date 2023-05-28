@@ -1,8 +1,9 @@
-﻿using Frame.NetDrivers;
+﻿using Frame.Interfaces;
+using Frame.NetDrivers;
 
 namespace Frame
 {
-    public abstract class Application
+    public abstract class Application : ILifeCycle
     {
         private SingleThreadSynchronizationContext SyncContext = new SingleThreadSynchronizationContext();
         internal ConfigBase? Config;
@@ -28,15 +29,18 @@ namespace Frame
                 ServerDriver.Init(GetConfig<ConfigBase>().HostAndPort);
                 NetDriver = ServerDriver;
             }
+            OnStart();
         }
 
         public void Update()
         {
             SyncContext.Update();
+            OnUpdate();
         }
         public void Stop()
         {
             NetDriver?.Fini();
+            OnStop();
         }
 
         public void Run()
@@ -52,5 +56,17 @@ namespace Frame
         protected abstract void OnClientConnected(Session session);
         protected abstract void OnClientDisconnected(Session session);
         protected abstract void OnClientReceiveData(Session session, Span<byte> data);
+
+        public virtual void OnStart()
+        {
+        }
+
+        public virtual void OnStop()
+        {
+        }
+
+        public virtual void OnUpdate()
+        {
+        }
     }
 }
