@@ -1,0 +1,27 @@
+package Protocol;
+
+enum MsgId {
+	LoginReq = 0;
+	LoginRsp = 1;
+}
+
+enum ErrCode {
+	Success = 0;
+	Exception = 1;
+}
+
+message Head {
+	required MsgId msgId = 1;
+	required int32 Sync = 2;
+}
+
+
+message LoginReq 
+{
+	required int32 test = 1;
+}
+
+message LoginRsp 
+{
+	required int32 test = 1;
+}

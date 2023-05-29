@@ -10,6 +10,5 @@ public interface ILifeCycle
 {
     void OnStart();
     void OnStop();
-    void OnUpdate();
 
 }

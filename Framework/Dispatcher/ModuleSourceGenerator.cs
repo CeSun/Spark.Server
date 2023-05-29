@@ -43,6 +43,8 @@ namespace Dispatcher
                                     ModuleClass.NeedApplication = true;
                                     ModuleClass.ApplicationMemberName = property;
                                 }
+                                var methodList = ProcessMethod(Class);
+                                ModuleClass.RouteMethods = methodList;
                                 Modules.Add(ModuleClass);
                                 if (HasImplInterface(Class, "Frame.Interfaces.ILifeCycle"))
                                 {
@@ -113,26 +115,10 @@ $@"
         {module.FieldName}.OnStop();
 ";
                 }
- source +=
-$@"
-    }}
-
-    public override void OnUpdate()
-    {{
-";
-
-                foreach(var module in LifeCycleModules)
-                {
-                    source += $@"
-        {module.FieldName}.OnUpdate();
-";
-                }
- source +=
-$@"
-    }}
-";
+                source += $@"
+    }}";
                 source += "}";
-                context.AddSource("ServerApplicationModule.cs", source);
+                context.AddSource("ServerApplicationModule.g.cs", source);
             }
 
 
@@ -152,6 +138,7 @@ $@"
             return false;
 
         }
+
 
         public bool HasImplInterface(ClassDeclarationSyntax classDeclaration, string interfaceName)
         {
@@ -179,7 +166,7 @@ $@"
                     continue;
                 }
                 var str = Member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (str == TypeName) {
+                if (str.IndexOf(TypeName) >= 0 ) {
                     return Member.Name;
                 }
 
@@ -211,6 +198,23 @@ $@"
 
             return List;
         }
+
+
+        public List<RouteMethodInfo> ProcessMethod(ClassDeclarationSyntax classDeclaration)
+        {
+            List<RouteMethodInfo> list = new List<RouteMethodInfo>();
+            foreach(var method in classDeclaration.Members.OfType<MethodDeclarationSyntax>())
+            {
+                foreach(var attlist in method.AttributeLists)
+                {
+                    foreach(var att in attlist.Attributes)
+                    {
+                        var b = HasAttribute(att, "Frame.Attributes.RouteAttribute");
+                    }
+                }
+            }
+            return list;
+        }
         public void Initialize(GeneratorInitializationContext context)
         {
             context.RegisterForSyntaxNotifications(() => new ModuleSyntaxReceiver());
@@ -240,5 +244,20 @@ $@"
         public bool NeedApplication { get; set; }
 
         public string ApplicationMemberName { get; set; }
+
+        public List<RouteMethodInfo> RouteMethods { get; set; }
+    }
+
+    public class RouteMethodInfo
+    {
+        public string Name { get; set; }
+
+        public string ReqMsgId { get; set; }
+
+        public string RspMsgId { get; set; }
+
+        public string ReqType { get; set; }
+
+
     }
 }

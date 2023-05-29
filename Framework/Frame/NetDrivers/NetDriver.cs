@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Frame.NetDrivers;
 
+public delegate void ReceiveDelegate(Session session, Span<byte> buffer);
 public abstract class NetDriver
 {
     public Action<Session>? ConnectedAction;
     public Action<Session>? DisconnectedAction;
-    public delegate void ReceiveDelegate(Session session, Span<byte> buffer);
     public ReceiveDelegate? ReceiveAction;
     protected bool IsExit = false;
     public void Fini()

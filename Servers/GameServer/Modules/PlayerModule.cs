@@ -4,10 +4,14 @@ using Frame.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Protocol;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GameServer.Modules;
+
 
 [Module("PlayerModule")]
 public class PlayerModule : ILifeCycle
@@ -17,7 +21,7 @@ public class PlayerModule : ILifeCycle
         init;
     }
 
-    [Route<int>(1,2)]
+    [Route(Protocol.LoginReq, Protocol.LoginRsp)]
     public int Login(int a)
     {
         return 0;
@@ -25,7 +29,7 @@ public class PlayerModule : ILifeCycle
 
     public void OnStart()
     {
-        Console.WriteLine("OnStart");
+       
     }
 
     public void OnStop()
@@ -33,8 +37,4 @@ public class PlayerModule : ILifeCycle
         Console.WriteLine("OnStop");
     }
 
-    public void OnUpdate()
-    {
-        Console.WriteLine("OnUpdate");
-    }
 }

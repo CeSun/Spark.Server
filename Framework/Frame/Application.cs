@@ -35,7 +35,6 @@ namespace Frame
         public void Update()
         {
             SyncContext.Update();
-            OnUpdate();
         }
         public void Stop()
         {
@@ -65,8 +64,5 @@ namespace Frame
         {
         }
 
-        public virtual void OnUpdate()
-        {
-        }
     }
 }

@@ -8,8 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Framework\Dispatcher\Dispatcher.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
-    <ProjectReference Include="..\..\Framework\Frame\Frame.csproj" />
+	  <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
+	  <PackageReference Include="SilentOrbit.ProtocolBuffers.SourceGenerator" Version="0.0.1" />
+	  <PackageReference Include="SilentOrbit.ProtocolBuffers.ProtocolBufferParser" Version="0.0.1" />
+	  <ProjectReference Include="..\..\Framework\Dispatcher\Dispatcher.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  <ProjectReference Include="..\..\Framework\Frame\Frame.csproj" />
+	  <AdditionalFiles Include="**\*.proto" />
   </ItemGroup>
 
   <ItemGroup>
